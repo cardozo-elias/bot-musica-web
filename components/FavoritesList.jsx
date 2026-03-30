@@ -6,9 +6,11 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // CORRECCIÓN: Usamos botUrl aquí
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    const s = io(botUrl);
+    // Bypass de ngrok agregado aquí
+    const s = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" }
+    });
     setSocket(s);
     return () => s.disconnect();
   }, []);

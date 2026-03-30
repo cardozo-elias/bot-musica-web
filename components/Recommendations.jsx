@@ -9,9 +9,11 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // CORRECCIÓN: Usamos botUrl aquí
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    socketRef.current = io(botUrl);
+    // Bypass de ngrok agregado aquí
+    socketRef.current = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" }
+    });
     socketRef.current.on('connect', () => socketRef.current.emit('get_recommendations', userId));
     
     socketRef.current.on('recommendations_data', (data) => {
@@ -56,7 +58,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
           <div 
             key={track.videoId} 
             onClick={() => play(track)}
-            className="group flex items-center gap-3 p-2 rounded-lg hover:bg-[#1e1f22] transition-all cursor-pointer border border-transparent hover:border-[#2b2d31]"
+            className="group flex items-center gap-3 p-2 rounded-lg hover:bg-[#1e1f22] transition-all cursor-pointer border border-transparent hover:border-[#3f4147]"
           >
             <div className="relative h-12 w-12 flex-shrink-0">
                 <img src={track.thumbnail} className="rounded-md object-cover h-full w-full shadow-sm" alt="" />

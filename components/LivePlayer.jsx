@@ -29,9 +29,11 @@ export default function LivePlayer({ userId }) {
   useEffect(() => {
     if (!userId) return;
     
-    // CORRECCIÓN: Definición limpia de botUrl
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    socketRef.current = io(botUrl);
+    // Bypass de ngrok agregado aquí
+    socketRef.current = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" }
+    });
     
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 

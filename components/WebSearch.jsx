@@ -10,13 +10,14 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   const [loading, setLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // Definimos la URL del bot usando la variable de Vercel
   const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // CORRECCIÓN: Usamos botUrl aquí
-    socketRef.current = io(botUrl);
+    // Bypass de ngrok agregado aquí
+    socketRef.current = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" }
+    });
     
     socketRef.current.emit("cmd_get_recommendations", userId);
     socketRef.current.on("search_results", (videos) => { setResults(videos || []); setLoading(false); });

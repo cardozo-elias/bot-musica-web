@@ -9,7 +9,6 @@ export default function PlaylistsPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [sessionInfo, setSessionInfo] = useState(null);
 
-  // Definimos la URL del bot
   const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
 
   useEffect(() => {
@@ -44,8 +43,11 @@ export default function PlaylistsPage() {
     e.stopPropagation();
     if (!sessionInfo?.user) return;
     
-    // CORRECCIÓN: Usamos botUrl aquí
-    const socket = io(botUrl);
+    // Bypass de ngrok agregado aquí
+    const socket = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" }
+    });
+
     socket.emit("cmd_play_playlist", { 
         userId: sessionInfo.user.id, 
         playlistId: playlistId, 
