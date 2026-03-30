@@ -28,7 +28,9 @@ export default function LivePlayer({ userId }) {
 
   useEffect(() => {
     if (!userId) return;
-    socketRef.current = io("http://localhost:3001");
+    // Intenta usar la variable de Vercel, si no existe usa localhost (para cuando programes en tu PC)
+  const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+socketRef.current = io(botUrl);
     
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 

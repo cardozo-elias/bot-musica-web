@@ -9,7 +9,8 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = io('http://localhost:3001');
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+    socketRef.current = io(botUrl);
     socketRef.current.on('connect', () => socketRef.current.emit('get_recommendations', userId));
     
     socketRef.current.on('recommendations_data', (data) => {
