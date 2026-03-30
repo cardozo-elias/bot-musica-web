@@ -31,7 +31,7 @@ export default function LivePlayer({ userId, guildId }) {
     
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Conexión con Bypass de ngrok
+    // Conexión con Bypass de ngrok incorporado
     socketRef.current = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
@@ -40,7 +40,7 @@ export default function LivePlayer({ userId, guildId }) {
 
     const interval = setInterval(() => {
       if (!isReordering.current) {
-        // Enviamos el objeto con userId y guildId para que el bot sepa qué servidor mirar
+        // Enviamos el objeto con userId y guildId al bot
         socketRef.current?.emit("get_status", { userId, guildId });
       }
     }, 1000);
@@ -67,7 +67,7 @@ export default function LivePlayer({ userId, guildId }) {
       clearInterval(interval); 
       socketRef.current?.disconnect(); 
     };
-  }, [userId, guildId]); // Se reinicia si cambias de servidor en la web
+  }, [userId, guildId]); // Se reinicia si cambias de servidor
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
@@ -231,4 +231,4 @@ export default function LivePlayer({ userId, guildId }) {
       </div>
     </>
   );
-} 
+}
