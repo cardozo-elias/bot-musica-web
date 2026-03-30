@@ -1,12 +1,12 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "../../api/auth/[...nextauth]/route"; // Ajusté la ruta por la nueva carpeta
 import { redirect } from "next/navigation";
 import { Pool } from 'pg';
 
-import LivePlayer from "../../components/LivePlayer";
-import WebSearch from "../../components/WebSearch";
-import Recommendations from "../../components/Recommendations";
-import FavoritesList from "../../components/FavoritesList";
+import LivePlayer from "../../../components/LivePlayer";
+import WebSearch from "../../../components/WebSearch";
+import Recommendations from "../../../components/Recommendations";
+import FavoritesList from "../../../components/FavoritesList";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -15,10 +15,11 @@ const pool = new Pool({
   }
 });
 
-export default async function DashboardPage() {
+// En Next.js, los componentes de página reciben 'params' automáticamente
+export default async function DashboardPage({ params }) {
+  const { guildId } = await params; // Capturamos el ID del servidor de la URL
   const session = await getServerSession(authOptions);
   
-  // Si alguien intenta entrar a /dashboard sin iniciar sesión, lo mandamos al login
   if (!session || !session.user) {
     redirect('/login');
   }
@@ -46,7 +47,6 @@ export default async function DashboardPage() {
   return (
     <main className="min-h-screen bg-[#0a0a0c] text-white p-4 md:p-8 pb-40 relative">
       
-      {/* BOTÓN VOLVER AL LANDING */}
       <a href="/" className="absolute top-6 left-6 md:top-8 md:left-8 text-gray-500 hover:text-[#5865F2] hover:scale-110 transition z-50 bg-[#111214] p-3 rounded-full border border-[#2b2d31] shadow-lg" title="Volver al Inicio">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -55,7 +55,6 @@ export default async function DashboardPage() {
 
       <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr_400px] gap-8 pt-16 md:pt-0">
         
-        {/* COLUMNA IZQUIERDA: Perfil y Recomendaciones */}
         <aside className="lg:sticky lg:top-4 h-fit">
           <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] mb-6 flex flex-col items-center shadow-xl relative overflow-hidden">
               <div className="absolute top-0 w-full h-24 bg-gradient-to-b from-[#5865F2]/20 to-transparent"></div>
@@ -69,7 +68,6 @@ export default async function DashboardPage() {
           <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
         </aside>
 
-        {/* COLUMNA CENTRAL: Estadísticas, Buscador y Favoritos */}
         <section className="flex flex-col gap-6">
           <div className="grid grid-cols-3 gap-4">
               <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] text-center shadow-lg relative overflow-hidden group hover:border-[#57F287] transition">
@@ -89,17 +87,18 @@ export default async function DashboardPage() {
               </div>
           </div>
           
-          <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+          <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} guildId={guildId} />
           
           <FavoritesList likes={allLikes} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
         </section>
 
-        {/* COLUMNA DERECHA: Espacio reservado para la Queue del LivePlayer */}
         <aside className="hidden lg:block h-screen">
+          {/* Espacio para la cola flotante si es necesario */}
         </aside>
       </div>
       
-      <LivePlayer userId={session.user.id} />
+      {/* Pasamos la guildId al reproductor */}
+      <LivePlayer userId={session.user.id} guildId={guildId} />
     </main>
   );
 }

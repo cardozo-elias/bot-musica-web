@@ -9,13 +9,13 @@ const formatTime = (ms) => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-export default function LivePlayer({ userId }) {
+export default function LivePlayer({ userId, guildId }) {
   const [status, setStatus] = useState({ playing: false, queueList: [] });
   const [isLiked, setIsLiked] = useState(false); 
   const [currentVideoId, setCurrentVideoId] = useState(null); 
   const [playlists, setPlaylists] = useState([]);
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
-  const [showQueue, setShowQueue] = useState(true); 
+  const [showQueue, setShowQueue] = useState(false); 
   const [showLyrics, setShowLyrics] = useState(false);
   const [lyrics, setLyrics] = useState({ title: "", text: "", loading: false });
   
@@ -30,7 +30,8 @@ export default function LivePlayer({ userId }) {
     if (!userId) return;
     
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    // Bypass de ngrok agregado aquí
+    
+    // Conexión con Bypass de ngrok
     socketRef.current = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
@@ -38,27 +39,35 @@ export default function LivePlayer({ userId }) {
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 
     const interval = setInterval(() => {
-      if (!isReordering.current) socketRef.current?.emit("get_status", userId);
+      if (!isReordering.current) {
+        // Enviamos el objeto con userId y guildId para que el bot sepa qué servidor mirar
+        socketRef.current?.emit("get_status", { userId, guildId });
+      }
     }, 1000);
     
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
       setStatus(data);
-      if (data.song) {
+      if (data.playing && data.song) {
         document.title = data.isPaused ? `⏸️ ${data.song.title}` : `▶️ ${data.song.title}`;
         if (draggingIndex === null) setLocalQueue(data.queueList || []);
         if (data.song.videoId !== currentVideoId) {
           setCurrentVideoId(data.song.videoId); setIsLiked(false);
         }
-      } else { document.title = "Musicardi Panel"; }
+      } else { 
+        document.title = "Musicardi Panel";
+      }
     });
 
     socketRef.current.on("lyrics_data", (data) => {
       setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false });
     });
 
-    return () => { clearInterval(interval); socketRef.current?.disconnect(); };
-  }, [userId, draggingIndex, currentVideoId]);
+    return () => { 
+      clearInterval(interval); 
+      socketRef.current?.disconnect(); 
+    };
+  }, [userId, guildId]); // Se reinicia si cambias de servidor en la web
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
@@ -131,7 +140,7 @@ export default function LivePlayer({ userId }) {
       {showQueue && (
         <div className="fixed right-6 top-6 bottom-32 w-[380px] bg-[#111214] border border-[#2b2d31] z-[40] shadow-2xl rounded-3xl p-6 flex flex-col animate-slideInRight">
           <div className="flex justify-between items-center mb-6 border-b border-[#2b2d31] pb-4">
-            <h3 className="font-black uppercase text-[10px] tracking-widest text-gray-500">Cola de Reproducción</h3>
+            <h3 className="font-black uppercase text-[10px] tracking-widest text-gray-500">Cola en {status.guildName}</h3>
             <button onClick={() => setShowQueue(false)} className="text-gray-500 hover:text-white text-xl">&times;</button>
           </div>
           <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
@@ -215,7 +224,7 @@ export default function LivePlayer({ userId }) {
              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" /></svg>
           </button>
           <div className="text-right border-l border-[#2b2d31] pl-6 min-w-[120px]">
-            <span className="text-[10px] text-[#5865F2] font-black uppercase block tracking-tighter">{status.guildName}</span>
+            <span className="text-[10px] text-[#5865F2] font-black uppercase block tracking-tighter truncate max-w-[100px]">{status.guildName}</span>
             <span className="text-[10px] text-gray-500 font-bold uppercase">{status.queueLength} EN COLA</span>
           </div>
         </div>
