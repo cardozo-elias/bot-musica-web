@@ -14,22 +14,27 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Bypass de ngrok agregado aquí
     socketRef.current = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
-    
     socketRef.current.emit("cmd_get_recommendations", userId);
     socketRef.current.on("search_results", (videos) => { setResults(videos || []); setLoading(false); });
     socketRef.current.on("recommendations_results", (videos) => { setRecommendations(videos || []); });
-    
     fetch("/api/playlists").then(res => res.json()).then(data => { if(Array.isArray(data)) setPlaylists(data); });
-    
     return () => socketRef.current?.disconnect();
   }, [userId, botUrl]);
 
   const handleAddToPlaylist = async (playlistId, video) => {
-    const songObj = { title: video.title, url: video.url, videoId: video.videoId, artist: String(video.author), thumbnail: video.thumbnail };
+    // CORRECCIÓN: Agregamos seconds y timestamp al objeto que se guarda en BD
+    const songObj = { 
+      title: video.title, 
+      url: video.url, 
+      videoId: video.videoId, 
+      artist: String(video.author), 
+      thumbnail: video.thumbnail,
+      seconds: video.seconds,
+      timestamp: video.timestamp
+    };
     await fetch("/api/playlists", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ playlistId, song: songObj }) });
     setOpenDropdown(null); alert("✅ Guardada.");
   };
@@ -45,7 +50,6 @@ export default function WebSearch({ userId, userName, userAvatar }) {
       </div>
       <div className="flex gap-3 w-full md:w-auto justify-end relative">
         <button onClick={() => socketRef.current?.emit("cmd_play_specific", { userId, video, userName, userAvatar })} className="bg-[#2b2d31] hover:bg-[#57F287] hover:text-black text-gray-300 px-6 py-2 rounded-xl font-black text-xs uppercase transition shadow-xl">▶ Cola</button>
-        
         <button onClick={() => setOpenDropdown(openDropdown === video.videoId ? null : video.videoId)} className="bg-[#2b2d31] hover:bg-[#5865F2] text-white px-4 py-2 rounded-xl font-bold transition shadow-xl">
            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
         </button>
@@ -66,13 +70,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   return (
     <div className="w-full bg-[#111214] p-6 md:p-10 rounded-3xl border border-[#2b2d31] shadow-2xl mb-8">
       <h3 className="text-2xl font-black mb-8 border-b border-[#2b2d31] pb-5 tracking-tighter">Buscador</h3>
-      <form onSubmit={(e) => { 
-          e.preventDefault(); 
-          if(!query.trim()) return; 
-          setLoading(true); 
-          setResults([]); 
-          socketRef.current?.emit("cmd_search", query); 
-        }} className="flex gap-3 mb-10">
+      <form onSubmit={(e) => { e.preventDefault(); if(!query.trim()) return; setLoading(true); setResults([]); socketRef.current?.emit("cmd_search", query); }} className="flex gap-3 mb-10">
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="¿Qué quieres escuchar hoy?" className="flex-1 bg-[#1e1f22] border border-[#2b2d31] rounded-2xl px-6 py-4 text-white focus:border-[#5865F2] outline-none transition text-lg shadow-inner" />
         <button type="submit" className="bg-[#5865F2] px-10 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#4752C4] transition shadow-xl">Buscar</button>
       </form>
