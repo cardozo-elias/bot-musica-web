@@ -9,6 +9,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
+    // CORRECCIÓN: Usamos botUrl aquí
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     socketRef.current = io(botUrl);
     socketRef.current.on('connect', () => socketRef.current.emit('get_recommendations', userId));
@@ -50,7 +51,6 @@ export default function Recommendations({ userId, userName, userAvatar }) {
         </button>
       </div>
       
-      {/* CAMBIO CLAVE: Quitamos el grid y usamos flex-col para una lista vertical */}
       <div className="flex flex-col p-2 gap-1 overflow-y-auto custom-scrollbar flex-1">
         {recs.map((track) => (
           <div 

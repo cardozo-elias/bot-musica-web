@@ -6,7 +6,9 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const s = io("http://localhost:3001");
+    // CORRECCIÓN: Usamos botUrl aquí
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+    const s = io(botUrl);
     setSocket(s);
     return () => s.disconnect();
   }, []);

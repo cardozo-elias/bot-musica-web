@@ -9,6 +9,9 @@ export default function PlaylistsPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [sessionInfo, setSessionInfo] = useState(null);
 
+  // Definimos la URL del bot
+  const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+
   useEffect(() => {
     fetch("/api/auth/session").then(res => res.json()).then(setSessionInfo);
     fetchPlaylists();
@@ -40,7 +43,9 @@ export default function PlaylistsPage() {
   const handlePlayPlaylist = (playlistId, e) => {
     e.stopPropagation();
     if (!sessionInfo?.user) return;
-    const socket = io("http://localhost:3001");
+    
+    // CORRECCIÓN: Usamos botUrl aquí
+    const socket = io(botUrl);
     socket.emit("cmd_play_playlist", { 
         userId: sessionInfo.user.id, 
         playlistId: playlistId, 
@@ -54,7 +59,6 @@ export default function PlaylistsPage() {
   return (
     <main className="min-h-screen bg-[#0a0a0c] text-white p-6 md:p-12 pb-48">
       <div className="max-w-[1200px] mx-auto">
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-[#2b2d31] pb-8 gap-6">
           <div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#5865F2] to-[#57F287]">
@@ -67,7 +71,6 @@ export default function PlaylistsPage() {
           </a>
         </div>
 
-        {/* LISTA DE PLAYLISTS */}
         {loading ? (
           <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div></div>
         ) : playlists.length === 0 ? (
@@ -79,8 +82,6 @@ export default function PlaylistsPage() {
           <div className="grid grid-cols-1 gap-6">
             {playlists.map(pl => (
               <div key={pl.id} className="bg-[#111214] rounded-3xl border border-[#2b2d31] overflow-hidden shadow-2xl transition hover:border-[#3f4147]">
-                
-                {/* CABECERA PLAYLIST */}
                 <div className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center cursor-pointer hover:bg-[#1a1b1e] gap-6" onClick={() => setExpandedId(expandedId === pl.id ? null : pl.id)}>
                   <div className="flex items-center gap-6 w-full">
                     <div className="bg-gradient-to-br from-[#5865F2] to-[#57F287] p-5 rounded-2xl shadow-xl text-white">
@@ -91,7 +92,6 @@ export default function PlaylistsPage() {
                       <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">{pl.songs?.length || 0} canciones guardadas</p>
                     </div>
                   </div>
-                  
                   <div className="flex gap-3 w-full md:w-auto">
                     <button onClick={(e) => handlePlayPlaylist(pl.id, e)} disabled={!pl.songs?.length} className="flex-1 md:flex-none bg-[#57F287] text-black px-8 py-3 rounded-full font-black text-xs uppercase hover:scale-105 transition shadow-xl disabled:opacity-30">
                       Reproducir
@@ -101,8 +101,6 @@ export default function PlaylistsPage() {
                     </button>
                   </div>
                 </div>
-
-                {/* CANCIONES DESPLEGADAS */}
                 {expandedId === pl.id && (
                   <div className="p-4 md:p-8 bg-[#0a0a0c] border-t border-[#2b2d31] flex flex-col gap-2">
                     {pl.songs?.map((song, i) => (

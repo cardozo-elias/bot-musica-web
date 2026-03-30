@@ -22,15 +22,16 @@ export default function LivePlayer({ userId }) {
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [localQueue, setLocalQueue] = useState([]);
   const isReordering = useRef(false);
-  const lyricsScrollRef = useRef(null); // NUEVO: Ref para el auto-scroll de las letras
+  const lyricsScrollRef = useRef(null); 
 
   const socketRef = useRef(null);
 
   useEffect(() => {
     if (!userId) return;
-    // Intenta usar la variable de Vercel, si no existe usa localhost (para cuando programes en tu PC)
-  const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-socketRef.current = io(botUrl);
+    
+    // CORRECCIÓN: Definición limpia de botUrl
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+    socketRef.current = io(botUrl);
     
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 
@@ -59,13 +60,11 @@ socketRef.current = io(botUrl);
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
-  // NUEVO: Auto-scroll de letras basado en el progreso
   useEffect(() => {
     if (showLyrics && lyricsScrollRef.current && status.song?.durationSec > 0 && !status.isPaused) {
       const container = lyricsScrollRef.current;
       const progress = (status.currentMs / 1000) / status.song.durationSec;
       const maxScroll = container.scrollHeight - container.clientHeight;
-      // Scrollea suavemente en base al porcentaje de la canción
       container.scrollTop = maxScroll * progress;
     }
   }, [status.currentMs, showLyrics, status.song]);
@@ -100,7 +99,6 @@ socketRef.current = io(botUrl);
 
   return (
     <>
-      {/* NUEVO DISEÑO DE LETRAS: Modal limpio, sin verde flúor, con auto-scroll */}
       {showLyrics && (
         <div className="fixed inset-0 bg-[#0a0a0c]/80 z-[100] p-4 md:p-10 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
           <div className="bg-[#111214] border border-[#2b2d31] rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">

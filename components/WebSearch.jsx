@@ -15,7 +15,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Usamos la variable de entorno aquí
+    // CORRECCIÓN: Usamos botUrl aquí
     socketRef.current = io(botUrl);
     
     socketRef.current.emit("cmd_get_recommendations", userId);
@@ -43,7 +43,6 @@ export default function WebSearch({ userId, userName, userAvatar }) {
         </div>
       </div>
       <div className="flex gap-3 w-full md:w-auto justify-end relative">
-        {/* CORRECCIÓN: Usamos el socket ya conectado en lugar de crear uno nuevo al localhost */}
         <button onClick={() => socketRef.current?.emit("cmd_play_specific", { userId, video, userName, userAvatar })} className="bg-[#2b2d31] hover:bg-[#57F287] hover:text-black text-gray-300 px-6 py-2 rounded-xl font-black text-xs uppercase transition shadow-xl">▶ Cola</button>
         
         <button onClick={() => setOpenDropdown(openDropdown === video.videoId ? null : video.videoId)} className="bg-[#2b2d31] hover:bg-[#5865F2] text-white px-4 py-2 rounded-xl font-bold transition shadow-xl">
@@ -71,7 +70,6 @@ export default function WebSearch({ userId, userName, userAvatar }) {
           if(!query.trim()) return; 
           setLoading(true); 
           setResults([]); 
-          // CORRECCIÓN: Usamos el socketRef
           socketRef.current?.emit("cmd_search", query); 
         }} className="flex gap-3 mb-10">
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="¿Qué quieres escuchar hoy?" className="flex-1 bg-[#1e1f22] border border-[#2b2d31] rounded-2xl px-6 py-4 text-white focus:border-[#5865F2] outline-none transition text-lg shadow-inner" />
