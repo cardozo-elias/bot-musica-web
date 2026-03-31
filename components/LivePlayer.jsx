@@ -31,7 +31,6 @@ export default function LivePlayer({ userId, guildId }) {
     
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Conexión con Bypass de ngrok incorporado
     socketRef.current = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
@@ -40,7 +39,6 @@ export default function LivePlayer({ userId, guildId }) {
 
     const interval = setInterval(() => {
       if (!isReordering.current) {
-        // Enviamos el objeto con userId y guildId al bot
         socketRef.current?.emit("get_status", { userId, guildId });
       }
     }, 1000);
@@ -63,11 +61,8 @@ export default function LivePlayer({ userId, guildId }) {
       setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false });
     });
 
-    return () => { 
-      clearInterval(interval); 
-      socketRef.current?.disconnect(); 
-    };
-  }, [userId, guildId]); // Se reinicia si cambias de servidor
+    return () => { clearInterval(interval); socketRef.current?.disconnect(); };
+  }, [userId, guildId]);
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
@@ -105,11 +100,38 @@ export default function LivePlayer({ userId, guildId }) {
     if (res.ok) { setShowPlaylistMenu(false); alert("✅ Guardada."); }
   };
 
-  if (!status.playing || !status.song) return null;
-  const progressPercent = status.song.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
+  const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
 
+  // --- ESTADO VACÍO (CUANDO NO HAY MÚSICA) ---
+  if (!status.playing || !status.song) {
+    return (
+      <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#2b2d31] p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
+        <div className="flex items-center gap-4 opacity-40 w-1/4">
+          <div className="w-14 h-14 bg-[#1e1f22] rounded-xl border border-[#2b2d31]"></div>
+          <div className="flex flex-col gap-2">
+            <div className="w-24 h-3 bg-[#1e1f22] rounded-full"></div>
+            <div className="w-16 h-2 bg-[#1e1f22] rounded-full"></div>
+          </div>
+        </div>
+        <div className="flex w-2/4 flex-col items-center opacity-40">
+          <div className="flex items-center gap-6 mb-2">
+            <div className="w-5 h-5 bg-[#1e1f22] rounded-full"></div>
+            <div className="w-10 h-10 bg-[#2b2d31] rounded-full"></div>
+            <div className="w-5 h-5 bg-[#1e1f22] rounded-full"></div>
+          </div>
+          <div className="w-full max-w-2xl bg-[#1e1f22] rounded-full h-1.5"></div>
+        </div>
+        <div className="w-1/4 flex justify-end">
+          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest opacity-40">Esperando conexión...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ESTADO ACTIVO ---
   return (
     <>
+      {/* Modales de Letras y Cola mantienen tu código original... */}
       {showLyrics && (
         <div className="fixed inset-0 bg-[#0a0a0c]/80 z-[100] p-4 md:p-10 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
           <div className="bg-[#111214] border border-[#2b2d31] rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
@@ -138,7 +160,7 @@ export default function LivePlayer({ userId, guildId }) {
       )}
 
       {showQueue && (
-        <div className="fixed right-6 top-6 bottom-32 w-[380px] bg-[#111214] border border-[#2b2d31] z-[40] shadow-2xl rounded-3xl p-6 flex flex-col animate-slideInRight">
+        <div className="fixed right-6 top-6 bottom-[110px] w-[380px] bg-[#111214] border border-[#2b2d31] z-[40] shadow-2xl rounded-3xl p-6 flex flex-col animate-slideInRight">
           <div className="flex justify-between items-center mb-6 border-b border-[#2b2d31] pb-4">
             <h3 className="font-black uppercase text-[10px] tracking-widest text-gray-500">Cola en {status.guildName}</h3>
             <button onClick={() => setShowQueue(false)} className="text-gray-500 hover:text-white text-xl">&times;</button>
@@ -158,27 +180,27 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 w-full bg-[#0a0a0c]/95 backdrop-blur-xl border-t border-[#2b2d31] p-4 shadow-2xl z-50 flex flex-col md:flex-row items-center justify-between px-10 gap-2 md:gap-0">
+      <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#2b2d31] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.4)] z-[60] flex flex-col md:flex-row items-center justify-between px-6 md:px-10 h-[90px]">
         <div className="flex items-center justify-start w-1/4 gap-4 overflow-hidden">
-          <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-xl shadow-2xl border border-[#2b2d31] flex-shrink-0" />
+          <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-xl shadow-2xl border border-[#2b2d31] flex-shrink-0 object-cover" />
           <div className="flex flex-col min-w-0">
             <span className="font-black text-white text-base line-clamp-1 hover:text-[#57F287] transition cursor-help" title={status.song.title}>
               {status.song.isTrivia ? "❓ Pista Misteriosa" : status.song.title}
             </span>
-            <span className="text-[#57F287] text-[10px] font-black uppercase tracking-widest truncate">
+            <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest truncate mt-0.5">
               {status.song.isTrivia ? "???" : (status.song.artist || "Artista Desconocido")}
             </span>
           </div>
         </div>
 
         <div className="flex w-2/4 flex-col items-center">
-          <div className="hidden md:flex items-center gap-8 mb-2 relative">
+          <div className="hidden md:flex items-center gap-6 mb-1 relative">
             <button onClick={handleLike} disabled={isLiked} className={`${isLiked ? 'text-[#57F287]' : 'text-gray-400 hover:text-white'} transition transform hover:scale-125 active:scale-95`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={isLiked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill={isLiked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </button>
             <div className="relative">
               <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-[#5865F2] transition transform hover:scale-125">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
               {showPlaylistMenu && (
                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-56 bg-[#111214] border border-[#2b2d31] rounded-2xl shadow-2xl p-2 z-[60] animate-fadeIn">
@@ -191,15 +213,15 @@ export default function LivePlayer({ userId, guildId }) {
                 </div>
               )}
             </div>
-            <button onClick={handlePause} className="bg-white text-black rounded-full p-2.5 hover:scale-110 transition shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+            <button onClick={handlePause} className="bg-white text-black rounded-full p-2.5 hover:scale-105 transition shadow-[0_0_15px_rgba(255,255,255,0.2)]">
               {status.isPaused ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
               )}
             </button>
-            <button onClick={handleSkip} className="text-gray-500 hover:text-white transition transform hover:translate-x-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" /></svg>
+            <button onClick={handleSkip} className="text-gray-400 hover:text-white transition transform hover:translate-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" /></svg>
             </button>
           </div>
 
@@ -209,23 +231,23 @@ export default function LivePlayer({ userId, guildId }) {
               const bar = e.currentTarget; const rect = bar.getBoundingClientRect();
               const percent = (e.clientX - rect.left) / rect.width;
               socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) });
-            }} className="flex-1 bg-[#2b2d31] rounded-full h-1.5 relative overflow-hidden cursor-pointer group">
-              <div className="bg-gradient-to-r from-[#5865F2] to-[#57F287] h-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+            }} className="flex-1 bg-[#2b2d31] rounded-full h-1.5 relative overflow-hidden cursor-pointer group hover:h-2 transition-all">
+              <div className="bg-white h-full transition-all duration-500 rounded-r-full" style={{ width: `${progressPercent}%` }} />
             </div>
             <span className="text-[10px] text-gray-500 font-mono w-10">{formatTime(status.song.durationSec * 1000)}</span>
           </div>
         </div>
 
         <div className="hidden md:flex w-1/4 justify-end gap-6 items-center">
-          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics ? 'text-[#57F287]' : 'text-gray-500'} hover:text-white transition scale-110`}>
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics ? 'text-[#57F287]' : 'text-gray-400'} hover:text-white transition scale-110`} title="Ver Letra">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
-          <button onClick={() => setShowQueue(!showQueue)} className={`${showQueue ? 'text-[#5865F2]' : 'text-gray-500'} hover:text-white transition scale-110`}>
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+          <button onClick={() => setShowQueue(!showQueue)} className={`${showQueue ? 'text-[#5865F2]' : 'text-gray-400'} hover:text-white transition scale-110`} title="Ver Cola">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" /></svg>
           </button>
           <div className="text-right border-l border-[#2b2d31] pl-6 min-w-[120px]">
-            <span className="text-[10px] text-[#5865F2] font-black uppercase block tracking-tighter truncate max-w-[100px]">{status.guildName}</span>
-            <span className="text-[10px] text-gray-500 font-bold uppercase">{status.queueLength} EN COLA</span>
+            <span className="text-[10px] text-gray-300 font-bold block truncate max-w-[100px]">{status.guildName}</span>
+            <span className="text-[9px] text-[#5865F2] font-black uppercase">{status.queueLength} en cola</span>
           </div>
         </div>
       </div>

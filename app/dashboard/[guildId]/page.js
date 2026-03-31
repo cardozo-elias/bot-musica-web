@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]/route"; // Ajusté la ruta por la nueva carpeta
+import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { Pool } from 'pg';
 
@@ -10,22 +10,19 @@ import FavoritesList from "../../../components/FavoritesList";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// En Next.js, los componentes de página reciben 'params' automáticamente
 export default async function DashboardPage({ params }) {
-  const { guildId } = await params; // Capturamos el ID del servidor de la URL
+  const resolvedParams = await params;
+  const guildId = resolvedParams?.guildId; 
   const session = await getServerSession(authOptions);
   
-  if (!session || !session.user) {
-    redirect('/login');
-  }
+  if (!session || !session.user) redirect('/login');
   
   let stats = { likesCount: 0, listenTimeHours: 0, songsPlayed: 0 };
   let allLikes = [];
+  let userPlaylists = [];
   
   try {
     const likesRes = await pool.query('SELECT COUNT(*) FROM likes WHERE user_id = $1', [session.user.id]);
@@ -37,67 +34,101 @@ export default async function DashboardPage({ params }) {
       stats.songsPlayed = userStatsRes.rows[0].songs_played;
     }
 
-    const recentRes = await pool.query('SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC', [session.user.id]);
+    const recentRes = await pool.query('SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC LIMIT 50', [session.user.id]);
     allLikes = recentRes.rows;
+
+    // NUEVO: Traemos las playlists para la barra lateral
+    const plRes = await pool.query('SELECT id, name FROM user_playlists WHERE user_id = $1', [session.user.id]);
+    userPlaylists = plRes.rows;
 
   } catch (e) {
     console.error("[WEB DB ERROR]:", e.message);
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0c] text-white p-4 md:p-8 pb-40 relative">
+    <main className="h-screen bg-[#0a0a0c] text-white flex overflow-hidden">
       
-      <a href="/" className="absolute top-6 left-6 md:top-8 md:left-8 text-gray-500 hover:text-[#5865F2] hover:scale-110 transition z-50 bg-[#111214] p-3 rounded-full border border-[#2b2d31] shadow-lg" title="Volver al Inicio">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      </a>
+      {/* SIDEBAR IZQUIERDA (Estilo FlaviBot) */}
+      <aside className="w-[280px] bg-[#000000] border-r border-[#1e1f22] flex flex-col pt-6 pb-28 z-10 shadow-xl">
+        {/* Perfil */}
+        <div className="px-6 flex items-center gap-3 mb-8">
+          <img src={session.user.image} className="w-10 h-10 rounded-full border border-[#2b2d31]" alt="Avatar" />
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-bold truncate text-gray-200">{session.user.name}</span>
+            <a href="/signout" className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
+          </div>
+        </div>
 
-      <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr_400px] gap-8 pt-16 md:pt-0">
-        
-        <aside className="lg:sticky lg:top-4 h-fit">
-          <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] mb-6 flex flex-col items-center shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 w-full h-24 bg-gradient-to-b from-[#5865F2]/20 to-transparent"></div>
-              <img src={session.user.image} className="w-20 h-20 rounded-full border-4 border-[#2b2d31] mb-4 relative z-10 shadow-lg" alt="Avatar" />
-              <h2 className="font-black text-xl text-center tracking-tight">¡Hola, {session.user.name}!</h2>
-              <div className="flex gap-2 mt-6 w-full relative z-10">
-                  <a href="/playlists" className="flex-1 bg-[#5865F2] text-center py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#4752C4] transition shadow-lg shadow-[#5865F2]/20">Playlists</a>
-                  <a href="/signout" className="flex-1 bg-[#da373c]/10 text-[#da373c] text-center py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#da373c]/20 hover:bg-[#da373c]/20 transition">Salir</a>
+        {/* Navegación Principal */}
+        <div className="px-4 flex flex-col gap-1 mb-6">
+          <div className="px-4 py-2 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Menú</div>
+          <button className="flex items-center gap-3 px-4 py-2.5 bg-[#1e1f22] text-white rounded-lg font-bold text-sm transition">
+            <span className="text-[#5865F2]">🏠</span> Panel Principal
+          </button>
+          <a href="/dashboard/select" className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg font-bold text-sm transition">
+            <span>🌐</span> Cambiar Servidor
+          </a>
+        </div>
+
+        {/* Listado de Playlists */}
+        <div className="px-4 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="px-4 py-2 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1 flex justify-between items-center">
+            Tus Playlists
+            <a href="/playlists" className="text-xl leading-none cursor-pointer hover:text-white transition" title="Gestionar Playlists">+</a>
+          </div>
+          {userPlaylists.length === 0 ? (
+            <p className="px-4 text-xs text-gray-600 mt-2">No hay playlists.</p>
+          ) : (
+            userPlaylists.map(pl => (
+              <a key={pl.id} href={`/playlists`} className="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg text-sm transition truncate">
+                🎵 {pl.name}
+              </a>
+            ))
+          )}
+        </div>
+      </aside>
+
+      {/* CONTENIDO CENTRAL */}
+      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#111214] to-[#0a0a0c] pb-32">
+        <div className="p-6 md:p-10 max-w-[1400px] w-full mx-auto flex flex-col gap-10">
+          
+          {/* Header de Estadísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#111214]/80 backdrop-blur-sm p-6 rounded-3xl border border-[#2b2d31] flex flex-col shadow-lg">
+                  <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-2">Pistas Guardadas</span>
+                  <span className="text-4xl font-black text-[#57F287]">{stats.likesCount}</span>
+              </div>
+              <div className="bg-[#111214]/80 backdrop-blur-sm p-6 rounded-3xl border border-[#2b2d31] flex flex-col shadow-lg">
+                  <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-2">Horas Escuchadas</span>
+                  <span className="text-4xl font-black text-[#FEE75C]">{stats.listenTimeHours}h</span>
+              </div>
+              <div className="bg-[#111214]/80 backdrop-blur-sm p-6 rounded-3xl border border-[#2b2d31] flex flex-col shadow-lg">
+                  <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-2">Solicitadas</span>
+                  <span className="text-4xl font-black text-[#EB459E]">{stats.songsPlayed}</span>
               </div>
           </div>
-          <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
-        </aside>
 
-        <section className="flex flex-col gap-6">
-          <div className="grid grid-cols-3 gap-4">
-              <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] text-center shadow-lg relative overflow-hidden group hover:border-[#57F287] transition">
-                  <div className="absolute inset-0 bg-[#57F287]/5 opacity-0 group-hover:opacity-100 transition"></div>
-                  <p className="text-gray-500 text-[10px] uppercase font-black mb-1 tracking-widest relative z-10">Likes</p>
-                  <p className="text-3xl font-black text-[#57F287] relative z-10">{stats.likesCount}</p>
-              </div>
-              <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] text-center shadow-lg relative overflow-hidden group hover:border-[#FEE75C] transition">
-                  <div className="absolute inset-0 bg-[#FEE75C]/5 opacity-0 group-hover:opacity-100 transition"></div>
-                  <p className="text-gray-500 text-[10px] uppercase font-black mb-1 tracking-widest relative z-10">Horas</p>
-                  <p className="text-3xl font-black text-[#FEE75C] relative z-10">{stats.listenTimeHours}h</p>
-              </div>
-              <div className="bg-[#111214] p-6 rounded-3xl border border-[#2b2d31] text-center shadow-lg relative overflow-hidden group hover:border-[#EB459E] transition">
-                  <div className="absolute inset-0 bg-[#EB459E]/5 opacity-0 group-hover:opacity-100 transition"></div>
-                  <p className="text-gray-500 text-[10px] uppercase font-black mb-1 tracking-widest relative z-10">Solicitadas</p>
-                  <p className="text-3xl font-black text-[#EB459E] relative z-10">{stats.songsPlayed}</p>
-              </div>
+          {/* Buscador Integrado */}
+          <div className="w-full">
+            <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} guildId={guildId} />
           </div>
-          
-          <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} guildId={guildId} />
-          
-          <FavoritesList likes={allLikes} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
-        </section>
 
-        <aside className="hidden lg:block h-screen">
-          {/* Espacio para la cola flotante si es necesario */}
-        </aside>
-      </div>
-      
-      {/* Pasamos la guildId al reproductor */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {/* Lista de Favoritos (Izquierda) */}
+            <div className="w-full">
+              <FavoritesList likes={allLikes} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+            </div>
+
+            {/* Recomendaciones (Derecha) */}
+            <div className="w-full">
+              <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Reproductor Flotante Permanente */}
       <LivePlayer userId={session.user.id} guildId={guildId} />
     </main>
   );
