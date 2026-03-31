@@ -32,6 +32,7 @@ export default async function LandingPage() {
             className="bg-[#111214] border border-[#2b2d31] hover:bg-white hover:text-black text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition transform hover:scale-105"
           >
             Invitar a mi Servidor
+            
           </a>
         </div>
       </div>
