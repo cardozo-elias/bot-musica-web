@@ -32,7 +32,6 @@ export default function LivePlayer({ userId, guildId }) {
   const [showLyrics, setShowLyrics] = useState(false);
   const [lyrics, setLyrics] = useState({ title: "", text: "", loading: false });
   
-  // --- NUEVOS ESTADOS PARA LA NOTIFICACIÓN ---
   const [toastMsg, setToastMsg] = useState(null);
   const [isQueueBouncing, setIsQueueBouncing] = useState(false);
   
@@ -59,7 +58,10 @@ export default function LivePlayer({ userId, guildId }) {
       if (data.playing && data.song) {
         document.title = data.isPaused ? `|| ${data.song.title}` : `Playing: ${data.song.title}`;
         if (draggingIndex === null) setLocalQueue(data.queueList || []);
-        if (data.song.videoId !== currentVideoId) { setCurrentVideoId(data.song.videoId); setIsLiked(false); }
+        
+        // --- SINCRONIZACIÓN AUTOMÁTICA DE LIKE ---
+        setCurrentVideoId(data.song.videoId);
+        setIsLiked(data.isLiked); // Usamos el dato que viene del bot
       } else { 
         document.title = "Musicardi Panel";
       }
@@ -67,12 +69,11 @@ export default function LivePlayer({ userId, guildId }) {
 
     socketRef.current.on("lyrics_data", (data) => setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false }));
     
-    // --- ESCUCHADOR DE NOTIFICACIONES ---
     socketRef.current.on("track_added", (title) => {
       setToastMsg(title);
       setIsQueueBouncing(true);
-      setTimeout(() => setIsQueueBouncing(false), 500); // Salto rápido del botón
-      setTimeout(() => setToastMsg(null), 3500); // Ocultar mensaje después de 3.5s
+      setTimeout(() => setIsQueueBouncing(false), 500);
+      setTimeout(() => setToastMsg(null), 3500);
     });
 
     return () => { clearInterval(interval); socketRef.current?.disconnect(); };
@@ -104,7 +105,10 @@ export default function LivePlayer({ userId, guildId }) {
     setDraggingIndex(null); setTimeout(() => { isReordering.current = false; }, 1500);
   };
 
-  const handleLike = () => { socketRef.current?.emit("cmd_like", userId); setIsLiked(true); };
+  const handleLike = () => { 
+    socketRef.current?.emit("cmd_like", userId); 
+    setIsLiked(true); // Feedback visual inmediato
+  };
   const handlePause = () => socketRef.current?.emit("cmd_pause", userId);
   const handleSkip = () => socketRef.current?.emit("cmd_skip", userId);
   const saveToPlaylist = async (playlistId) => {
@@ -139,7 +143,6 @@ export default function LivePlayer({ userId, guildId }) {
 
   return (
     <>
-      {/* NOTIFICACIÓN FLOTANTE */}
       {toastMsg && (
         <div className="fixed bottom-[110px] right-6 md:right-10 bg-[#57F287] text-[#0a0a0c] px-4 py-3 rounded-xl shadow-[0_10px_40px_rgba(87,242,135,0.3)] font-bold text-sm z-[100] flex items-center gap-3 transition-all animate-bounce">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -209,7 +212,7 @@ export default function LivePlayer({ userId, guildId }) {
 
         <div className="flex w-2/4 flex-col items-center">
           <div className="hidden md:flex items-center gap-6 mb-1 relative">
-            <button onClick={handleLike} disabled={isLiked} className={`${isLiked ? 'text-white' : 'text-gray-500 hover:text-gray-300'} transition transform hover:scale-110 active:scale-95`} title="Guardar pista">
+            <button onClick={handleLike} className={`${isLiked ? 'text-white scale-110' : 'text-gray-500 hover:text-gray-300'} transition transform active:scale-95`} title="Guardar pista">
               <HeartIcon filled={isLiked} />
             </button>
             <div className="relative">
@@ -252,8 +255,6 @@ export default function LivePlayer({ userId, guildId }) {
           <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics ? 'text-white' : 'text-gray-500'} hover:text-gray-300 transition`} title="Letra">
              <LyricsIcon />
           </button>
-          
-          {/* BOTÓN COLA CON ANIMACIÓN */}
           <button onClick={() => setShowQueue(!showQueue)} 
             className={`${showQueue ? 'text-white' : 'text-gray-500'} ${isQueueBouncing ? 'scale-125 text-[#57F287] -translate-y-2' : 'hover:text-gray-300'} transition-all duration-300 transform`} 
             title="Cola">
