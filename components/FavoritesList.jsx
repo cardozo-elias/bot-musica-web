@@ -4,10 +4,12 @@ import { io } from "socket.io-client";
 
 export default function FavoritesList({ likes, userId, userName, userAvatar }) {
   const [socket, setSocket] = useState(null);
+  
+  // 👉 NUEVO ESTADO PARA EL BOTÓN DE PLAY
+  const [loadingTrackId, setLoadingTrackId] = useState(null);
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    // Bypass de ngrok agregado aquí
     const s = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
@@ -16,12 +18,18 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
   }, []);
 
   const handlePlay = (song) => {
+    if (loadingTrackId === song.videoId) return; // Evita doble clic
+
+    setLoadingTrackId(song.videoId); // Candado
+    
     socket?.emit("cmd_play_specific", { 
         userId, 
         video: { videoId: song.videoId, title: song.title, author: song.artist }, 
         userName, 
         userAvatar 
     });
+
+    setTimeout(() => setLoadingTrackId(null), 1500); // Desbloqueo a los 1.5s
   };
 
   return (
@@ -49,12 +57,22 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
                 </div>
               </div>
               <div>
+                
+                {/* 👉 BOTÓN REPRODUCIR MEJORADO */}
                 <button 
+                  disabled={loadingTrackId === song.videoId}
                   onClick={() => handlePlay(song)} 
-                  className="opacity-0 group-hover:opacity-100 bg-[#57F287] text-black px-4 py-2 rounded-xl font-black text-xs uppercase shadow-xl hover:scale-105 transition"
+                  className={`flex items-center justify-center min-w-[100px] px-4 py-2 rounded-xl font-black text-xs uppercase shadow-xl transition ${
+                    loadingTrackId === song.videoId 
+                      ? 'opacity-100 bg-[#3f4147] text-gray-400 cursor-not-allowed' 
+                      : 'opacity-0 group-hover:opacity-100 bg-[#57F287] text-black hover:scale-105'
+                  }`}
                 >
-                  Reproducir
+                  {loadingTrackId === song.videoId ? (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  ) : "Reproducir"}
                 </button>
+
               </div>
             </div>
           ))}

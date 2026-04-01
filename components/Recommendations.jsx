@@ -6,11 +6,14 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   const [recs, setRecs] = useState([]);
   const [seed, setSeed] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  // 👉 NUEVO ESTADO PARA EL BOTÓN DE PLAY
+  const [loadingTrackId, setLoadingTrackId] = useState(null);
+  
   const socketRef = useRef(null);
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    // Bypass de ngrok agregado aquí
     socketRef.current = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" }
     });
@@ -26,7 +29,13 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   }, [userId]);
 
   const play = (track) => {
+    // Si ya está cargando esta canción, ignoramos el clic
+    if (loadingTrackId === track.videoId) return;
+    
+    setLoadingTrackId(track.videoId); // Activamos el candado visual
     socketRef.current?.emit('cmd_play_specific', { userId, video: track, userName, userAvatar });
+    
+    setTimeout(() => setLoadingTrackId(null), 1500); // Soltamos el candado a los 1.5s
   };
 
   if (loading) return (
@@ -58,12 +67,19 @@ export default function Recommendations({ userId, userName, userAvatar }) {
           <div 
             key={track.videoId} 
             onClick={() => play(track)}
-            className="group flex items-center gap-3 p-2 rounded-lg hover:bg-[#1e1f22] transition-all cursor-pointer border border-transparent hover:border-[#3f4147]"
+            className={`group flex items-center gap-3 p-2 rounded-lg transition-all border border-transparent 
+              ${loadingTrackId === track.videoId ? 'opacity-50 pointer-events-none' : 'hover:bg-[#1e1f22] cursor-pointer hover:border-[#3f4147]'}`}
           >
             <div className="relative h-12 w-12 flex-shrink-0">
                 <img src={track.thumbnail} className="rounded-md object-cover h-full w-full shadow-sm" alt="" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition rounded-md">
-                    <span className="text-white text-xs">▶</span>
+                
+                {/* 👉 FONDO OSCURO SIEMPRE ACTIVO SI ESTÁ CARGANDO */}
+                <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition rounded-md ${loadingTrackId === track.videoId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    {loadingTrackId === track.videoId ? (
+                        <svg className="animate-spin h-4 w-4 text-[#57F287]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    ) : (
+                        <span className="text-white text-xs">▶</span>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col min-w-0 flex-1">

@@ -9,6 +9,9 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  
+  // 👉 NUEVO ESTADO: Controla qué canción se está enviando al bot
+  const [loadingTrackId, setLoadingTrackId] = useState(null);
 
   const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
   const socketRef = useRef(null);
@@ -25,7 +28,6 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   }, [userId, botUrl]);
 
   const handleAddToPlaylist = async (playlistId, video) => {
-    // CORRECCIÓN: Agregamos seconds y timestamp al objeto que se guarda en BD
     const songObj = { 
       title: video.title, 
       url: video.url, 
@@ -49,7 +51,26 @@ export default function WebSearch({ userId, userName, userAvatar }) {
         </div>
       </div>
       <div className="flex gap-3 w-full md:w-auto justify-end relative">
-        <button onClick={() => socketRef.current?.emit("cmd_play_specific", { userId, video, userName, userAvatar })} className="bg-[#2b2d31] hover:bg-[#57F287] hover:text-black text-gray-300 px-6 py-2 rounded-xl font-black text-xs uppercase transition shadow-xl">▶ Cola</button>
+        
+        {/* 👉 BOTÓN DE PLAY MEJORADO CON SPINNER */}
+        <button 
+          disabled={loadingTrackId === video.videoId}
+          onClick={() => {
+            setLoadingTrackId(video.videoId); // Bloquea el botón
+            socketRef.current?.emit("cmd_play_specific", { userId, video, userName, userAvatar });
+            setTimeout(() => setLoadingTrackId(null), 1500); // Lo desbloquea a los 1.5s
+          }} 
+          className={`flex items-center justify-center min-w-[100px] px-6 py-2 rounded-xl font-black text-xs uppercase transition shadow-xl ${
+            loadingTrackId === video.videoId 
+              ? 'bg-[#3f4147] text-gray-500 cursor-not-allowed' 
+              : 'bg-[#2b2d31] hover:bg-[#57F287] hover:text-black text-gray-300'
+          }`}
+        >
+          {loadingTrackId === video.videoId ? (
+            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          ) : "▶ Cola"}
+        </button>
+
         <button onClick={() => setOpenDropdown(openDropdown === video.videoId ? null : video.videoId)} className="bg-[#2b2d31] hover:bg-[#5865F2] text-white px-4 py-2 rounded-xl font-bold transition shadow-xl">
            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
         </button>
@@ -76,7 +97,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
       </form>
       <div className="flex flex-col gap-4">
         {loading ? (
-            <p className="text-center py-10 font-black uppercase tracking-widest text-gray-600 animate-pulse">Buscando en YouTube...</p>
+            <p className="text-center py-10 font-black uppercase tracking-widest text-gray-600 animate-pulse">Buscando en Apple Music...</p>
         ) : (
             (results.length > 0 ? results : recommendations).map((video) => <VideoCard key={video.videoId} video={video} />)
         )}
