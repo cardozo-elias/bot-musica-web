@@ -7,6 +7,8 @@ import LivePlayer from "../../../components/LivePlayer";
 import WebSearch from "../../../components/WebSearch";
 import Recommendations from "../../../components/Recommendations";
 import FavoritesList from "../../../components/FavoritesList";
+// 1. IMPORTAMOS EL NUEVO SELECTOR
+import ServerSelector from "../../../components/ServerSelector";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -64,9 +66,11 @@ export default async function DashboardPage({ params }) {
           <button className="flex items-center gap-3 px-4 py-2.5 bg-[#1e1f22] text-white rounded-lg font-bold text-sm transition">
             Panel Principal
           </button>
-          <a href="/dashboard/select" className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg font-bold text-sm transition">
-            Cambiar Servidor
-          </a>
+          
+          {/* 2. REEMPLAZO DEL BOTÓN VIEJO POR EL SELECTOR REAL */}
+          <div className="mt-1">
+            <ServerSelector userId={session.user.id} currentGuildId={guildId} />
+          </div>
         </div>
 
         {/* Listado de Playlists */}
