@@ -4,10 +4,7 @@ import { io } from 'socket.io-client';
 
 export default function Recommendations({ userId, userName, userAvatar }) {
   const [recs, setRecs] = useState([]);
-  const [seed, setSeed] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // 👉 NUEVO ESTADO PARA EL BOTÓN DE PLAY
   const [loadingTrackId, setLoadingTrackId] = useState(null);
   
   const socketRef = useRef(null);
@@ -21,7 +18,6 @@ export default function Recommendations({ userId, userName, userAvatar }) {
     
     socketRef.current.on('recommendations_data', (data) => {
       setRecs(data.tracks || []);
-      setSeed(data.seed || '');
       setLoading(false);
     });
 
@@ -29,18 +25,15 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   }, [userId]);
 
   const play = (track) => {
-    // Si ya está cargando esta canción, ignoramos el clic
     if (loadingTrackId === track.videoId) return;
-    
-    setLoadingTrackId(track.videoId); // Activamos el candado visual
+    setLoadingTrackId(track.videoId); 
     socketRef.current?.emit('cmd_play_specific', { userId, video: track, userName, userAvatar });
-    
-    setTimeout(() => setLoadingTrackId(null), 1500); // Soltamos el candado a los 1.5s
+    setTimeout(() => setLoadingTrackId(null), 1500); 
   };
 
   if (loading) return (
-    <div className="bg-[#111214] p-6 rounded-xl border border-[#2b2d31] animate-pulse w-full">
-        <div className="h-4 w-32 bg-[#2b2d31] rounded mb-6"></div>
+    <div className="bg-[#111214] p-6 rounded-xl border border-[#2b2d31] animate-pulse w-full h-[550px]">
+        <div className="h-6 w-48 bg-[#2b2d31] rounded mb-6"></div>
         {[1,2,3,4,5].map(i => <div key={i} className="h-16 bg-[#1e1f22] rounded-xl mb-3"></div>)}
     </div>
   );
@@ -50,9 +43,9 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   return (
     <div className="bg-[#111214] rounded-xl border border-[#2b2d31] shadow-2xl flex flex-col h-[550px] w-full">
       <div className="p-4 border-b border-[#2b2d31] flex justify-between items-center bg-[#161719] rounded-t-xl">
-        <div className="min-w-0 pr-2">
-            <h3 className="font-black text-[12px] uppercase tracking-widest text-white">Mix Personal</h3>
-            <p className="text-[10px] text-[#57F287] font-bold truncate">vía {seed}</p>
+        <div className="min-w-0 pr-2 flex flex-col">
+            {/* LÍNEA DE "VIA..." ELIMINADA */}
+            <h3 className="text-xl font-black text-white tracking-tighter">Mix Personal</h3>
         </div>
         <button 
           onClick={() => { setLoading(true); socketRef.current?.emit('get_recommendations', userId); }}
@@ -73,7 +66,6 @@ export default function Recommendations({ userId, userName, userAvatar }) {
             <div className="relative h-12 w-12 flex-shrink-0">
                 <img src={track.thumbnail} className="rounded-md object-cover h-full w-full shadow-sm" alt="" />
                 
-                {/* 👉 FONDO OSCURO SIEMPRE ACTIVO SI ESTÁ CARGANDO */}
                 <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition rounded-md ${loadingTrackId === track.videoId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     {loadingTrackId === track.videoId ? (
                         <svg className="animate-spin h-4 w-4 text-[#57F287]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
