@@ -90,16 +90,30 @@ export default function WebSearch({ userId, userName, userAvatar }) {
 
   return (
     <div className="w-full bg-[#111214] p-6 md:p-10 rounded-3xl border border-[#2b2d31] shadow-2xl mb-8">
-      <h3 className="text-2xl font-black mb-8 border-b border-[#2b2d31] pb-5 tracking-tighter">Buscador</h3>
+      <div className="flex justify-between items-center mb-8 border-b border-[#2b2d31] pb-5">
+        <h3 className="text-2xl font-black tracking-tighter">Buscador</h3>
+        {/* 👇 BOTÓN PARA LIMPIAR RESULTADOS 👇 */}
+        {results.length > 0 && (
+          <button 
+            onClick={() => { setResults([]); setQuery(""); }} 
+            className="text-red-400 hover:text-red-500 text-xs font-bold uppercase tracking-widest transition flex items-center gap-1"
+          >
+            ✕ Limpiar
+          </button>
+        )}
+      </div>
+
       <form onSubmit={(e) => { e.preventDefault(); if(!query.trim()) return; setLoading(true); setResults([]); socketRef.current?.emit("cmd_search", query); }} className="flex gap-3 mb-10">
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="¿Qué quieres escuchar hoy?" className="flex-1 bg-[#1e1f22] border border-[#2b2d31] rounded-2xl px-6 py-4 text-white focus:border-[#5865F2] outline-none transition text-lg shadow-inner" />
         <button type="submit" className="bg-[#5865F2] px-10 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#4752C4] transition shadow-xl">Buscar</button>
       </form>
+      
       <div className="flex flex-col gap-4">
         {loading ? (
             <p className="text-center py-10 font-black uppercase tracking-widest text-gray-600 animate-pulse">Buscando en Apple Music...</p>
         ) : (
-            (results.length > 0 ? results : recommendations).map((video) => <VideoCard key={video.videoId} video={video} />)
+            // Si hay resultados de búsqueda, mostramos la lista. Si no, no mostramos NADA (así ahorra espacio).
+            results.map((video) => <VideoCard key={video.videoId} video={video} />)
         )}
       </div>
     </div>

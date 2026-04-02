@@ -2,15 +2,28 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 
-export default function RecentlyPlayed({ history, userId, userName, userAvatar }) {
+export default function RecentlyPlayed({ history: initialHistory, userId, userName, userAvatar }) {
+  const [history, setHistory] = useState(initialHistory || []);
   const [loadingTrackId, setLoadingTrackId] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     socketRef.current = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
+
+    // 👇 ESCUCHAR NUEVAS CANCIONES EN TIEMPO REAL 👇
+    socketRef.current.on('history_updated', (data) => {
+      if (data.userId === userId) {
+        setHistory(prev => {
+          // Evitamos duplicados si el bot mandó el evento dos veces rápido
+          const filtered = prev.filter(s => s.videoId !== data.videoId);
+          return [data, ...filtered].slice(0, 30); // Guardamos máximo 30
+        });
+      }
+    });
+
     return () => socketRef.current?.disconnect();
-  }, []);
+  }, [userId]);
 
   const handlePlay = (song) => {
     if (loadingTrackId === song.videoId) return;
@@ -24,7 +37,6 @@ export default function RecentlyPlayed({ history, userId, userName, userAvatar }
     setTimeout(() => setLoadingTrackId(null), 1500);
   };
 
-  // Función para formatear la fecha
   const timeAgo = (dateString) => {
     const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
     if (seconds < 60) return "hace instantes";
