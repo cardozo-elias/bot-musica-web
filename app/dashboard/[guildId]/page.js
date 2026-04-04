@@ -7,8 +7,8 @@ import LivePlayer from "../../../components/LivePlayer";
 import WebSearch from "../../../components/WebSearch";
 import Recommendations from "../../../components/Recommendations";
 import ServerSelector from "../../../components/ServerSelector";
-import RecentlyPlayed from "../../../components/RecentlyPlayed";
-import SidebarFavorites from "../../../components/SidebarFavorites"; // IMPORTAMOS EL NUEVO DESPLEGABLE
+import RecentlyPlayed from "../../../components/RecentlyPlayed"; 
+import SidebarFavorites from "../../../components/SidebarFavorites";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -72,11 +72,36 @@ export default async function DashboardPage({ params }) {
           </div>
         </div>
 
-        {/* LIKES DESPLEGABLES (REEMPLAZO TOTAL) */}
-        <SidebarFavorites initialLikes={allLikes} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+        {/* LIKES (MOVIDOS AQUÍ - CON ESPACIADO CORREGIDO) */}
+        <div className="px-4 flex flex-col gap-1 mb-8">
+          <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2 flex justify-between items-center">
+            Tus Favoritos
+            <span className="text-gray-500 font-bold">{allLikes.length}</span>
+          </div>
+          
+          <div className="max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1">
+            {allLikes.length === 0 ? (
+                <p className="px-4 text-xs text-gray-600 mt-1">No hay favoritos.</p>
+            ) : (
+                allLikes.slice(0, 20).map(like => (
+                    <div key={like.videoId} className="group flex items-center gap-3 px-4 py-2 hover:bg-[#1e1f22]/70 rounded-lg transition-all cursor-pointer">
+                        <span className="text-[#57F287]/80 group-hover:text-[#57F287] text-[10px] self-start mt-0.5">♥</span>
+                        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+                            <span className="font-bold text-gray-300 group-hover:text-white truncate text-xs leading-tight">
+                                {like.title}
+                            </span>
+                            <span className="text-[9px] text-gray-600 group-hover:text-gray-400 font-bold uppercase truncate leading-tight">
+                                {like.artist}
+                            </span>
+                        </div>
+                    </div>
+                ))
+            )}
+          </div>
+        </div>
 
         {/* Listado de Playlists */}
-        <div className="px-4 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar mt-4">
+        <div className="px-4 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
           <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2 flex justify-between items-center">
             Playlists
             <a href="/playlists" className="text-lg leading-none cursor-pointer text-gray-500 hover:text-white transition" title="Gestionar Playlists">+</a>
