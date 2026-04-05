@@ -8,6 +8,11 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
   const [loadingTrackId, setLoadingTrackId] = useState(null);
   const socketRef = useRef(null);
 
+  // LOG PARA CONFIRMAR CARGA (Míralo en F12)
+  useEffect(() => {
+    console.log("⭐ SidebarFavorites v2.0 Cargado (Con + y X)");
+  }, []);
+
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     socketRef.current = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
@@ -25,9 +30,9 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
     return () => socketRef.current?.disconnect();
   }, [userId]);
 
-  // 👇 FUNCIÓN PARA AÑADIR A LA COLA 👇
   const handleAddToQueue = (e, song) => {
     e.stopPropagation();
+    console.log("Añadiendo a cola:", song.title);
     socketRef.current?.emit("cmd_add_queue", { 
         userId, 
         video: { videoId: song.videoId, title: song.title, author: song.artist }, 
@@ -76,7 +81,7 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
               <p className="px-4 text-xs text-gray-600 mt-1 italic">No hay favoritos.</p>
           ) : (
               likes.map(like => (
-                  <div key={like.videoId} onClick={() => handlePlay(like)} className={`group flex items-center justify-between px-4 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${loadingTrackId === like.videoId ? 'opacity-50' : 'hover:bg-[#1e1f22]'}`}>
+                  <div key={like.videoId} onClick={() => handlePlay(like)} className="group flex items-center justify-between px-4 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 hover:bg-[#1e1f22]">
                       <div className="flex items-start gap-3 min-w-0 flex-1 overflow-hidden">
                           {loadingTrackId === like.videoId ? (
                               <svg className="animate-spin h-3 w-3 text-[#57F287] mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -89,25 +94,26 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
                           </div>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {/* 👇 BOTÓN AÑADIR A LA COLA (+) 👇 */}
+                      {/* CONTENEDOR DE ICONOS (ml-2 asegura separación) */}
+                      <div className="flex items-center gap-1 ml-2 shrink-0">
+                          {/* BOTÓN + (Añadir a cola) */}
                           <button 
                             onClick={(e) => handleAddToQueue(e, like)}
-                            className="p-1.5 text-gray-500 hover:text-[#57F287] hover:bg-[#57F287]/10 rounded-lg transition-all"
+                            className="p-1.5 text-gray-600 hover:text-[#57F287] hover:bg-[#57F287]/10 rounded-lg transition-all opacity-40 group-hover:opacity-100"
                             title="Añadir a la cola"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
                           </button>
 
-                          {/* BOTÓN ELIMINAR (X) */}
+                          {/* BOTÓN X (Eliminar) */}
                           <button 
                             onClick={(e) => handleDelete(e, like.videoId)}
-                            className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            className="p-1.5 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-40 group-hover:opacity-100"
                             title="Quitar de favoritos"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           </button>
