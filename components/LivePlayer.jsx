@@ -59,7 +59,6 @@ export default function LivePlayer({ userId, guildId }) {
   const [parsedLyrics, setParsedLyrics] = useState([]);
   const [activeLine, setActiveLine] = useState(-1);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
-  const [lyricsOffset, setLyricsOffset] = useState(0); // 👈 NUEVO: Desfase en segundos
 
   const [toastMsg, setToastMsg] = useState(null);
   const [isQueueBouncing, setIsQueueBouncing] = useState(false);
@@ -110,13 +109,12 @@ export default function LivePlayer({ userId, guildId }) {
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
-  // Si cambia la canción, volvemos a sincronizar automáticamente y reseteamos el desfase
-  useEffect(() => { setIsAutoScroll(true); setLyricsOffset(0); }, [currentVideoId]);
+  useEffect(() => { setIsAutoScroll(true); }, [currentVideoId]);
 
-  // MOTOR KARAOKE: Encontrar la línea actual con el Desfase (Offset)
+  // MOTOR KARAOKE
   useEffect(() => {
     if (parsedLyrics.length > 0 && status.currentMs > 0) {
-        const currentSec = (status.currentMs / 1000) + lyricsOffset; // 👈 Aplicamos el desfase aquí
+        const currentSec = (status.currentMs / 1000);
         let newActive = -1;
         for (let i = 0; i < parsedLyrics.length; i++) {
             if (currentSec >= parsedLyrics[i].time) newActive = i;
@@ -124,9 +122,9 @@ export default function LivePlayer({ userId, guildId }) {
         }
         if (newActive !== activeLine) setActiveLine(newActive);
     }
-  }, [status.currentMs, parsedLyrics, lyricsOffset]);
+  }, [status.currentMs, parsedLyrics]);
 
-  // MOTOR KARAOKE: Auto-scroll
+  // AUTO-SCROLL
   useEffect(() => {
     if (isAutoScroll && activeLine >= 0 && lineRefs.current[activeLine] && showLyrics) {
         lineRefs.current[activeLine].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -195,25 +193,26 @@ export default function LivePlayer({ userId, guildId }) {
 
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
-  const isLongTitle = status.song?.title?.length > 25;
+  
+  // 👇 Redujimos el límite a 20 para activar la animación de inmediato 👇
+  const isLongTitle = status.song?.title?.length > 20;
 
   const renderLyricsContent = () => {
-    if (lyrics.loading) return <p className="animate-pulse font-bold opacity-50 mt-10 text-center">Buscando letras en LRCLIB...</p>;
+    if (lyrics.loading) return <p className="animate-pulse font-bold opacity-50 mt-10 text-center">Buscando letras...</p>;
     
-    // Vista Karaoke (Si tiene tiempos)
     if (parsedLyrics.length > 0) {
       return (
-        <div className="pb-[40vh] pt-[20vh] space-y-6 flex flex-col items-center md:items-start px-4 relative">
+        <div className="pb-[40vh] pt-[20vh] space-y-4 flex flex-col items-center md:items-start px-4 md:px-8 relative w-full">
             {parsedLyrics.map((line, i) => (
                 <p key={i} ref={el => lineRefs.current[i] = el}
                     onClick={() => { 
-                        // 👇 Clic para saltar, respetando el desfase 👇
-                        const target = Math.max(0, line.time - lyricsOffset);
-                        socketRef.current?.emit("cmd_seek", { userId, targetSec: target }); 
+                        socketRef.current?.emit("cmd_seek", { userId, targetSec: line.time }); 
                         setIsAutoScroll(true); 
                     }}
-                    className={`text-2xl md:text-4xl font-black transition-all duration-500 ease-out cursor-pointer w-full text-center md:text-left ${
-                        i === activeLine ? "opacity-100 scale-105 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" : "opacity-30 hover:opacity-60 scale-100 text-gray-400"
+                    className={`transition-all duration-500 ease-out cursor-pointer w-full text-center md:text-left ${
+                        i === activeLine 
+                            ? "text-2xl md:text-3xl font-black opacity-100 text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]" 
+                            : "text-lg md:text-2xl font-bold opacity-30 hover:opacity-60 text-gray-400"
                     }`}
                 >
                     {line.text}
@@ -223,29 +222,11 @@ export default function LivePlayer({ userId, guildId }) {
       );
     }
 
-    // Vista Texto Estático (Faltan tiempos en la DB)
     return (
-        <div className="flex flex-col items-center md:items-start pt-[10vh] pb-10 px-4">
-            <span className="bg-white/10 text-gray-400 text-[9px] uppercase tracking-widest px-3 py-1 rounded-full mb-6 font-bold border border-white/10">
-                Texto estático (Tiempos no disponibles)
-            </span>
-            <pre className="font-sans text-xl md:text-2xl font-bold leading-relaxed opacity-90 whitespace-pre-wrap text-center md:text-left">
-                {lyrics.text || "No se encontraron letras."}
-            </pre>
-        </div>
+        <pre className="font-sans text-lg md:text-xl font-semibold leading-relaxed opacity-80 whitespace-pre-wrap text-center md:text-left pt-[10vh] pb-10 px-4 md:px-8">
+            {lyrics.text || "No se encontraron letras."}
+        </pre>
     );
-  };
-
-  const renderLyricsControls = () => {
-      if (parsedLyrics.length === 0) return null;
-      return (
-        <div className={`absolute top-6 right-6 md:right-10 z-50 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-xl transition-opacity duration-500 ${isIdle && isFullscreen ? 'opacity-0' : 'opacity-100'}`}>
-            <span className="text-[9px] uppercase font-bold text-gray-400 ml-1">Desfase:</span>
-            <button onClick={() => setLyricsOffset(prev => prev - 0.5)} className="text-white hover:text-[#57F287] transition font-bold text-sm px-2">-0.5s</button>
-            <span className="text-[10px] font-mono text-[#57F287] w-8 text-center">{lyricsOffset > 0 ? `+${lyricsOffset}` : lyricsOffset}</span>
-            <button onClick={() => setLyricsOffset(prev => prev + 0.5)} className="text-white hover:text-[#57F287] transition font-bold text-sm px-2">+0.5s</button>
-        </div>
-      );
   };
 
   if (!status.playing || !status.song) {
@@ -275,9 +256,16 @@ export default function LivePlayer({ userId, guildId }) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
         
+        {/* 👇 CLASES CSS AGREGADAS PARA OCULTAR LA BARRA DE SCROLL Y MEJORAR MARQUESINA 👇 */}
         <style dangerouslySetInnerHTML={{__html: `
-          @keyframes marquee-ping-pong { 0%, 15% { transform: translateX(0); } 45%, 55% { transform: translateX(calc(-100% + 240px)); } 85%, 100% { transform: translateX(0); } }
-          .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 20s ease-in-out infinite; }
+          @keyframes marquee-ping-pong { 
+              0%, 15% { transform: translateX(0); } 
+              45%, 55% { transform: translateX(calc(-100% + 230px)); } 
+              85%, 100% { transform: translateX(0); } 
+          }
+          .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 12s ease-in-out infinite; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `}} />
 
         <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 blur-3xl scale-110" style={{ backgroundImage: `url(${status.song.thumbnail})` }}></div>
@@ -300,7 +288,8 @@ export default function LivePlayer({ userId, guildId }) {
                 <img src={status.song.thumbnail} className="w-full aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-8" alt="Cover" />
                 <div className={`w-full text-center md:text-left flex justify-between items-end gap-4 transition-opacity duration-700 ${isIdle ? 'opacity-50' : 'opacity-100'}`}>
                     <div className="min-w-0">
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tighter truncate drop-shadow-xl">{status.song.title}</h1>
+                        {/* 👇 LINE-CLAMP PARA QUE OCUPE DOS LÍNEAS EN VEZ DE MOSTRAR PUNTOS SUSPENSIVOS 👇 */}
+                        <h1 className="text-3xl md:text-5xl font-black tracking-tighter drop-shadow-xl line-clamp-2 md:line-clamp-3">{status.song.title}</h1>
                         <p className="text-lg md:text-xl font-bold opacity-70 truncate mt-2 drop-shadow-lg">{status.song.artist}</p>
                     </div>
                     <button onClick={handleLike} className={`p-3 rounded-full transition transform active:scale-95 shadow-xl ${isLiked ? '' : 'bg-white/5 hover:bg-white/10'}`} style={{ color: isLiked ? activeColor : 'white' }}>
@@ -312,8 +301,6 @@ export default function LivePlayer({ userId, guildId }) {
             {showLyrics && (
                 <div className="w-full max-w-3xl h-[60vh] md:h-[70vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden relative">
                     
-                    {renderLyricsControls()}
-
                     {!isAutoScroll && parsedLyrics.length > 0 && (
                         <div className={`absolute bottom-10 right-4 md:right-10 z-50 animate-fadeIn transition-opacity duration-500 ${isIdle ? 'opacity-0' : 'opacity-100'}`}>
                             <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
@@ -322,10 +309,11 @@ export default function LivePlayer({ userId, guildId }) {
                         </div>
                     )}
                     
+                    {/* 👇 scrollbar-hide SE APLICA AQUÍ SI ESTÁ IDLE 👇 */}
                     <div 
                       ref={lyricsScrollRef} 
                       onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
-                      className="flex-1 overflow-y-auto custom-scrollbar"
+                      className={`flex-1 overflow-y-auto ${isIdle && isFullscreen ? 'scrollbar-hide' : 'custom-scrollbar'}`}
                       style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
                     >
                         {renderLyricsContent()}
@@ -359,7 +347,16 @@ export default function LivePlayer({ userId, guildId }) {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `@keyframes marquee-ping-pong { 0%, 15% { transform: translateX(0); } 45%, 55% { transform: translateX(calc(-100% + 240px)); } 85%, 100% { transform: translateX(0); } } .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 20s ease-in-out infinite; }`}} />
+      <style dangerouslySetInnerHTML={{__html: `
+          @keyframes marquee-ping-pong { 
+              0%, 15% { transform: translateX(0); } 
+              45%, 55% { transform: translateX(calc(-100% + 230px)); } 
+              85%, 100% { transform: translateX(0); } 
+          } 
+          .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 12s ease-in-out infinite; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
 
       {toastMsg && (
         <div className="fixed bottom-[110px] right-6 md:right-10 text-[#0a0a0c] px-4 py-3 rounded-xl shadow-2xl font-bold text-sm z-[100] flex items-center gap-3 transition-all animate-bounce" style={{ backgroundColor: activeColor }}>
@@ -380,8 +377,6 @@ export default function LivePlayer({ userId, guildId }) {
             </div>
             
             <div className="flex-1 relative bg-black/40">
-                {renderLyricsControls()}
-
                 {!isAutoScroll && parsedLyrics.length > 0 && (
                     <div className="absolute bottom-6 right-6 z-50 animate-fadeIn">
                         <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
@@ -430,7 +425,9 @@ export default function LivePlayer({ userId, guildId }) {
               <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-md shadow-md object-cover group-hover:opacity-50 transition" />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><FullscreenIcon /></div>
           </div>
-          <div className="flex flex-col min-w-0 w-[240px] relative overflow-hidden">
+          
+          <div className="flex flex-col min-w-0 w-[230px] relative overflow-hidden">
+            {/* 👇 MARQUESINA CONDICIONAL (SI ES MENOS DE 20 LETRAS, SOLO PONE TRUNCATE) 👇 */}
             <span className={`font-bold text-gray-100 text-sm hover:underline cursor-pointer ${isLongTitle ? 'animate-marquee' : 'truncate'}`} style={{ textDecorationColor: activeColor }} onClick={toggleFullscreen}>
               {status.song.isTrivia ? "Pista Misteriosa" : status.song.title}
             </span>
