@@ -68,7 +68,7 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
   return (
     <div className="px-4 flex flex-col gap-1">
       <button onClick={() => setIsOpen(!isOpen)} className="px-4 py-2 flex justify-between items-center w-full hover:bg-[#1e1f22]/50 rounded-md transition cursor-pointer group">
-        <span className="text-[10px] font-black uppercase text-gray-600 group-hover:text-gray-400 tracking-widest transition">Tus Favoritos</span>
+        <span className="text-[10px] font-black uppercase text-gray-600 group-hover:text-gray-400 tracking-widest transition">Mis favoritos</span>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 font-bold text-xs">{likes.length}</span>
           <svg className={`w-3 h-3 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
