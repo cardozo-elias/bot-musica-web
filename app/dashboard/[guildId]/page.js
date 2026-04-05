@@ -37,18 +37,17 @@ export default async function DashboardPage({ params }) {
       stats.songsPlayed = userStatsRes.rows[0].songs_played;
     }
 
-    // Likes para el panel lateral
+    // Traemos los favoritos para pasarlos como "initialLikes"
     const recentLikesRes = await pool.query('SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC LIMIT 50', [session.user.id]);
     allLikes = recentLikesRes.rows;
 
     const plRes = await pool.query('SELECT id, name FROM user_playlists WHERE user_id = $1', [session.user.id]);
     userPlaylists = plRes.rows;
 
-    // Historial Reciente (Evitamos errores si la tabla recién se crea)
     try {
       const historyRes = await pool.query('SELECT title, artist, video_id as "videoId", played_at as "playedAt" FROM user_history WHERE user_id = $1 ORDER BY played_at DESC LIMIT 30', [session.user.id]);
       userHistory = historyRes.rows;
-    } catch(err) { console.log("La tabla history aún no tiene datos o no existe."); }
+    } catch(err) { console.log("Historial vacío."); }
 
   } catch (e) {
     console.error("[WEB DB ERROR]:", e.message);
@@ -57,7 +56,7 @@ export default async function DashboardPage({ params }) {
   return (
     <main className="h-screen bg-[#0a0a0c] text-white flex overflow-hidden font-sans">
       
-      {/* SIDEBAR NUEVO DISEÑO */}
+      {/* SIDEBAR */}
       <aside className="w-[280px] bg-[#000000] border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-xl">
         
         {/* Navegación Principal */}
@@ -72,39 +71,19 @@ export default async function DashboardPage({ params }) {
           </div>
         </div>
 
-        {/* LIKES (MOVIDOS AQUÍ - CON ESPACIADO CORREGIDO) */}
-        <div className="px-4 flex flex-col gap-1 mb-8">
-          <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2 flex justify-between items-center">
-            Tus Favoritos
-            <span className="text-gray-500 font-bold">{allLikes.length}</span>
-          </div>
-          
-          <div className="max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1">
-            {allLikes.length === 0 ? (
-                <p className="px-4 text-xs text-gray-600 mt-1">No hay favoritos.</p>
-            ) : (
-                allLikes.slice(0, 20).map(like => (
-                    <div key={like.videoId} className="group flex items-center gap-3 px-4 py-2 hover:bg-[#1e1f22]/70 rounded-lg transition-all cursor-pointer">
-                        <span className="text-[#57F287]/80 group-hover:text-[#57F287] text-[10px] self-start mt-0.5">♥</span>
-                        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
-                            <span className="font-bold text-gray-300 group-hover:text-white truncate text-xs leading-tight">
-                                {like.title}
-                            </span>
-                            <span className="text-[9px] text-gray-600 group-hover:text-gray-400 font-bold uppercase truncate leading-tight">
-                                {like.artist}
-                            </span>
-                        </div>
-                    </div>
-                ))
-            )}
-          </div>
-        </div>
+        {/* 👇 AQUÍ ESTÁ EL CAMBIO: INVOCAMOS EL COMPONENTE REAL 👇 */}
+        <SidebarFavorites 
+          initialLikes={allLikes} 
+          userId={session.user.id} 
+          userName={session.user.name} 
+          userAvatar={session.user.image} 
+        />
 
         {/* Listado de Playlists */}
-        <div className="px-4 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
+        <div className="px-4 mt-6 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
           <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2 flex justify-between items-center">
             Playlists
-            <a href="/playlists" className="text-lg leading-none cursor-pointer text-gray-500 hover:text-white transition" title="Gestionar Playlists">+</a>
+            <a href="/playlists" className="text-lg leading-none cursor-pointer text-gray-500 hover:text-white transition">+</a>
           </div>
           {userPlaylists.length === 0 ? (
             <p className="px-4 text-xs text-gray-600 mt-2">No hay playlists.</p>
@@ -117,12 +96,12 @@ export default async function DashboardPage({ params }) {
           )}
         </div>
 
-        {/* PERFIL DE USUARIO (MOVIDO AL FONDO) */}
+        {/* Perfil */}
         <div className="px-6 flex items-center gap-4 mt-auto border-t border-[#1e1f22] pt-6 mb-2">
           <img src={session.user.image} className="w-10 h-10 rounded-full border border-[#2b2d31]" alt="Avatar" />
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-bold truncate text-gray-200">{session.user.name}</span>
-            <a href="/signout" className="text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
+            <a href="/api/auth/signout" className="text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
           </div>
         </div>
 
@@ -156,7 +135,6 @@ export default async function DashboardPage({ params }) {
             <div className="w-full">
               <RecentlyPlayed history={userHistory} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
             </div>
-
             <div className="w-full">
               <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
             </div>
