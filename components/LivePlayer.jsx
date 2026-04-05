@@ -23,7 +23,7 @@ const LyricsIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24
 
 
 export default function LivePlayer({ userId, guildId }) {
-  const [status, setStatus] = useState({ playing: false, queueList: [], color: '#57F287', voiceMembers: [], volume: 100 });
+  const [status, setStatus] = useState({ playing: false, queueList: [], color: '#57F287', voiceMembers: [] });
   const [isLiked, setIsLiked] = useState(false); 
   const [currentVideoId, setCurrentVideoId] = useState(null); 
   const [playlists, setPlaylists] = useState([]);
@@ -54,7 +54,7 @@ export default function LivePlayer({ userId, guildId }) {
     
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
-      setStatus(prev => ({ ...data, volume: data.volume || prev.volume, color: data.color || '#57F287', voiceMembers: data.voiceMembers || [] }));
+      setStatus(prev => ({ ...data, color: data.color || '#57F287', voiceMembers: data.voiceMembers || [] }));
       
       if (data.playing && data.song) {
         document.title = data.isPaused ? `|| ${data.song.title}` : `▶ ${data.song.title}`;
@@ -78,6 +78,28 @@ export default function LivePlayer({ userId, guildId }) {
   }, [userId, guildId]);
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
+
+  // 👇 NUEVO: CONTROLADOR DE PANTALLA COMPLETA NATIVA 👇
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error al intentar pantalla completa: ${err.message}`);
+        setIsFullscreen(true); // Fallback a CSS si el navegador bloquea la API
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+    }
+  };
 
   const fetchLyrics = () => { setLyrics(prev => ({ ...prev, loading: true })); socketRef.current?.emit("get_lyrics", userId); };
   
@@ -105,16 +127,10 @@ export default function LivePlayer({ userId, guildId }) {
     if (res.ok) { setShowPlaylistMenu(false); alert("Guardada."); }
   };
   const setFilter = (type) => { socketRef.current?.emit("cmd_filter", { userId, filterType: type }); setShowFilterMenu(false); };
-  const handleVolume = (e) => {
-    const vol = e.target.value;
-    setStatus(prev => ({ ...prev, volume: vol }));
-    socketRef.current?.emit("cmd_volume", { userId, vol });
-  };
 
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
 
-  // 👇 ARREGLO DEL PLACEHOLDER GRIS 👇
   if (!status.playing || !status.song) {
     return (
       <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#1e1f22] p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
@@ -154,7 +170,8 @@ export default function LivePlayer({ userId, guildId }) {
                     Live Session
                 </span>
             </div>
-            <button onClick={() => setIsFullscreen(false)} className="p-3 bg-black/40 hover:bg-white/10 backdrop-blur-md rounded-full transition">
+            {/* 👇 Usa toggleFullscreen para volver */}
+            <button onClick={toggleFullscreen} className="p-3 bg-black/40 hover:bg-white/10 backdrop-blur-md rounded-full transition">
                 <ShrinkIcon />
             </button>
         </div>
@@ -251,14 +268,16 @@ export default function LivePlayer({ userId, guildId }) {
         
         {/* INFO CANCIÓN Y WIDGET DE USUARIOS */}
         <div className="flex items-center justify-start w-1/4 gap-4 overflow-hidden">
-          <div className="relative group cursor-pointer" onClick={() => setIsFullscreen(true)}>
+          {/* 👇 Usa toggleFullscreen aquí también */}
+          <div className="relative group cursor-pointer" onClick={toggleFullscreen}>
               <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-md shadow-md object-cover group-hover:opacity-50 transition" />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                   <FullscreenIcon />
               </div>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="font-bold text-gray-100 text-sm line-clamp-1 hover:underline cursor-pointer" style={{ textDecorationColor: activeColor }} onClick={() => setIsFullscreen(true)}>
+            {/* 👇 Y aquí */}
+            <span className="font-bold text-gray-100 text-sm line-clamp-1 hover:underline cursor-pointer" style={{ textDecorationColor: activeColor }} onClick={toggleFullscreen}>
               {status.song.isTrivia ? "Pista Misteriosa" : status.song.title}
             </span>
             <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest truncate mt-0.5">
@@ -347,16 +366,12 @@ export default function LivePlayer({ userId, guildId }) {
 
         {/* CONTROLES DERECHA */}
         <div className="hidden md:flex w-1/4 justify-end gap-4 items-center">
-          {/* Slider Volumen */}
-          <div className="flex items-center gap-2 mr-2 w-24 group">
-              <svg className="w-4 h-4 text-gray-500 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" /></svg>
-              <input type="range" min="0" max="100" value={status.volume} onChange={handleVolume} className="w-full h-1 bg-[#2b2d31] rounded-lg appearance-none cursor-pointer accent-white" />
-          </div>
 
           <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-white' : 'text-gray-500'} hover:text-gray-300 transition`} title="Letra">
              <LyricsIcon />
           </button>
-          <button onClick={() => setIsFullscreen(true)} className="text-gray-500 hover:text-white transition" title="Pantalla Completa">
+          {/* 👇 Usa toggleFullscreen aquí */}
+          <button onClick={toggleFullscreen} className="text-gray-500 hover:text-white transition" title="Pantalla Completa">
              <FullscreenIcon />
           </button>
           <button onClick={() => setShowQueue(!showQueue)} className={`transition-all duration-300 transform ${showQueue ? 'scale-110' : 'text-gray-500 hover:text-white'}`} style={{ color: showQueue || isQueueBouncing ? activeColor : '' }} title="Cola">
