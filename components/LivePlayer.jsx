@@ -19,6 +19,8 @@ const MenuIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" 
 const FullscreenIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>;
 const ShrinkIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 14h4v4m0-4l-5 5m16-5h-4v4m0-4l5 5M4 10h4V6m0 4l-5-5m16 5h-4V6m0 4l5-5" /></svg>;
 const FilterIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>;
+const LyricsIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+
 
 export default function LivePlayer({ userId, guildId }) {
   const [status, setStatus] = useState({ playing: false, queueList: [], color: '#57F287', voiceMembers: [], volume: 100 });
@@ -35,6 +37,7 @@ export default function LivePlayer({ userId, guildId }) {
   
   const [lyrics, setLyrics] = useState({ title: "", text: "", loading: false });
   const [toastMsg, setToastMsg] = useState(null);
+  const [isQueueBouncing, setIsQueueBouncing] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [localQueue, setLocalQueue] = useState([]);
   
@@ -64,7 +67,12 @@ export default function LivePlayer({ userId, guildId }) {
     });
 
     socketRef.current.on("lyrics_data", (data) => setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false }));
-    socketRef.current.on("track_added", (title) => { setToastMsg(title); setTimeout(() => setToastMsg(null), 3500); });
+    socketRef.current.on("track_added", (title) => { 
+        setToastMsg(title); 
+        setIsQueueBouncing(true);
+        setTimeout(() => setIsQueueBouncing(false), 500);
+        setTimeout(() => setToastMsg(null), 3500); 
+    });
 
     return () => { clearInterval(interval); socketRef.current?.disconnect(); };
   }, [userId, guildId]);
@@ -86,7 +94,7 @@ export default function LivePlayer({ userId, guildId }) {
   const handleDragEnd = () => {
     socketRef.current?.emit("cmd_reorder_queue", { userId, guildId, newQueueIds: localQueue.map(s => s.videoId) });
     setDraggingIndex(null); 
-        setTimeout(() => { isReordering.current = false; }, 500);
+    setTimeout(() => { isReordering.current = false; }, 500);
   };
 
   const handleLike = () => { socketRef.current?.emit("cmd_like", userId); setIsLiked(true); };
@@ -106,6 +114,7 @@ export default function LivePlayer({ userId, guildId }) {
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
 
+  // 👇 ARREGLO DEL PLACEHOLDER GRIS 👇
   if (!status.playing || !status.song) {
     return (
       <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#1e1f22] p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
@@ -128,6 +137,7 @@ export default function LivePlayer({ userId, guildId }) {
       </div>
     );
   }
+
   // --- MODO PANTALLA COMPLETA (TEATRO) ---
   if (isFullscreen) {
     return (
@@ -343,6 +353,9 @@ export default function LivePlayer({ userId, guildId }) {
               <input type="range" min="0" max="100" value={status.volume} onChange={handleVolume} className="w-full h-1 bg-[#2b2d31] rounded-lg appearance-none cursor-pointer accent-white" />
           </div>
 
+          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-white' : 'text-gray-500'} hover:text-gray-300 transition`} title="Letra">
+             <LyricsIcon />
+          </button>
           <button onClick={() => setIsFullscreen(true)} className="text-gray-500 hover:text-white transition" title="Pantalla Completa">
              <FullscreenIcon />
           </button>
