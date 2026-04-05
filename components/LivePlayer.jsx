@@ -9,7 +9,6 @@ const formatTime = (ms) => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-// --- MOTOR DE PARSEO DE LETRAS LRC ---
 const parseLrc = (lrcString) => {
   if (!lrcString) return [];
   const lines = lrcString.split('\n');
@@ -55,11 +54,12 @@ export default function LivePlayer({ userId, guildId }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
   
-  // ESTADOS DE KARAOKE
+  // KARAOKE Y SCROLL
   const [lyrics, setLyrics] = useState({ title: "", text: "", loading: false });
   const [parsedLyrics, setParsedLyrics] = useState([]);
   const [activeLine, setActiveLine] = useState(-1);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const [lyricsOffset, setLyricsOffset] = useState(0); // 👈 NUEVO: Desfase en segundos
 
   const [toastMsg, setToastMsg] = useState(null);
   const [isQueueBouncing, setIsQueueBouncing] = useState(false);
@@ -71,7 +71,6 @@ export default function LivePlayer({ userId, guildId }) {
   const lyricsScrollRef = useRef(null); 
   const lineRefs = useRef([]);
   const idleTimeout = useRef(null);
-  const scrollTimeout = useRef(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -98,7 +97,7 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.on("lyrics_data", (data) => {
       setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false });
       setParsedLyrics(data.synced ? parseLrc(data.synced) : []);
-      setIsAutoScroll(true);
+      setIsAutoScroll(true); 
     });
 
     socketRef.current.on("track_added", (title) => { 
@@ -111,10 +110,13 @@ export default function LivePlayer({ userId, guildId }) {
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
-  // MOTOR KARAOKE: Encontrar la línea actual
+  // Si cambia la canción, volvemos a sincronizar automáticamente y reseteamos el desfase
+  useEffect(() => { setIsAutoScroll(true); setLyricsOffset(0); }, [currentVideoId]);
+
+  // MOTOR KARAOKE: Encontrar la línea actual con el Desfase (Offset)
   useEffect(() => {
     if (parsedLyrics.length > 0 && status.currentMs > 0) {
-        const currentSec = status.currentMs / 1000;
+        const currentSec = (status.currentMs / 1000) + lyricsOffset; // 👈 Aplicamos el desfase aquí
         let newActive = -1;
         for (let i = 0; i < parsedLyrics.length; i++) {
             if (currentSec >= parsedLyrics[i].time) newActive = i;
@@ -122,21 +124,16 @@ export default function LivePlayer({ userId, guildId }) {
         }
         if (newActive !== activeLine) setActiveLine(newActive);
     }
-  }, [status.currentMs, parsedLyrics]);
+  }, [status.currentMs, parsedLyrics, lyricsOffset]);
 
-  // MOTOR KARAOKE: Auto-scroll suave
+  // MOTOR KARAOKE: Auto-scroll
   useEffect(() => {
     if (isAutoScroll && activeLine >= 0 && lineRefs.current[activeLine] && showLyrics) {
         lineRefs.current[activeLine].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [activeLine, isAutoScroll, showLyrics, isFullscreen]);
 
-  // DETECTOR DE SCROLL MANUAL DEL USUARIO
-  const handleUserScroll = () => {
-    setIsAutoScroll(false);
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-    scrollTimeout.current = setTimeout(() => setIsAutoScroll(true), 10000); // Vuelve a auto-scroll tras 10s inactivo
-  };
+  const breakSync = () => { if (isAutoScroll) setIsAutoScroll(false); };
 
   // PANTALLA COMPLETA
   useEffect(() => {
@@ -173,7 +170,6 @@ export default function LivePlayer({ userId, guildId }) {
 
   const fetchLyrics = () => { setLyrics(prev => ({ ...prev, loading: true })); socketRef.current?.emit("get_lyrics", userId); };
   
-  // DRAG & DROP
   const handleDragStart = (e, i) => { isReordering.current = true; setDraggingIndex(i); e.dataTransfer.effectAllowed = "move"; };
   const handleDragOver = (e, i) => {
     e.preventDefault();
@@ -201,17 +197,21 @@ export default function LivePlayer({ userId, guildId }) {
   const activeColor = status.color;
   const isLongTitle = status.song?.title?.length > 25;
 
-  // COMPONENTE DE RENDERIZADO DE LETRAS (Para usarlo en ambos modos)
   const renderLyricsContent = () => {
     if (lyrics.loading) return <p className="animate-pulse font-bold opacity-50 mt-10 text-center">Buscando letras en LRCLIB...</p>;
     
-    // Si hay letras sincronizadas
+    // Vista Karaoke (Si tiene tiempos)
     if (parsedLyrics.length > 0) {
       return (
-        <div className="pb-[40vh] pt-[20vh] space-y-6 flex flex-col items-center md:items-start px-4">
+        <div className="pb-[40vh] pt-[20vh] space-y-6 flex flex-col items-center md:items-start px-4 relative">
             {parsedLyrics.map((line, i) => (
                 <p key={i} ref={el => lineRefs.current[i] = el}
-                    onClick={() => { socketRef.current?.emit("cmd_seek", { userId, targetSec: line.time }); setIsAutoScroll(true); }}
+                    onClick={() => { 
+                        // 👇 Clic para saltar, respetando el desfase 👇
+                        const target = Math.max(0, line.time - lyricsOffset);
+                        socketRef.current?.emit("cmd_seek", { userId, targetSec: target }); 
+                        setIsAutoScroll(true); 
+                    }}
                     className={`text-2xl md:text-4xl font-black transition-all duration-500 ease-out cursor-pointer w-full text-center md:text-left ${
                         i === activeLine ? "opacity-100 scale-105 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" : "opacity-30 hover:opacity-60 scale-100 text-gray-400"
                     }`}
@@ -223,13 +223,30 @@ export default function LivePlayer({ userId, guildId }) {
       );
     }
 
-    // Fallback: Si no hay letras sincronizadas, mostramos el texto plano sin auto-scroll
-    return <pre className="font-sans text-xl md:text-2xl font-bold leading-relaxed opacity-90 whitespace-pre-wrap pb-10 pt-10 text-center md:text-left px-4">{lyrics.text || "No se encontraron letras."}</pre>;
+    // Vista Texto Estático (Faltan tiempos en la DB)
+    return (
+        <div className="flex flex-col items-center md:items-start pt-[10vh] pb-10 px-4">
+            <span className="bg-white/10 text-gray-400 text-[9px] uppercase tracking-widest px-3 py-1 rounded-full mb-6 font-bold border border-white/10">
+                Texto estático (Tiempos no disponibles)
+            </span>
+            <pre className="font-sans text-xl md:text-2xl font-bold leading-relaxed opacity-90 whitespace-pre-wrap text-center md:text-left">
+                {lyrics.text || "No se encontraron letras."}
+            </pre>
+        </div>
+    );
   };
 
-  // ------------------------------------
-  // VISTAS PRINCIPALES
-  // ------------------------------------
+  const renderLyricsControls = () => {
+      if (parsedLyrics.length === 0) return null;
+      return (
+        <div className={`absolute top-6 right-6 md:right-10 z-50 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-xl transition-opacity duration-500 ${isIdle && isFullscreen ? 'opacity-0' : 'opacity-100'}`}>
+            <span className="text-[9px] uppercase font-bold text-gray-400 ml-1">Desfase:</span>
+            <button onClick={() => setLyricsOffset(prev => prev - 0.5)} className="text-white hover:text-[#57F287] transition font-bold text-sm px-2">-0.5s</button>
+            <span className="text-[10px] font-mono text-[#57F287] w-8 text-center">{lyricsOffset > 0 ? `+${lyricsOffset}` : lyricsOffset}</span>
+            <button onClick={() => setLyricsOffset(prev => prev + 0.5)} className="text-white hover:text-[#57F287] transition font-bold text-sm px-2">+0.5s</button>
+        </div>
+      );
+  };
 
   if (!status.playing || !status.song) {
     return (
@@ -293,10 +310,21 @@ export default function LivePlayer({ userId, guildId }) {
             </div>
 
             {showLyrics && (
-                <div className="w-full max-w-3xl h-[60vh] md:h-[70vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden">
+                <div className="w-full max-w-3xl h-[60vh] md:h-[70vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden relative">
+                    
+                    {renderLyricsControls()}
+
+                    {!isAutoScroll && parsedLyrics.length > 0 && (
+                        <div className={`absolute bottom-10 right-4 md:right-10 z-50 animate-fadeIn transition-opacity duration-500 ${isIdle ? 'opacity-0' : 'opacity-100'}`}>
+                            <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
+                                ↓ Sincronizar
+                            </button>
+                        </div>
+                    )}
+                    
                     <div 
                       ref={lyricsScrollRef} 
-                      onWheel={handleUserScroll} onTouchMove={handleUserScroll}
+                      onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
                       className="flex-1 overflow-y-auto custom-scrollbar"
                       style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
                     >
@@ -342,16 +370,33 @@ export default function LivePlayer({ userId, guildId }) {
 
       {showLyrics && (
         <div className="fixed inset-0 bg-[#0a0a0c]/90 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
-          <div className="bg-[#111214] border border-[#1e1f22] rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
+          <div className="bg-[#111214] border border-[#1e1f22] rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
             <div className="p-6 border-b border-[#1e1f22] flex justify-between items-center bg-[#111214] shrink-0 z-10">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-white truncate">{status.song.title}</h2>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{String(status.song.artist)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{color: activeColor}}>{String(status.song.artist)}</p>
               </div>
               <button onClick={() => setShowLyrics(false)} className="text-gray-500 hover:text-white transition text-sm font-bold uppercase tracking-widest">Cerrar</button>
             </div>
-            <div ref={lyricsScrollRef} onWheel={handleUserScroll} onTouchMove={handleUserScroll} className="p-8 overflow-y-auto custom-scrollbar flex-1 relative" style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
-                {renderLyricsContent()}
+            
+            <div className="flex-1 relative bg-black/40">
+                {renderLyricsControls()}
+
+                {!isAutoScroll && parsedLyrics.length > 0 && (
+                    <div className="absolute bottom-6 right-6 z-50 animate-fadeIn">
+                        <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
+                            ↓ Sincronizar
+                        </button>
+                    </div>
+                )}
+                <div 
+                  ref={lyricsScrollRef} 
+                  onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
+                  className="absolute inset-0 overflow-y-auto custom-scrollbar"
+                  style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
+                >
+                    {renderLyricsContent()}
+                </div>
             </div>
           </div>
         </div>
@@ -391,12 +436,6 @@ export default function LivePlayer({ userId, guildId }) {
             </span>
             <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest truncate mt-0.5">{status.song.isTrivia ? "???" : (status.song.artist || "Desconocido")}</span>
           </div>
-          {status.voiceMembers.length > 0 && (
-              <div className="hidden lg:flex items-center -space-x-2 ml-4 opacity-70 hover:opacity-100 transition" title={`${status.voiceMembers.length} en el canal`}>
-                  {status.voiceMembers.slice(0, 3).map(m => <img key={m.id} src={m.avatar} className="w-6 h-6 rounded-full border-2 border-[#0a0a0c]" alt={m.name} />)}
-                  {status.voiceMembers.length > 3 && <div className="w-6 h-6 rounded-full border-2 border-[#0a0a0c] bg-[#1e1f22] flex items-center justify-center text-[8px] font-bold">+{status.voiceMembers.length - 3}</div>}
-              </div>
-          )}
         </div>
 
         <div className="flex w-2/4 flex-col items-center">
