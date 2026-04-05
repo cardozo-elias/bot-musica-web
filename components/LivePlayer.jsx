@@ -9,6 +9,27 @@ const formatTime = (ms) => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
+// --- MOTOR DE PARSEO DE LETRAS LRC ---
+const parseLrc = (lrcString) => {
+  if (!lrcString) return [];
+  const lines = lrcString.split('\n');
+  const parsed = [];
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+  
+  lines.forEach(line => {
+      const match = timeRegex.exec(line);
+      if (match) {
+          const minutes = parseInt(match[1]);
+          const seconds = parseInt(match[2]);
+          const milliseconds = parseInt(match[3]);
+          const timeInSeconds = minutes * 60 + seconds + (milliseconds / (match[3].length === 3 ? 1000 : 100));
+          const text = line.replace(timeRegex, '').trim();
+          if (text) parsed.push({ time: timeInSeconds, text });
+      }
+  });
+  return parsed;
+};
+
 // ÍCONOS SVG
 const PlayIcon = () => <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
 const PauseIcon = () => <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>;
@@ -27,18 +48,19 @@ export default function LivePlayer({ userId, guildId }) {
   const [currentVideoId, setCurrentVideoId] = useState(null); 
   const [playlists, setPlaylists] = useState([]);
   
-  // Menús Toggles
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showQueue, setShowQueue] = useState(false); 
   const [showLyrics, setShowLyrics] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Modo Cine (Idle)
   const [isIdle, setIsIdle] = useState(false);
-  const idleTimeout = useRef(null);
-
+  
+  // ESTADOS DE KARAOKE
   const [lyrics, setLyrics] = useState({ title: "", text: "", loading: false });
+  const [parsedLyrics, setParsedLyrics] = useState([]);
+  const [activeLine, setActiveLine] = useState(-1);
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
+
   const [toastMsg, setToastMsg] = useState(null);
   const [isQueueBouncing, setIsQueueBouncing] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState(null);
@@ -47,6 +69,9 @@ export default function LivePlayer({ userId, guildId }) {
   const isReordering = useRef(false);
   const socketRef = useRef(null);
   const lyricsScrollRef = useRef(null); 
+  const lineRefs = useRef([]);
+  const idleTimeout = useRef(null);
+  const scrollTimeout = useRef(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -70,12 +95,15 @@ export default function LivePlayer({ userId, guildId }) {
       }
     });
 
-    socketRef.current.on("lyrics_data", (data) => setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false }));
+    socketRef.current.on("lyrics_data", (data) => {
+      setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false });
+      setParsedLyrics(data.synced ? parseLrc(data.synced) : []);
+      setIsAutoScroll(true);
+    });
+
     socketRef.current.on("track_added", (title) => { 
-        setToastMsg(title); 
-        setIsQueueBouncing(true);
-        setTimeout(() => setIsQueueBouncing(false), 500);
-        setTimeout(() => setToastMsg(null), 3500); 
+        setToastMsg(title); setIsQueueBouncing(true);
+        setTimeout(() => setIsQueueBouncing(false), 500); setTimeout(() => setToastMsg(null), 3500); 
     });
 
     return () => { clearInterval(interval); socketRef.current?.disconnect(); };
@@ -83,7 +111,34 @@ export default function LivePlayer({ userId, guildId }) {
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
-  // --- CONTROLADOR DE PANTALLA COMPLETA ---
+  // MOTOR KARAOKE: Encontrar la línea actual
+  useEffect(() => {
+    if (parsedLyrics.length > 0 && status.currentMs > 0) {
+        const currentSec = status.currentMs / 1000;
+        let newActive = -1;
+        for (let i = 0; i < parsedLyrics.length; i++) {
+            if (currentSec >= parsedLyrics[i].time) newActive = i;
+            else break;
+        }
+        if (newActive !== activeLine) setActiveLine(newActive);
+    }
+  }, [status.currentMs, parsedLyrics]);
+
+  // MOTOR KARAOKE: Auto-scroll suave
+  useEffect(() => {
+    if (isAutoScroll && activeLine >= 0 && lineRefs.current[activeLine] && showLyrics) {
+        lineRefs.current[activeLine].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [activeLine, isAutoScroll, showLyrics, isFullscreen]);
+
+  // DETECTOR DE SCROLL MANUAL DEL USUARIO
+  const handleUserScroll = () => {
+    setIsAutoScroll(false);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => setIsAutoScroll(true), 10000); // Vuelve a auto-scroll tras 10s inactivo
+  };
+
+  // PANTALLA COMPLETA
   useEffect(() => {
     const handleFullscreenChange = () => { setIsFullscreen(!!document.fullscreenElement); };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -92,21 +147,15 @@ export default function LivePlayer({ userId, guildId }) {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Error al intentar pantalla completa: ${err.message}`);
-        setIsFullscreen(true); 
-      });
+      document.documentElement.requestFullscreen().catch(() => setIsFullscreen(true));
     } else {
       if (document.exitFullscreen) document.exitFullscreen().catch(err => console.log(err));
     }
   };
 
-  // DETECTOR DE INACTIVIDAD (MODO CINE)
+  // MODO CINE (IDLE)
   useEffect(() => {
-    if (!isFullscreen) {
-        setIsIdle(false);
-        return;
-    }
+    if (!isFullscreen) { setIsIdle(false); return; }
     const resetIdle = () => {
         setIsIdle(false);
         if (idleTimeout.current) clearTimeout(idleTimeout.current);
@@ -122,20 +171,9 @@ export default function LivePlayer({ userId, guildId }) {
     };
   }, [isFullscreen]);
 
-  // AUTO-SCROLL DE LETRAS (SOLO EN FULLSCREEN)
-  useEffect(() => {
-    if (showLyrics && isFullscreen && lyricsScrollRef.current && status.song?.durationSec > 0 && !status.isPaused) {
-      const container = lyricsScrollRef.current;
-      const progress = (status.currentMs / 1000) / status.song.durationSec;
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      container.scrollTo({ top: maxScroll * progress, behavior: "smooth" });
-    }
-  }, [status.currentMs, showLyrics, isFullscreen, status.song, status.isPaused]);
-
-
   const fetchLyrics = () => { setLyrics(prev => ({ ...prev, loading: true })); socketRef.current?.emit("get_lyrics", userId); };
   
-  // Lógica Drag & Drop
+  // DRAG & DROP
   const handleDragStart = (e, i) => { isReordering.current = true; setDraggingIndex(i); e.dataTransfer.effectAllowed = "move"; };
   const handleDragOver = (e, i) => {
     e.preventDefault();
@@ -147,8 +185,7 @@ export default function LivePlayer({ userId, guildId }) {
   };
   const handleDragEnd = () => {
     socketRef.current?.emit("cmd_reorder_queue", { userId, guildId, newQueueIds: localQueue.map(s => s.queueId) });
-    setDraggingIndex(null); 
-    setTimeout(() => { isReordering.current = false; }, 500);
+    setDraggingIndex(null); setTimeout(() => { isReordering.current = false; }, 500);
   };
 
   const handleLike = () => { socketRef.current?.emit("cmd_like", userId); setIsLiked(true); };
@@ -163,6 +200,36 @@ export default function LivePlayer({ userId, guildId }) {
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
   const isLongTitle = status.song?.title?.length > 25;
+
+  // COMPONENTE DE RENDERIZADO DE LETRAS (Para usarlo en ambos modos)
+  const renderLyricsContent = () => {
+    if (lyrics.loading) return <p className="animate-pulse font-bold opacity-50 mt-10 text-center">Buscando letras en LRCLIB...</p>;
+    
+    // Si hay letras sincronizadas
+    if (parsedLyrics.length > 0) {
+      return (
+        <div className="pb-[40vh] pt-[20vh] space-y-6 flex flex-col items-center md:items-start px-4">
+            {parsedLyrics.map((line, i) => (
+                <p key={i} ref={el => lineRefs.current[i] = el}
+                    onClick={() => { socketRef.current?.emit("cmd_seek", { userId, targetSec: line.time }); setIsAutoScroll(true); }}
+                    className={`text-2xl md:text-4xl font-black transition-all duration-500 ease-out cursor-pointer w-full text-center md:text-left ${
+                        i === activeLine ? "opacity-100 scale-105 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" : "opacity-30 hover:opacity-60 scale-100 text-gray-400"
+                    }`}
+                >
+                    {line.text}
+                </p>
+            ))}
+        </div>
+      );
+    }
+
+    // Fallback: Si no hay letras sincronizadas, mostramos el texto plano sin auto-scroll
+    return <pre className="font-sans text-xl md:text-2xl font-bold leading-relaxed opacity-90 whitespace-pre-wrap pb-10 pt-10 text-center md:text-left px-4">{lyrics.text || "No se encontraron letras."}</pre>;
+  };
+
+  // ------------------------------------
+  // VISTAS PRINCIPALES
+  // ------------------------------------
 
   if (!status.playing || !status.song) {
     return (
@@ -187,23 +254,13 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
-  // --- MODO PANTALLA COMPLETA (TEATRO / CINE) ---
   if (isFullscreen) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
         
-        {/* ANIMACIÓN MARQUESINA CSS */}
         <style dangerouslySetInnerHTML={{__html: `
-          @keyframes marquee-ping-pong {
-            0%, 15% { transform: translateX(0); }
-            45%, 55% { transform: translateX(calc(-100% + 240px)); }
-            85%, 100% { transform: translateX(0); }
-          }
-          .animate-marquee {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee-ping-pong 20s linear infinite;
-          }
+          @keyframes marquee-ping-pong { 0%, 15% { transform: translateX(0); } 45%, 55% { transform: translateX(calc(-100% + 240px)); } 85%, 100% { transform: translateX(0); } }
+          .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 20s ease-in-out infinite; }
         `}} />
 
         <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 blur-3xl scale-110" style={{ backgroundImage: `url(${status.song.thumbnail})` }}></div>
@@ -221,8 +278,8 @@ export default function LivePlayer({ userId, guildId }) {
             </button>
         </div>
 
-        <div className="z-10 flex-1 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-24 px-10 h-full">
-            <div className={`flex flex-col items-center max-w-lg w-full transition-transform duration-700 ${showLyrics ? 'scale-90' : 'scale-100'}`}>
+        <div className="z-10 flex-1 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-24 px-10 h-full overflow-hidden">
+            <div className={`flex flex-col items-center max-w-lg w-full transition-transform duration-700 ${showLyrics ? 'scale-90 md:translate-x-0' : 'scale-100'}`}>
                 <img src={status.song.thumbnail} className="w-full aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-8" alt="Cover" />
                 <div className={`w-full text-center md:text-left flex justify-between items-end gap-4 transition-opacity duration-700 ${isIdle ? 'opacity-50' : 'opacity-100'}`}>
                     <div className="min-w-0">
@@ -236,27 +293,14 @@ export default function LivePlayer({ userId, guildId }) {
             </div>
 
             {showLyrics && (
-                <div className="w-full max-w-lg h-[60vh] bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl animate-fadeIn">
-                    <div className={`flex justify-between items-center border-b border-white/10 pb-4 mb-4 transition-opacity duration-700 ${isIdle ? 'opacity-0' : 'opacity-100'}`}>
-                        <h3 className="font-black uppercase tracking-widest text-xs opacity-70">Letras en vivo</h3>
-                        <button onClick={() => setShowLyrics(false)} className="text-xs opacity-50 hover:opacity-100 uppercase font-bold tracking-widest transition">Cerrar</button>
-                    </div>
-                    
+                <div className="w-full max-w-3xl h-[60vh] md:h-[70vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden">
                     <div 
                       ref={lyricsScrollRef} 
-                      className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-center md:text-left"
-                      style={{ 
-                          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
-                          maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)'
-                      }}
+                      onWheel={handleUserScroll} onTouchMove={handleUserScroll}
+                      className="flex-1 overflow-y-auto custom-scrollbar"
+                      style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
                     >
-                        {lyrics.loading ? (
-                            <p className="animate-pulse font-bold opacity-50 mt-10">Sincronizando letras...</p>
-                        ) : (
-                            <pre className="font-sans text-xl md:text-2xl font-bold leading-relaxed opacity-90 whitespace-pre-wrap pb-[30vh] pt-[10vh]">
-                                {lyrics.text || "No se encontraron letras."}
-                            </pre>
-                        )}
+                        {renderLyricsContent()}
                     </div>
                 </div>
             )}
@@ -285,26 +329,31 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
-  // --- MODO NORMAL (BARRA INFERIOR) ---
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes marquee-ping-pong {
-          0%, 15% { transform: translateX(0); }
-          45%, 55% { transform: translateX(calc(-100% + 240px)); }
-          85%, 100% { transform: translateX(0); }
-        }
-        .animate-marquee {
-          display: inline-block;
-          white-space: nowrap;
-          animation: marquee-ping-pong 20s ease-in-out infinite;
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{__html: `@keyframes marquee-ping-pong { 0%, 15% { transform: translateX(0); } 45%, 55% { transform: translateX(calc(-100% + 240px)); } 85%, 100% { transform: translateX(0); } } .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 20s ease-in-out infinite; }`}} />
 
       {toastMsg && (
         <div className="fixed bottom-[110px] right-6 md:right-10 text-[#0a0a0c] px-4 py-3 rounded-xl shadow-2xl font-bold text-sm z-[100] flex items-center gap-3 transition-all animate-bounce" style={{ backgroundColor: activeColor }}>
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
           <span className="truncate max-w-[200px]">{toastMsg}</span>
+        </div>
+      )}
+
+      {showLyrics && (
+        <div className="fixed inset-0 bg-[#0a0a0c]/90 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
+          <div className="bg-[#111214] border border-[#1e1f22] rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
+            <div className="p-6 border-b border-[#1e1f22] flex justify-between items-center bg-[#111214] shrink-0 z-10">
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-white truncate">{status.song.title}</h2>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{String(status.song.artist)}</p>
+              </div>
+              <button onClick={() => setShowLyrics(false)} className="text-gray-500 hover:text-white transition text-sm font-bold uppercase tracking-widest">Cerrar</button>
+            </div>
+            <div ref={lyricsScrollRef} onWheel={handleUserScroll} onTouchMove={handleUserScroll} className="p-8 overflow-y-auto custom-scrollbar flex-1 relative" style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+                {renderLyricsContent()}
+            </div>
+          </div>
         </div>
       )}
 
@@ -330,64 +379,31 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
-      {/* 👇 REPRODUCTOR INFERIOR CON DEGRADADO CAMALEÓN 👇 */}
-      <div 
-        className="fixed bottom-0 left-0 w-full border-t border-[#1e1f22] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] flex flex-col md:flex-row items-center justify-between px-6 md:px-10 h-[90px] transition-colors duration-1000"
-        style={{
-          background: `linear-gradient(90deg, ${activeColor}33 0%, rgba(10,10,12,0.95) 30%, rgba(10,10,12,0.95) 100%)`,
-          backdropFilter: 'blur(16px)'
-        }}
-      >
-        
-        {/* INFO CANCIÓN (Con Marquesina) */}
+      <div className="fixed bottom-0 left-0 w-full border-t border-[#1e1f22] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] flex flex-col md:flex-row items-center justify-between px-6 md:px-10 h-[90px] transition-colors duration-1000" style={{ background: `linear-gradient(90deg, ${activeColor}33 0%, rgba(10,10,12,0.95) 30%, rgba(10,10,12,0.95) 100%)`, backdropFilter: 'blur(16px)' }}>
         <div className="flex items-center justify-start w-1/4 gap-4 overflow-hidden">
           <div className="relative group cursor-pointer" onClick={toggleFullscreen}>
               <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-md shadow-md object-cover group-hover:opacity-50 transition" />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                  <FullscreenIcon />
-              </div>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><FullscreenIcon /></div>
           </div>
-          
           <div className="flex flex-col min-w-0 w-[240px] relative overflow-hidden">
-            {/* 👇 MARQUESINA INTELIGENTE APLICADA AQUÍ 👇 */}
-            <span 
-              className={`font-bold text-gray-100 text-sm hover:underline cursor-pointer ${isLongTitle ? 'animate-marquee' : 'truncate'}`} 
-              style={{ textDecorationColor: activeColor }} 
-              onClick={toggleFullscreen}
-            >
+            <span className={`font-bold text-gray-100 text-sm hover:underline cursor-pointer ${isLongTitle ? 'animate-marquee' : 'truncate'}`} style={{ textDecorationColor: activeColor }} onClick={toggleFullscreen}>
               {status.song.isTrivia ? "Pista Misteriosa" : status.song.title}
             </span>
-            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest truncate mt-0.5">
-              {status.song.isTrivia ? "???" : (status.song.artist || "Desconocido")}
-            </span>
+            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest truncate mt-0.5">{status.song.isTrivia ? "???" : (status.song.artist || "Desconocido")}</span>
           </div>
-
-          {/* WIDGET: Quién escucha */}
           {status.voiceMembers.length > 0 && (
               <div className="hidden lg:flex items-center -space-x-2 ml-4 opacity-70 hover:opacity-100 transition" title={`${status.voiceMembers.length} en el canal`}>
-                  {status.voiceMembers.slice(0, 3).map(m => (
-                      <img key={m.id} src={m.avatar} className="w-6 h-6 rounded-full border-2 border-[#0a0a0c]" alt={m.name} />
-                  ))}
-                  {status.voiceMembers.length > 3 && (
-                      <div className="w-6 h-6 rounded-full border-2 border-[#0a0a0c] bg-[#1e1f22] flex items-center justify-center text-[8px] font-bold">
-                          +{status.voiceMembers.length - 3}
-                      </div>
-                  )}
+                  {status.voiceMembers.slice(0, 3).map(m => <img key={m.id} src={m.avatar} className="w-6 h-6 rounded-full border-2 border-[#0a0a0c]" alt={m.name} />)}
+                  {status.voiceMembers.length > 3 && <div className="w-6 h-6 rounded-full border-2 border-[#0a0a0c] bg-[#1e1f22] flex items-center justify-center text-[8px] font-bold">+{status.voiceMembers.length - 3}</div>}
               </div>
           )}
         </div>
 
-        {/* CONTROLES CENTRALES */}
         <div className="flex w-2/4 flex-col items-center">
           <div className="hidden md:flex items-center gap-6 mb-1 relative">
-            <button onClick={handleLike} className={`transition transform active:scale-95 ${isLiked ? 'scale-110' : 'text-gray-400 hover:text-white'}`} style={{ color: isLiked ? activeColor : '' }} title="Guardar pista">
-              <HeartIcon filled={isLiked} />
-            </button>
-            
+            <button onClick={handleLike} className={`transition transform active:scale-95 ${isLiked ? 'scale-110' : 'text-gray-400 hover:text-white'}`} style={{ color: isLiked ? activeColor : '' }} title="Guardar pista"><HeartIcon filled={isLiked} /></button>
             <div className="relative">
-              <button onClick={() => setShowFilterMenu(!showFilterMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Filtros de Audio">
-                <FilterIcon />
-              </button>
+              <button onClick={() => setShowFilterMenu(!showFilterMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Filtros de Audio"><FilterIcon /></button>
               {showFilterMenu && (
                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 bg-[#18191c] border border-[#2b2d31] rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
                   <p className="text-[9px] font-black uppercase text-gray-500 mb-2 px-2 pt-1 text-center border-b border-[#2b2d31] pb-2 tracking-widest">Panel de Filtros</p>
@@ -400,25 +416,15 @@ export default function LivePlayer({ userId, guildId }) {
                 </div>
               )}
             </div>
-
-            <button onClick={handlePause} className="text-white transition transform hover:scale-105 p-1" title={status.isPaused ? "Reanudar" : "Pausar"}>
-              {status.isPaused ? <PlayIcon /> : <PauseIcon />}
-            </button>
-            <button onClick={handleSkip} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Omitir">
-              <SkipIcon />
-            </button>
-
+            <button onClick={handlePause} className="text-white transition transform hover:scale-105 p-1" title={status.isPaused ? "Reanudar" : "Pausar"}>{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
+            <button onClick={handleSkip} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Omitir"><SkipIcon /></button>
             <div className="relative">
-              <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Añadir a Playlist">
-                <MenuIcon />
-              </button>
+              <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Añadir a Playlist"><MenuIcon /></button>
               {showPlaylistMenu && (
                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 bg-[#18191c] border border-[#2b2d31] rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
                   <p className="text-[9px] font-black uppercase text-gray-500 mb-2 px-2 pt-1 text-center border-b border-[#2b2d31] pb-2 tracking-widest">Añadir a</p>
                   <div className="max-h-48 overflow-y-auto custom-scrollbar flex flex-col gap-1">
-                    {playlists.map(pl => (
-                      <button key={pl.id} onClick={() => saveToPlaylist(pl.id)} className="w-full text-left text-[11px] p-2 hover:bg-[#2b2d31] rounded-md transition truncate font-bold text-gray-300">{pl.name}</button>
-                    ))}
+                    {playlists.map(pl => <button key={pl.id} onClick={() => saveToPlaylist(pl.id)} className="w-full text-left text-[11px] p-2 hover:bg-[#2b2d31] rounded-md transition truncate font-bold text-gray-300">{pl.name}</button>)}
                   </div>
                 </div>
               )}
@@ -427,28 +433,17 @@ export default function LivePlayer({ userId, guildId }) {
 
           <div className="w-full max-w-2xl flex items-center gap-3 px-2 mt-1">
             <span className="text-[10px] text-gray-400 font-mono w-10 text-right">{formatTime(status.currentMs)}</span>
-            <div onClick={(e) => {
-              const bar = e.currentTarget; const rect = bar.getBoundingClientRect();
-              const percent = (e.clientX - rect.left) / rect.width;
-              socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) });
-            }} className="flex-1 bg-[#2b2d31]/50 rounded-full h-1.5 relative overflow-hidden cursor-pointer group">
+            <div onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const percent = (e.clientX - rect.left) / rect.width; socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) }); }} className="flex-1 bg-[#2b2d31]/50 rounded-full h-1.5 relative overflow-hidden cursor-pointer group">
               <div className="h-full transition-all duration-500 ease-linear rounded-r-full" style={{ width: `${progressPercent}%`, backgroundColor: activeColor }} />
             </div>
             <span className="text-[10px] text-gray-400 font-mono w-10">{formatTime(status.song.durationSec * 1000)}</span>
           </div>
         </div>
 
-        {/* CONTROLES DERECHA */}
         <div className="hidden md:flex w-1/4 justify-end gap-4 items-center">
-          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-white' : 'text-gray-400'} hover:text-gray-200 transition`} title="Letra">
-             <LyricsIcon />
-          </button>
-          <button onClick={toggleFullscreen} className="text-gray-400 hover:text-gray-200 transition" title="Pantalla Completa">
-             <FullscreenIcon />
-          </button>
-          <button onClick={() => setShowQueue(!showQueue)} className={`transition-all duration-300 transform ${showQueue ? 'scale-110' : 'text-gray-400 hover:text-gray-200'}`} style={{ color: showQueue || isQueueBouncing ? activeColor : '' }} title="Cola">
-             <ListIcon />
-          </button>
+          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-white' : 'text-gray-400'} hover:text-gray-200 transition`} title="Letra"><LyricsIcon /></button>
+          <button onClick={toggleFullscreen} className="text-gray-400 hover:text-gray-200 transition" title="Pantalla Completa"><FullscreenIcon /></button>
+          <button onClick={() => setShowQueue(!showQueue)} className={`transition-all duration-300 transform ${showQueue ? 'scale-110' : 'text-gray-400 hover:text-gray-200'}`} style={{ color: showQueue || isQueueBouncing ? activeColor : '' }} title="Cola"><ListIcon /></button>
         </div>
       </div>
     </>
