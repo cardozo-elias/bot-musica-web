@@ -114,7 +114,8 @@ export default function LivePlayer({ userId, guildId }) {
     setDraggingIndex(i); setLocalQueue(reordered);
   };
   const handleDragEnd = () => {
-    socketRef.current?.emit("cmd_reorder_queue", { userId, guildId, newQueueIds: localQueue.map(s => s.videoId) });
+    // 👇 AHORA MANDAMOS EL QUEUE-ID (Índice matemático)
+    socketRef.current?.emit("cmd_reorder_queue", { userId, guildId, newQueueIds: localQueue.map(s => s.queueId) });
     setDraggingIndex(null); 
     setTimeout(() => { isReordering.current = false; }, 500);
   };
