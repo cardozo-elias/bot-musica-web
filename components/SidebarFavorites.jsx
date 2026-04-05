@@ -24,15 +24,24 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
     return () => socketRef.current?.disconnect();
   }, [userId]);
 
-  const handleAddToQueue = (e, song) => {
-    e.stopPropagation();
+  // 👇 AHORA ESTA ES LA FUNCIÓN PRINCIPAL AL HACER CLICK 👇
+  const handleAddToQueue = (song) => {
+    if (loadingTrackId === song.videoId) return;
+    
+    setLoadingTrackId(song.videoId);
     socketRef.current?.emit("cmd_add_queue", { 
-        userId, video: { videoId: song.videoId, title: song.title, author: song.artist }, userName, userAvatar 
+        userId, 
+        video: { videoId: song.videoId, title: song.title, author: song.artist }, 
+        userName, 
+        userAvatar 
     });
+
+    // Quitamos el estado de carga después de un momento
+    setTimeout(() => setLoadingTrackId(null), 1000);
   };
 
   const handleDelete = async (e, videoId) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Importante: para que no se agregue a la cola al intentar borrarlo
     setLikes(prev => prev.filter(l => l.videoId !== videoId));
     try {
       await fetch('/api/likes', {
@@ -40,16 +49,7 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoId })
       });
-    } catch (e) { console.error("Error:", e); }
-  };
-
-  const handlePlay = (song) => {
-    if (loadingTrackId === song.videoId) return;
-    setLoadingTrackId(song.videoId);
-    socketRef.current?.emit("cmd_play_specific", { 
-        userId, video: { videoId: song.videoId, title: song.title, author: song.artist }, userName, userAvatar 
-    });
-    setTimeout(() => setLoadingTrackId(null), 1500);
+    } catch (e) { console.error("Error al borrar:", e); }
   };
 
   return (
@@ -69,7 +69,6 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
           animation: marquee-favorites 7s linear infinite alternate;
         }
 
-        /* 👇 Máscara corregida: El desvanecimiento ocurre en los primeros 12px 👇 */
         .fade-left-mask {
           -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12px);
           mask-image: linear-gradient(to right, transparent 0%, black 12px);
@@ -94,30 +93,26 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
               <p className="px-4 text-xs text-gray-600 mt-1 italic">No hay favoritos.</p>
           ) : (
               likes.map(like => (
-                  <div key={like.videoId} onClick={() => handlePlay(like)} 
+                  <div key={like.videoId} 
+                       onClick={() => handleAddToQueue(like)} 
                        className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer hover:bg-[#1e1f22] shrink-0 min-h-[64px] relative overflow-hidden"
                   >
-                      {/* Icono de Estado / Corazón */}
+                      {/* Icono de Estado / Spinner */}
                       <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 relative z-20 bg-inherit">
                         {loadingTrackId === like.videoId ? (
                             <svg className="animate-spin h-3.5 w-3.5 text-[#57F287]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         ) : (
-                            <>
-                                <span className="text-[#57F287]/80 group-hover:opacity-0 transition-opacity text-[10px]">♥</span>
-                                <svg className="w-3.5 h-3.5 text-white absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </>
+                            <span className="text-[#57F287]/80 group-hover:text-[#57F287] text-[10px]">♥</span>
                         )}
                       </div>
 
-                      {/* 👇 INFO DE LA CANCIÓN: Padding-left de 12px para que la primera letra sea nítida 👇 */}
-                      <div className="flex-1 flex flex-col min-w-0 pr-12 pl-3 -ml-3 overflow-hidden relative fade-left-mask">
-                          
+                      {/* Info de la canción */}
+                      <div className="flex-1 flex flex-col min-w-0 pr-10 pl-3 -ml-3 overflow-hidden relative fade-left-mask">
                           <div className="w-full overflow-hidden">
                               <p className="font-bold text-gray-200 text-xs truncate whitespace-nowrap group-hover:text-white transition-colors animate-marquee-fav">
                                   {like.title}
                               </p>
                           </div>
-
                           <div className="w-full overflow-hidden mt-0.5">
                               <p className="text-[10px] text-gray-600 font-bold uppercase truncate whitespace-nowrap group-hover:text-gray-400 transition-colors animate-marquee-fav">
                                   {like.artist}
@@ -125,13 +120,16 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
                           </div>
                       </div>
 
-                      {/* ESCUDO PROTECTOR DERECHO */}
-                      <div className="absolute right-0 top-0 bottom-0 flex items-center gap-1 px-3 bg-[#1e1f22] opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-[-10px_0_15px_#1e1f22]">
-                          <button onClick={(e) => handleAddToQueue(e, like)} className="p-1.5 text-gray-400 hover:text-[#57F287] transition-colors">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                          </button>
-                          <button onClick={(e) => handleDelete(e, like.videoId)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      {/* Solo el botón de Eliminar (X) */}
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center px-4 bg-[#1e1f22] opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-[-10px_0_15px_#1e1f22]">
+                          <button 
+                            onClick={(e) => handleDelete(e, like.videoId)} 
+                            className="p-1.5 text-gray-500 hover:text-red-500 transition-colors" 
+                            title="Eliminar de favoritos"
+                          >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
                           </button>
                       </div>
 
