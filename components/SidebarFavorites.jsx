@@ -27,10 +27,7 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
   const handleAddToQueue = (e, song) => {
     e.stopPropagation();
     socketRef.current?.emit("cmd_add_queue", { 
-        userId, 
-        video: { videoId: song.videoId, title: song.title, author: song.artist }, 
-        userName, 
-        userAvatar 
+        userId, video: { videoId: song.videoId, title: song.title, author: song.artist }, userName, userAvatar 
     });
   };
 
@@ -50,10 +47,7 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
     if (loadingTrackId === song.videoId) return;
     setLoadingTrackId(song.videoId);
     socketRef.current?.emit("cmd_play_specific", { 
-        userId, 
-        video: { videoId: song.videoId, title: song.title, author: song.artist }, 
-        userName, 
-        userAvatar 
+        userId, video: { videoId: song.videoId, title: song.title, author: song.artist }, userName, userAvatar 
     });
     setTimeout(() => setLoadingTrackId(null), 1500);
   };
@@ -61,16 +55,16 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
   return (
     <div className="px-4 flex flex-col gap-1">
       
-      {/* ANIMACIONES PARA EL DESLIZAMIENTO (MARQUEE) */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes marquee-favorites { 
-          0%, 15% { transform: translateX(0); } 
-          85%, 100% { transform: translateX(calc(-100% + 140px)); } 
+        @keyframes marquee-ping-pong {
+          0%, 20% { transform: translateX(0); }
+          80%, 100% { transform: translateX(calc(-100% + 160px)); } 
         }
-        .animate-marquee-fav {
-          display: inline-block;
-          white-space: nowrap;
-          animation: marquee-favorites 8s ease-in-out infinite alternate;
+        .group:hover .animate-slide {
+          animation: marquee-ping-pong 8s ease-in-out infinite alternate;
+          overflow: visible !important;
+          white-space: nowrap !important;
+          width: max-content !important;
         }
       `}} />
 
@@ -93,42 +87,46 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
           ) : (
               likes.map(like => (
                   <div key={like.videoId} onClick={() => handlePlay(like)} 
-                       // 👇 shrink-0 Y py-3 SON CLAVE PARA QUE NO SE APLASTEN 👇
                        className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer hover:bg-[#1e1f22] shrink-0 min-h-[64px] relative overflow-hidden"
                   >
-                      {/* Icono de Estado */}
-                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 relative">
+                      {/* Icono de Estado (Corazón o Carga) */}
+                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 z-10">
                         {loadingTrackId === like.videoId ? (
                             <svg className="animate-spin h-3.5 w-3.5 text-[#57F287]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         ) : (
-                            <>
-                                <span className="text-[#57F287]/80 group-hover:opacity-0 transition-opacity text-[10px]">♥</span>
-                                <svg className="w-3.5 h-3.5 text-white absolute opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </>
+                            <span className="text-[#57F287]/80 group-hover:text-[#57F287] text-[10px]">♥</span>
                         )}
                       </div>
 
-                      {/* Info de la canción con Marquesina en Hover */}
-                      <div className="flex-1 flex flex-col min-w-0 pr-8 overflow-hidden">
+                      {/* Info de la canción */}
+                      <div className="flex-1 flex flex-col min-w-0 pr-10 overflow-hidden relative">
                           <div className="w-full overflow-hidden">
-                              <p className={`font-bold text-gray-200 text-xs truncate whitespace-nowrap group-hover:animate-marquee-fav group-hover:text-white`}>
+                              <p className="font-bold text-gray-200 text-xs truncate animate-slide">
                                   {like.title}
                               </p>
                           </div>
                           <div className="w-full overflow-hidden mt-0.5">
-                              <p className="text-[10px] text-gray-600 font-bold uppercase truncate whitespace-nowrap group-hover:animate-marquee-fav group-hover:text-gray-400">
+                              <p className="text-[10px] text-gray-600 font-bold uppercase truncate animate-slide">
                                   {like.artist}
                               </p>
                           </div>
                       </div>
 
-                      {/* Iconos de acción (Absolutos para no mover el texto, invisibles por defecto) */}
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                          <button onClick={(e) => handleAddToQueue(e, like)} className="p-1.5 text-gray-500 hover:text-[#57F287] hover:bg-[#57F287]/10 rounded-lg transition-colors">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      {/* Iconos de Acción (Con fondo sólido para "tapar" el texto que deslice) */}
+                      <div className="absolute right-2 top-0 bottom-0 flex items-center gap-0.5 px-2 bg-gradient-to-l from-[#1e1f22] via-[#1e1f22] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                          <button 
+                            onClick={(e) => handleAddToQueue(e, like)}
+                            className="p-1.5 text-gray-400 hover:text-[#57F287] transition-colors"
+                            title="A la cola"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                           </button>
-                          <button onClick={(e) => handleDelete(e, like.videoId)} className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          <button 
+                            onClick={(e) => handleDelete(e, like.videoId)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                            title="Eliminar"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                       </div>
 
