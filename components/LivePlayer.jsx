@@ -135,7 +135,14 @@ export default function LivePlayer({ userId, guildId }) {
 
   // PANTALLA COMPLETA
   useEffect(() => {
-    const handleFullscreenChange = () => { setIsFullscreen(!!document.fullscreenElement); };
+    const handleFullscreenChange = () => { 
+        const isFull = !!document.fullscreenElement;
+        setIsFullscreen(isFull); 
+        // 👇 APAGAR LETRAS AL SALIR DE PANTALLA COMPLETA 👇
+        if (!isFull) {
+            setShowLyrics(false);
+        }
+    };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
@@ -194,7 +201,6 @@ export default function LivePlayer({ userId, guildId }) {
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
   
-  // 👇 Redujimos el límite a 20 para activar la animación de inmediato 👇
   const isLongTitle = status.song?.title?.length > 20;
 
   const renderLyricsContent = () => {
@@ -256,7 +262,6 @@ export default function LivePlayer({ userId, guildId }) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
         
-        {/* 👇 CLASES CSS AGREGADAS PARA OCULTAR LA BARRA DE SCROLL Y MEJORAR MARQUESINA 👇 */}
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes marquee-ping-pong { 
               0%, 15% { transform: translateX(0); } 
@@ -288,7 +293,6 @@ export default function LivePlayer({ userId, guildId }) {
                 <img src={status.song.thumbnail} className="w-full aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-8" alt="Cover" />
                 <div className={`w-full text-center md:text-left flex justify-between items-end gap-4 transition-opacity duration-700 ${isIdle ? 'opacity-50' : 'opacity-100'}`}>
                     <div className="min-w-0">
-                        {/* 👇 LINE-CLAMP PARA QUE OCUPE DOS LÍNEAS EN VEZ DE MOSTRAR PUNTOS SUSPENSIVOS 👇 */}
                         <h1 className="text-3xl md:text-5xl font-black tracking-tighter drop-shadow-xl line-clamp-2 md:line-clamp-3">{status.song.title}</h1>
                         <p className="text-lg md:text-xl font-bold opacity-70 truncate mt-2 drop-shadow-lg">{status.song.artist}</p>
                     </div>
@@ -309,7 +313,6 @@ export default function LivePlayer({ userId, guildId }) {
                         </div>
                     )}
                     
-                    {/* 👇 scrollbar-hide SE APLICA AQUÍ SI ESTÁ IDLE 👇 */}
                     <div 
                       ref={lyricsScrollRef} 
                       onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
@@ -365,6 +368,7 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
+      {/* VENTANA DE LETRAS EN MODO NORMAL */}
       {showLyrics && (
         <div className="fixed inset-0 bg-[#0a0a0c]/90 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
           <div className="bg-[#111214] border border-[#1e1f22] rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
@@ -427,7 +431,6 @@ export default function LivePlayer({ userId, guildId }) {
           </div>
           
           <div className="flex flex-col min-w-0 w-[230px] relative overflow-hidden">
-            {/* 👇 MARQUESINA CONDICIONAL (SI ES MENOS DE 20 LETRAS, SOLO PONE TRUNCATE) 👇 */}
             <span className={`font-bold text-gray-100 text-sm hover:underline cursor-pointer ${isLongTitle ? 'animate-marquee' : 'truncate'}`} style={{ textDecorationColor: activeColor }} onClick={toggleFullscreen}>
               {status.song.isTrivia ? "Pista Misteriosa" : status.song.title}
             </span>
