@@ -55,21 +55,23 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
   return (
     <div className="px-4 flex flex-col gap-1">
       
+      {/* 👇 ANIMACIÓN OPTIMIZADA: Comienza rápido y hace ping-pong 👇 */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes marquee-ping-pong {
-          0%, 20% { transform: translateX(0); }
-          80%, 100% { transform: translateX(calc(-100% + 160px)); } 
+        @keyframes marquee-favorites { 
+          0%, 5% { transform: translateX(0); } 
+          95%, 100% { transform: translateX(calc(-100% + 150px)); } 
         }
-        .group:hover .animate-slide {
-          animation: marquee-ping-pong 8s ease-in-out infinite alternate;
-          overflow: visible !important;
-          white-space: nowrap !important;
-          width: max-content !important;
+        .group:hover .animate-marquee-fav {
+          display: inline-block;
+          white-space: nowrap;
+          width: auto;
+          min-width: 100%;
+          animation: marquee-favorites 6s linear infinite alternate;
         }
       `}} />
 
       <button onClick={() => setIsOpen(!isOpen)} className="px-4 py-2 flex justify-between items-center w-full hover:bg-[#1e1f22]/50 rounded-md transition group">
-        <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-gray-300 tracking-widest transition">
+        <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-gray-400 tracking-widest transition">
           Tus Favoritos
         </span>
         <div className="flex items-center gap-2">
@@ -89,8 +91,8 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
                   <div key={like.videoId} onClick={() => handlePlay(like)} 
                        className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer hover:bg-[#1e1f22] shrink-0 min-h-[64px] relative overflow-hidden"
                   >
-                      {/* Icono de Estado (Corazón o Carga) */}
-                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 z-10">
+                      {/* Icono de Estado (Z-Index alto para estar siempre arriba) */}
+                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 z-20 bg-inherit">
                         {loadingTrackId === like.videoId ? (
                             <svg className="animate-spin h-3.5 w-3.5 text-[#57F287]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         ) : (
@@ -99,32 +101,30 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
                       </div>
 
                       {/* Info de la canción */}
-                      <div className="flex-1 flex flex-col min-w-0 pr-10 overflow-hidden relative">
+                      <div className="flex-1 flex flex-col min-w-0 pr-12 overflow-hidden relative">
                           <div className="w-full overflow-hidden">
-                              <p className="font-bold text-gray-200 text-xs truncate animate-slide">
+                              <p className="font-bold text-gray-200 text-xs truncate animate-marquee-fav">
                                   {like.title}
                               </p>
                           </div>
                           <div className="w-full overflow-hidden mt-0.5">
-                              <p className="text-[10px] text-gray-600 font-bold uppercase truncate animate-slide">
+                              <p className="text-[10px] text-gray-600 font-bold uppercase truncate animate-marquee-fav">
                                   {like.artist}
                               </p>
                           </div>
                       </div>
 
-                      {/* Iconos de Acción (Con fondo sólido para "tapar" el texto que deslice) */}
-                      <div className="absolute right-2 top-0 bottom-0 flex items-center gap-0.5 px-2 bg-gradient-to-l from-[#1e1f22] via-[#1e1f22] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      {/* 👇 ESCUDO PROTECTOR: Botones con fondo sólido para tapar el texto al deslizar 👇 */}
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center gap-1 px-3 bg-[#1e1f22] opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-[-10px_0_15px_#1e1f22]">
                           <button 
                             onClick={(e) => handleAddToQueue(e, like)}
                             className="p-1.5 text-gray-400 hover:text-[#57F287] transition-colors"
-                            title="A la cola"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                           </button>
                           <button 
                             onClick={(e) => handleDelete(e, like.videoId)}
                             className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                            title="Eliminar"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
