@@ -14,7 +14,7 @@ export default async function LandingPage() {
           Musicardi
         </h1>
         <p className="text-gray-400 text-lg md:text-xl font-medium mb-10 leading-relaxed">
-          El bot de música definitivo para Discord. Audio de alta fidelidad, sistema de Autoplay con IA y un panel web en tiempo real.
+          El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.
         </p>
 
         <div className="flex flex-col md:flex-row gap-4 justify-center">
