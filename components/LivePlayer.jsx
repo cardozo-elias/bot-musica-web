@@ -138,7 +138,6 @@ export default function LivePlayer({ userId, guildId }) {
     const handleFullscreenChange = () => { 
         const isFull = !!document.fullscreenElement;
         setIsFullscreen(isFull); 
-        // 👇 APAGAR LETRAS AL SALIR DE PANTALLA COMPLETA 👇
         if (!isFull) {
             setShowLyrics(false);
         }
@@ -291,12 +290,22 @@ export default function LivePlayer({ userId, guildId }) {
         <div className="z-10 flex-1 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-24 px-10 h-full overflow-hidden">
             <div className={`flex flex-col items-center max-w-lg w-full transition-transform duration-700 ${showLyrics ? 'scale-90 md:translate-x-0' : 'scale-100'}`}>
                 <img src={status.song.thumbnail} className="w-full aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-8" alt="Cover" />
-                <div className={`w-full text-center md:text-left flex justify-between items-end gap-4 transition-opacity duration-700 ${isIdle ? 'opacity-50' : 'opacity-100'}`}>
-                    <div className="min-w-0">
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tighter drop-shadow-xl line-clamp-2 md:line-clamp-3">{status.song.title}</h1>
-                        <p className="text-lg md:text-xl font-bold opacity-70 truncate mt-2 drop-shadow-lg">{status.song.artist}</p>
+                
+                {/* 👇 CONTENEDOR CORREGIDO (ESPACIADO Y ALTURA) 👇 */}
+                <div className={`w-full text-center md:text-left flex justify-between items-center gap-4 transition-opacity duration-700 ${isIdle ? 'opacity-50' : 'opacity-100'}`}>
+                    <div className="min-w-0 py-2">
+                        <h1 className="text-3xl md:text-6xl font-black tracking-tighter drop-shadow-xl leading-tight mb-2">
+                          {status.song.title}
+                        </h1>
+                        <p className="text-lg md:text-2xl font-bold opacity-70 drop-shadow-lg leading-relaxed">
+                          {status.song.artist}
+                        </p>
                     </div>
-                    <button onClick={handleLike} className={`p-3 rounded-full transition transform active:scale-95 shadow-xl ${isLiked ? '' : 'bg-white/5 hover:bg-white/10'}`} style={{ color: isLiked ? activeColor : 'white' }}>
+                    <button 
+                      onClick={handleLike} 
+                      className={`p-4 rounded-full transition transform active:scale-95 shadow-xl shrink-0 ${isLiked ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`} 
+                      style={{ color: isLiked ? activeColor : '' }}
+                    >
                         <HeartIcon filled={isLiked} />
                     </button>
                 </div>
@@ -304,7 +313,6 @@ export default function LivePlayer({ userId, guildId }) {
 
             {showLyrics && (
                 <div className="w-full max-w-3xl h-[60vh] md:h-[70vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden relative">
-                    
                     {!isAutoScroll && parsedLyrics.length > 0 && (
                         <div className={`absolute bottom-10 right-4 md:right-10 z-50 animate-fadeIn transition-opacity duration-500 ${isIdle ? 'opacity-0' : 'opacity-100'}`}>
                             <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
@@ -312,10 +320,7 @@ export default function LivePlayer({ userId, guildId }) {
                             </button>
                         </div>
                     )}
-                    
-                    <div 
-                      ref={lyricsScrollRef} 
-                      onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
+                    <div ref={lyricsScrollRef} onWheel={breakSync} onTouchStart={breakSync} onMouseDown={breakSync}
                       className={`flex-1 overflow-y-auto ${isIdle && isFullscreen ? 'scrollbar-hide' : 'custom-scrollbar'}`}
                       style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
                     >
@@ -336,12 +341,12 @@ export default function LivePlayer({ userId, guildId }) {
                 <span className="text-xs font-mono opacity-50">{formatTime(status.song.durationSec * 1000)}</span>
             </div>
 
-            <div className="flex items-center justify-center gap-8">
+            <div className="flex items-center justify-center gap-10">
                 <button onClick={() => setShowLyrics(!showLyrics)} className={`transition p-3 rounded-full ${showLyrics ? 'bg-white/20 text-white' : 'opacity-50 hover:opacity-100'}`}><LyricsIcon /></button>
                 <button onClick={handlePause} className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-[0_0_30px_rgba(255,255,255,0.3)]">
                     {status.isPaused ? <PlayIcon /> : <PauseIcon />}
                 </button>
-                <button onClick={handleSkip} className="opacity-70 hover:opacity-100 hover:scale-110 transition"><SkipIcon /></button>
+                <button onClick={handleSkip} className="opacity-70 hover:opacity-100 hover:scale-110 transition scale-125"><SkipIcon /></button>
             </div>
         </div>
       </div>
