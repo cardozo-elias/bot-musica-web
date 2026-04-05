@@ -250,7 +250,7 @@ export default function LivePlayer({ userId, guildId }) {
           </div>
           <div className="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar">
             {localQueue.length > 0 ? localQueue.map((s, i) => (
-              <div key={`${s.videoId}-${i}`} draggable onDragStart={(e)=>handleDragStart(e,i)} onDragOver={(e)=>handleDragOver(e,i)} onDragEnd={handleDragEnd}
+              <div key={`queue-${s.queueId || i}`} draggable onDragStart={(e)=>handleDragStart(e,i)} onDragOver={(e)=>handleDragOver(e,i)} onDragEnd={handleDragEnd}
                 className={`flex items-center gap-4 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing hover:bg-[#1e1f22] ${draggingIndex === i ? 'opacity-30 scale-95 border-white/20 bg-[#1e1f22]' : 'border-transparent'}`}>
                 <span className="text-[10px] font-black opacity-30 w-4 text-center">≡</span>
                 <img src={s.thumbnail} className="w-10 h-10 rounded-md object-cover flex-shrink-0" alt="" />
