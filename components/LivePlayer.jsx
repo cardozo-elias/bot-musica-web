@@ -106,8 +106,28 @@ export default function LivePlayer({ userId, guildId }) {
   const progressPercent = status.song?.durationSec > 0 ? (status.currentMs / (status.song.durationSec * 1000)) * 100 : 0;
   const activeColor = status.color;
 
-  if (!status.playing || !status.song) return null;
-
+  if (!status.playing || !status.song) {
+    return (
+      <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#1e1f22] p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
+        <div className="flex items-center gap-4 opacity-40 w-1/4">
+          <div className="w-14 h-14 bg-[#1e1f22] rounded-md border border-[#2b2d31]"></div>
+          <div className="flex flex-col gap-2">
+            <div className="w-24 h-2.5 bg-[#1e1f22] rounded-sm"></div>
+            <div className="w-16 h-2 bg-[#1e1f22] rounded-sm"></div>
+          </div>
+        </div>
+        <div className="flex w-2/4 flex-col items-center opacity-40">
+          <div className="flex items-center gap-6 mb-2">
+            <div className="w-5 h-5 bg-[#1e1f22] rounded-full"></div>
+            <div className="w-10 h-10 bg-[#2b2d31] rounded-full"></div>
+            <div className="w-5 h-5 bg-[#1e1f22] rounded-full"></div>
+          </div>
+          <div className="w-full max-w-2xl bg-[#1e1f22] rounded-full h-1.5"></div>
+        </div>
+        <div className="w-1/4 flex justify-end"></div>
+      </div>
+    );
+  }
   // --- MODO PANTALLA COMPLETA (TEATRO) ---
   if (isFullscreen) {
     return (
