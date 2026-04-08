@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
+// 🔥 NUEVO: Importamos el contexto que creamos en el paso anterior
+import { useSocketStats } from "./SocketContext";
 
 const formatTime = (ms) => {
   const totalSeconds = Math.floor((ms || 0) / 1000);
@@ -43,6 +45,9 @@ const LyricsIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24
 const TrashIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
 
 export default function LivePlayer({ userId, guildId }) {
+  // 🔥 NUEVO: Traemos el "setter" del Contexto para enviar los datos hacia arriba
+  const { setSocketStats } = useSocketStats();
+
   const [status, setStatus] = useState({ playing: false, queueList: [], color: '#57F287', voiceMembers: [] });
   const [isLiked, setIsLiked] = useState(false); 
   const [currentVideoId, setCurrentVideoId] = useState(null); 
@@ -81,6 +86,10 @@ export default function LivePlayer({ userId, guildId }) {
     
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
+      
+      // 🔥 NUEVO: Enviamos toda la data fresca al Contexto para que el Dashboard la lea
+      setSocketStats(data);
+      
       setStatus(prev => ({ ...data, color: data.color || '#57F287', voiceMembers: data.voiceMembers || [] }));
       
       if (data.playing && data.song) {
@@ -105,7 +114,7 @@ export default function LivePlayer({ userId, guildId }) {
     });
 
     return () => { clearInterval(interval); socketRef.current?.disconnect(); };
-  }, [userId, guildId]);
+  }, [userId, guildId, setSocketStats]); // Agregamos setSocketStats a las dependencias
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
