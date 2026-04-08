@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-// 🔥 NUEVO: Importamos el contexto que creamos en el paso anterior
-import { useSocketStats } from "./SocketContext";
+import { useSocketStats } from "./SocketContext"; // 🔥 NUEVO: Contexto para el Dashboard
 
 const formatTime = (ms) => {
   const totalSeconds = Math.floor((ms || 0) / 1000);
@@ -114,7 +113,7 @@ export default function LivePlayer({ userId, guildId }) {
     });
 
     return () => { clearInterval(interval); socketRef.current?.disconnect(); };
-  }, [userId, guildId, setSocketStats]); // Agregamos setSocketStats a las dependencias
+  }, [userId, guildId, setSocketStats]); 
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 
@@ -193,19 +192,29 @@ export default function LivePlayer({ userId, guildId }) {
     setDraggingIndex(null); setTimeout(() => { isReordering.current = false; }, 500);
   };
 
-  // 👇 NUEVA FUNCIÓN PARA ELIMINAR DE LA COLA 👇
   const handleRemoveFromQueue = (e, index) => {
     e.stopPropagation();
-    // Actualizamos la UI al instante
     const newQueue = localQueue.filter((_, i) => i !== index);
     setLocalQueue(newQueue);
-    // Le avisamos al bot
     socketRef.current?.emit("cmd_remove_queue", { userId, guildId, trackIndex: index });
   };
 
-  const handleLike = () => { socketRef.current?.emit("cmd_like", userId); setIsLiked(true); };
-  const handlePause = () => socketRef.current?.emit("cmd_pause", userId);
-  const handleSkip = () => socketRef.current?.emit("cmd_skip", userId);
+  // 🔥 NUEVO: INTERFAZ OPTIMISTA PARA MEJORAR LA SENSACIÓN DE VELOCIDAD 🔥
+  const handleLike = () => { 
+      setIsLiked(true); // Cambia al instante en la web
+      socketRef.current?.emit("cmd_like", userId); 
+  };
+  
+  const handlePause = () => {
+      setStatus(prev => ({ ...prev, isPaused: !prev.isPaused })); // Cambia el icono sin delay
+      socketRef.current?.emit("cmd_pause", userId);
+  };
+  
+  const handleSkip = () => {
+      setStatus(prev => ({ ...prev, playing: false })); // Oculta el reproductor asumiendo que el bot ya obedeció
+      socketRef.current?.emit("cmd_skip", userId);
+  };
+
   const saveToPlaylist = async (playlistId) => {
     const res = await fetch('/api/playlists', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playlistId, song: status.song }) });
     if (res.ok) { setShowPlaylistMenu(false); alert("Guardada."); }
