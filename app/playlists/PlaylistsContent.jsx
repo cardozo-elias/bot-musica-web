@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 
-// --- GENERADOR DE MOSAICOS 2x2 ---
 const MosaicCover = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return (
@@ -38,10 +37,7 @@ const MosaicCover = ({ songs }) => {
 };
 
 export default function PlaylistsContent({ initialPlaylists }) {
-  // Estado local para actualizaciones en tiempo real
   const [playlists, setPlaylists] = useState(initialPlaylists);
-  
-  // Estados para la Modal de Creación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [plName, setPlName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,7 +46,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
   const [selectedSong, setSelectedSong] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Buscador ultra-rápido usando la API de Apple Music
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -62,22 +57,19 @@ export default function PlaylistsContent({ initialPlaylists }) {
         const cleanResults = data.results.map(t => ({
           title: t.trackName,
           artist: t.artistName,
-          videoId: `itunes_${t.trackId}`, // ID Falso para que el bot lo traduzca luego
+          videoId: `itunes_${t.trackId}`,
           thumbnail: t.artworkUrl100.replace('100x100bb', '600x600bb'),
           url: t.trackViewUrl
         }));
         setSearchResults(cleanResults);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
     setIsSearching(false);
   };
 
   const handleCreate = async () => {
     if (!plName.trim()) return alert("Ponle un nombre a tu playlist.");
     setIsSaving(true);
-
     try {
       const res = await fetch('/api/playlists', {
         method: 'POST',
@@ -87,31 +79,20 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
       if (res.ok) {
         const newPlaylist = await res.json();
-        // 🔥 MAGIA EN TIEMPO REAL: Añadimos la nueva playlist al principio de la lista sin recargar 🔥
         setPlaylists([{ ...newPlaylist, songs: typeof newPlaylist.songs === 'string' ? JSON.parse(newPlaylist.songs) : newPlaylist.songs }, ...playlists]);
-        
-        // Limpiamos y cerramos
-        setIsModalOpen(false);
-        setPlName("");
-        setSearchQuery("");
-        setSearchResults([]);
-        setSelectedSong(null);
+        setIsModalOpen(false); setPlName(""); setSearchQuery(""); setSearchResults([]); setSelectedSong(null);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
     setIsSaving(false);
   };
 
   return (
     <>
-      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#18191c] to-[#0a0a0c]">
+      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#18191c] to-[#0a0a0c] pb-32">
         <div className="p-8 md:p-12 max-w-[1600px] w-full mx-auto">
           <h1 className="text-4xl font-black tracking-tight mb-8">Tus Playlists</h1>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            
-            {/* Tarjeta Botón para Crear Nueva */}
             <div 
               onClick={() => setIsModalOpen(true)}
               className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all cursor-pointer group flex flex-col items-center justify-center aspect-[3/4] shadow-md"
@@ -122,7 +103,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
                <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Crear Playlist</span>
             </div>
 
-            {/* Mapeo de las Playlists Reales (Ahora lee del ESTADO local) */}
             {playlists.map(pl => (
               <Link href={`/playlists/${pl.id}`} key={pl.id} className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all group flex flex-col shadow-md">
                 <div className="relative mb-4 rounded-md overflow-hidden shadow-lg aspect-square bg-[#1e1f22]">
@@ -143,7 +123,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
         </div>
       </section>
 
-      {/* VENTANA MODAL (CREAR PLAYLIST) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="bg-[#111214] border border-[#2b2d31] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-slideUp">

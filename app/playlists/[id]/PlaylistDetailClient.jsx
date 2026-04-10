@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from "socket.io-client";
 
-// Mosaico más compacto y cuadrado para el nuevo diseño
 const MosaicCoverPanel = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return <div className="w-32 h-32 md:w-40 md:h-40 bg-[#1e1f22] rounded-xl flex items-center justify-center border border-[#2b2d31]"><span className="text-3xl text-gray-600">🎵</span></div>;
@@ -28,7 +27,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
   const [socket, setSocket] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Estados del Buscador Integrado
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -98,14 +96,12 @@ export default function PlaylistDetailClient({ playlist, session }) {
       });
 
       if (res.ok) {
-        // Actualizamos la UI al instante
         const newSongData = {
           ...track,
           requester: session.user.name,
           requesterAvatar: session.user.image
         };
         setSongs([...songs, newSongData]);
-        // Removemos de los resultados para dar feedback visual
         setSearchResults(searchResults.filter(t => t.videoId !== track.videoId));
       }
     } catch (err) { console.error(err); }
@@ -113,10 +109,9 @@ export default function PlaylistDetailClient({ playlist, session }) {
   };
 
   return (
-    <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#0a0a0c]">
+    <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#0a0a0c] pb-32">
       <div className="p-6 md:p-10 max-w-[1400px] w-full mx-auto flex flex-col gap-6">
         
-        {/* PANEL HEADER (Estilo Dashboard en lugar de Spotify) */}
         <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-sm">
           <MosaicCoverPanel songs={songs} />
           
@@ -133,7 +128,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
               <span className="font-mono text-xs">{songs.length} pistas</span>
             </div>
 
-            {/* ACTION BAR: Botones estilo panel de control */}
             <div className="flex items-center justify-center md:justify-start gap-3">
               <button 
                 onClick={handlePlayPlaylist}
@@ -155,7 +149,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
           </div>
         </div>
 
-        {/* MÓDULO DE BÚSQUEDA INTEGRADO */}
         {showSearch && (
           <div className="bg-[#111214] border border-[#57F287]/30 rounded-2xl p-6 shadow-lg animate-slideDown">
             <h3 className="text-sm font-black uppercase text-white tracking-widest mb-4">Buscador Rápido</h3>
@@ -198,7 +191,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
           </div>
         )}
 
-        {/* TABLA DE CANCIONES (Estilo Dashboard) */}
         <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl overflow-hidden shadow-sm">
           <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-[#1e1f22] bg-[#0a0a0c]/50 text-[10px] font-black text-gray-500 uppercase tracking-widest">
             <span className="w-6 text-center">#</span>
