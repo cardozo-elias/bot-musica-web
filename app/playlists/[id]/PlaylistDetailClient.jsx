@@ -33,12 +33,74 @@ export default function PlaylistDetailClient({ playlist, session }) {
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(null);
 
+  // Estados para Recomendaciones
+  const [recommendations, setRecommendations] = useState([]);
+  const [isFetchingRecs, setIsFetchingRecs] = useState(false);
+
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     const newSocket = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
     setSocket(newSocket);
     return () => newSocket.disconnect();
   }, []);
+
+  // Disparar recomendaciones cuando cargan las canciones por primera vez
+  useEffect(() => {
+    if (songs.length > 0 && recommendations.length === 0) {
+      fetchRecommendations();
+    }
+  }, [songs.length]);
+
+  const fetchRecommendations = async () => {
+    if (songs.length === 0) return;
+    setIsFetchingRecs(true);
+    try {
+      // 1. Extraemos artistas únicos de la playlist
+      const uniqueArtists = [...new Set(songs.map(s => s.artist).filter(Boolean))];
+      
+      // 2. Elegimos hasta 3 artistas al azar
+      const shuffledArtists = uniqueArtists.sort(() => 0.5 - Math.random()).slice(0, 3);
+      
+      let allFetchedTracks = [];
+      
+      // 3. Buscamos canciones de esos artistas en iTunes
+      for (const artist of shuffledArtists) {
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&entity=song&limit=15`);
+        const data = await res.json();
+        if (data.results) {
+          allFetchedTracks = allFetchedTracks.concat(data.results);
+        }
+      }
+
+      // 4. Limpiamos y filtramos las que ya están en la playlist
+      const existingIds = new Set(songs.map(s => s.videoId));
+      const existingTitles = new Set(songs.map(s => s.title.toLowerCase()));
+      const cleanRecs = [];
+      const seenRecIds = new Set();
+
+      for (const t of allFetchedTracks) {
+        const fakeId = `itunes_${t.trackId}`;
+        const titleLower = t.trackName.toLowerCase();
+        
+        // Evitamos duplicados, canciones que ya están, y remixes/versiones raras si ya existe el título
+        if (!existingIds.has(fakeId) && !existingTitles.has(titleLower) && !seenRecIds.has(fakeId)) {
+          seenRecIds.add(fakeId);
+          cleanRecs.push({
+            title: t.trackName,
+            artist: t.artistName,
+            videoId: fakeId,
+            thumbnail: t.artworkUrl100.replace('100x100bb', '600x600bb'),
+            url: t.trackViewUrl
+          });
+        }
+      }
+
+      // 5. Mezclamos los resultados finales y mostramos 5
+      setRecommendations(cleanRecs.sort(() => 0.5 - Math.random()).slice(0, 5));
+
+    } catch (e) { console.error("[RECS ERROR]:", e); }
+    setIsFetchingRecs(false);
+  };
 
   const handlePlayPlaylist = () => {
     if (!socket || songs.length === 0) return;
@@ -102,7 +164,9 @@ export default function PlaylistDetailClient({ playlist, session }) {
           requesterAvatar: session.user.image
         };
         setSongs([...songs, newSongData]);
+        // Quitar visualmente de las listas
         setSearchResults(searchResults.filter(t => t.videoId !== track.videoId));
+        setRecommendations(recommendations.filter(t => t.videoId !== track.videoId));
       }
     } catch (err) { console.error(err); }
     setIsAdding(null);
@@ -241,6 +305,50 @@ export default function PlaylistDetailClient({ playlist, session }) {
             )}
           </div>
         </div>
+
+        {/* 🔥 NUEVO: SECCIÓN DE RECOMENDACIONES 🔥 */}
+        {songs.length > 0 && (
+          <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-black uppercase text-white tracking-widest">Recomendaciones</h3>
+                <span className="text-xs text-gray-500 font-medium">Basado en los artistas de esta playlist</span>
+              </div>
+              <button 
+                onClick={fetchRecommendations} 
+                disabled={isFetchingRecs}
+                className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {isFetchingRecs ? 'Cargando...' : '↻ Refrescar'}
+              </button>
+            </div>
+
+            {recommendations.length === 0 && !isFetchingRecs ? (
+              <p className="text-xs text-gray-500 italic text-center py-4">Agrega más variedad a tu playlist para recibir recomendaciones.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {recommendations.map((track, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-[#0a0a0c] border border-[#1e1f22] rounded-xl hover:border-[#2b2d31] transition-colors group">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <img src={track.thumbnail} className="w-10 h-10 rounded object-cover shadow-sm" alt="Cover" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-white truncate">{track.title}</span>
+                        <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide truncate">{track.artist}</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleAddSong(track)}
+                      disabled={isAdding === track.videoId}
+                      className="px-4 py-2 rounded border border-[#2b2d31] text-xs font-bold text-gray-300 hover:text-black hover:bg-white hover:border-white transition-all disabled:opacity-50"
+                    >
+                      {isAdding === track.videoId ? 'Añadiendo...' : 'Añadir'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </section>
