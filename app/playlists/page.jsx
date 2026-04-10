@@ -1,136 +1,176 @@
-"use client";
-import { useEffect, useState } from "react";
-import LivePlayer from "../../components/LivePlayer";
-import { io } from "socket.io-client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
+import { Pool } from 'pg';
+import Link from "next/link";
+import SidebarFavorites from "../../components/SidebarFavorites";
 
-export default function PlaylistsPage() {
-  const [playlists, setPlaylists] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState(null);
-  const [sessionInfo, setSessionInfo] = useState(null);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-  const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+// 🔥 COMPONENTE MAGICO: Generador de Mosaicos 2x2 🔥
+const MosaicCover = ({ songs }) => {
+  if (!songs || songs.length === 0) {
+    return (
+      <div className="w-full aspect-square bg-[#1e1f22] flex items-center justify-center text-gray-600">
+        <svg className="w-12 h-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    fetch("/api/auth/session").then(res => res.json()).then(setSessionInfo);
-    fetchPlaylists();
-  }, []);
+  // Filtramos para obtener portadas ÚNICAS (para que no se repita 4 veces la misma si agregaste el mismo disco)
+  const uniqueCovers = [];
+  const seenIds = new Set();
+  for (const song of songs) {
+    if (!seenIds.has(song.videoId) && song.thumbnail) {
+      seenIds.add(song.videoId);
+      uniqueCovers.push(song.thumbnail);
+    }
+  }
 
-  const fetchPlaylists = async () => {
-    try {
-      const res = await fetch("/api/playlists"); 
-      const data = await res.json();
-      setPlaylists(Array.isArray(data) ? data : []);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
+  // Si hay menos de 4 portadas distintas, mostramos la primera en grande
+  if (uniqueCovers.length < 4) {
+    return (
+      <img 
+        src={uniqueCovers[0]} 
+        alt="Cover" 
+        className="w-full aspect-square object-cover shadow-md"
+      />
+    );
+  }
 
-  const removeSong = async (playlistId, videoId) => {
-    await fetch("/api/playlists", { 
-      method: "PATCH", 
-      headers: { "Content-Type": "application/json" }, 
-      body: JSON.stringify({ playlistId, videoId }) 
-    });
-    fetchPlaylists();
-  };
+  // Si hay 4 o más, armamos el mosaico estilo Spotify
+  return (
+    <div className="w-full aspect-square grid grid-cols-2 grid-rows-2 gap-0 shadow-md">
+      <img src={uniqueCovers[0]} className="w-full h-full object-cover" alt="Cover 1" />
+      <img src={uniqueCovers[1]} className="w-full h-full object-cover" alt="Cover 2" />
+      <img src={uniqueCovers[2]} className="w-full h-full object-cover" alt="Cover 3" />
+      <img src={uniqueCovers[3]} className="w-full h-full object-cover" alt="Cover 4" />
+    </div>
+  );
+};
 
-  const deletePlaylist = async (id) => {
-    if (!confirm("¿Seguro que quieres eliminar esta playlist entera?")) return;
-    await fetch(`/api/playlists?id=${id}`, { method: "DELETE" });
-    fetchPlaylists();
-  };
+export default async function PlaylistsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user) redirect('/login');
 
-  const handlePlayPlaylist = (playlistId, e) => {
-    e.stopPropagation();
-    if (!sessionInfo?.user) return;
-    
-    // Bypass de ngrok agregado aquí
-    const socket = io(botUrl, {
-      extraHeaders: { "ngrok-skip-browser-warning": "true" }
-    });
+  let playlists = [];
+  let allLikes = [];
 
-    socket.emit("cmd_play_playlist", { 
-        userId: sessionInfo.user.id, 
-        playlistId: playlistId, 
-        userName: sessionInfo.user.name, 
-        userAvatar: sessionInfo.user.image 
-    });
-    alert("🎶 ¡Playlist enviada a la cola!");
-    setTimeout(() => socket.disconnect(), 1000);
-  };
+  try {
+    // Traemos las playlists con todo su contenido (JSONB)
+    const plRes = await pool.query('SELECT id, name, songs FROM user_playlists WHERE user_id = $1 ORDER BY id DESC', [session.user.id]);
+    playlists = plRes.rows.map(pl => ({
+      id: pl.id,
+      name: pl.name,
+      songs: typeof pl.songs === 'string' ? JSON.parse(pl.songs) : pl.songs || []
+    }));
+
+    // Traemos los likes para la sidebar
+    const likesRes = await pool.query('SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC LIMIT 50', [session.user.id]);
+    allLikes = likesRes.rows;
+  } catch (e) {
+    console.error("[PLAYLISTS DB ERROR]:", e.message);
+  }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0c] text-white p-6 md:p-12 pb-48">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-[#2b2d31] pb-8 gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#5865F2] to-[#57F287]">
-              Tus playlists
-            </h1>
-            <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Colección de listas personalizadas</p>
+    <main className="h-screen bg-[#0a0a0c] text-white flex overflow-hidden font-sans">
+      
+      {/* SIDEBAR (Idéntica al Dashboard para mantener la estética) */}
+      <aside className="w-[280px] bg-[#000000] border-r border-[#1e1f22] flex flex-col pt-8 pb-8 z-10 shadow-xl shrink-0">
+        <div className="px-4 flex flex-col gap-2 mb-8">
+          <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2">Navegación</div>
+          <Link href="/dashboard/select" className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg font-bold text-sm transition">
+             Panel Principal
+          </Link>
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-[#1e1f22] text-white rounded-lg font-bold text-sm transition mt-1">
+             Tus Playlists
           </div>
-          <a href="/" className="bg-[#111214] border border-[#2b2d31] hover:bg-white hover:text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest transition shadow-lg">
-            Volver al Panel
-          </a>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div></div>
-        ) : playlists.length === 0 ? (
-          <div className="bg-[#111214] p-20 rounded-3xl border border-dashed border-[#2b2d31] text-center shadow-2xl">
-            <p className="text-gray-400 font-bold text-xl mb-2">Aún no tienes listas de reproducción.</p>
-            <p className="text-gray-600 text-sm">Usa el buscador en el panel principal para crear una.</p>
+        <SidebarFavorites 
+          initialLikes={allLikes} 
+          userId={session.user.id} 
+          userName={session.user.name} 
+          userAvatar={session.user.image} 
+        />
+
+        {/* Listado lateral estilo Spotify */}
+        <div className="px-4 mt-6 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2">
+            Tu Biblioteca
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {playlists.map(pl => (
-              <div key={pl.id} className="bg-[#111214] rounded-3xl border border-[#2b2d31] overflow-hidden shadow-2xl transition hover:border-[#3f4147]">
-                <div className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center cursor-pointer hover:bg-[#1a1b1e] gap-6" onClick={() => setExpandedId(expandedId === pl.id ? null : pl.id)}>
-                  <div className="flex items-center gap-6 w-full">
-                    <div className="bg-gradient-to-br from-[#5865F2] to-[#57F287] p-5 rounded-2xl shadow-xl text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-black tracking-tight">{pl.name}</h2>
-                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">{pl.songs?.length || 0} canciones guardadas</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 w-full md:w-auto">
-                    <button onClick={(e) => handlePlayPlaylist(pl.id, e)} disabled={!pl.songs?.length} className="flex-1 md:flex-none bg-[#57F287] text-black px-8 py-3 rounded-full font-black text-xs uppercase hover:scale-105 transition shadow-xl disabled:opacity-30">
-                      Reproducir
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); deletePlaylist(pl.id); }} className="bg-[#da373c]/10 text-[#da373c] border border-[#da373c]/20 hover:bg-[#da373c] hover:text-white p-3 rounded-full transition" title="Eliminar Lista">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  </div>
-                </div>
-                {expandedId === pl.id && (
-                  <div className="p-4 md:p-8 bg-[#0a0a0c] border-t border-[#2b2d31] flex flex-col gap-2">
-                    {pl.songs?.map((song, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 md:p-4 hover:bg-[#1e1f22] rounded-2xl group transition border border-transparent hover:border-[#2b2d31]">
-                        <div className="flex items-center gap-5 overflow-hidden">
-                          <span className="text-gray-600 font-black text-xs w-4 text-center">{i + 1}</span>
-                          <img src={song.thumbnail} className="w-12 h-12 rounded-xl shadow-md object-cover" alt="" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{song.title}</p>
-                            <p className="text-[10px] text-gray-500 uppercase font-black tracking-wider mt-0.5">{String(song.artist)}</p>
-                          </div>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); removeSong(pl.id, song.videoId); }} className="opacity-0 group-hover:opacity-100 text-red-500 p-2 rounded-lg hover:bg-[#111214] transition font-bold text-xs uppercase tracking-widest">
-                           Quitar
-                        </button>
-                      </div>
-                    ))}
-                    {(!pl.songs || pl.songs.length === 0) && (
-                        <p className="text-center py-6 text-gray-600 font-bold text-sm">Esta lista está vacía.</p>
-                    )}
-                  </div>
-                )}
+          {playlists.map(pl => (
+            <Link key={pl.id} href={`/playlists/${pl.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg text-sm transition truncate">
+              {pl.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="px-6 flex items-center gap-4 mt-auto border-t border-[#1e1f22] pt-6">
+          <img src={session.user.image} className="w-10 h-10 rounded-full border border-[#2b2d31]" alt="Avatar" />
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-bold truncate text-gray-200">{session.user.name}</span>
+            <a href="/api/auth/signout" className="text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
+          </div>
+        </div>
+      </aside>
+
+      {/* CONTENIDO CENTRAL: Grilla de Playlists */}
+      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#18191c] to-[#0a0a0c]">
+        <div className="p-8 md:p-12 max-w-[1600px] w-full mx-auto">
+          
+          <h1 className="text-4xl font-black tracking-tight mb-8">Tus Playlists</h1>
+
+          {playlists.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center opacity-50">
+              <svg className="w-20 h-20 mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <h2 className="text-2xl font-bold">Aún no tienes playlists</h2>
+              <p className="text-sm mt-2 max-w-md">Guarda la cola de reproducción actual desde tu Dashboard o usando el comando /playlist en Discord para crear una nueva.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              
+              {/* Tarjeta para crear nueva (opcional, visual por ahora) */}
+              <div className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all cursor-pointer group flex flex-col items-center justify-center aspect-[3/4]">
+                 <div className="w-16 h-16 rounded-full bg-[#2b2d31] flex items-center justify-center text-gray-400 group-hover:text-white transition-colors mb-4">
+                    <span className="text-3xl leading-none font-light">+</span>
+                 </div>
+                 <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Crear Playlist</span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {sessionInfo?.user?.id && <LivePlayer userId={sessionInfo.user.id} />}
+
+              {/* Mapeo de las Playlists Reales */}
+              {playlists.map(pl => (
+                <Link href={`/playlists/${pl.id}`} key={pl.id} className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all group flex flex-col">
+                  
+                  {/* Contenedor de la imagen con botón de Play invisible estilo Spotify */}
+                  <div className="relative mb-4 rounded-md overflow-hidden shadow-lg aspect-square">
+                    <MosaicCover songs={pl.songs} />
+                    
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end justify-end p-3">
+                        <button className="w-12 h-12 bg-[#57F287] rounded-full flex items-center justify-center text-black opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:bg-[#45d16f] shadow-xl">
+                            <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-white text-base truncate mb-1">{pl.name}</h3>
+                  <p className="text-xs text-gray-500 font-medium truncate">
+                    {pl.songs.length} pistas • {pl.songs.length > 0 ? pl.songs[0].artist : 'Vacía'}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+
+        </div>
+      </section>
     </main>
   );
 }
