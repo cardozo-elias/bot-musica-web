@@ -23,17 +23,35 @@ export async function GET(req) {
   }
 }
 
-// Crear una nueva playlist
+// 🔥 ACTUALIZADO: Crear una nueva playlist (Con canción inicial opcional)
 export async function POST(req) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!session || !session.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  
   try {
-    const { name } = await req.json();
-    await pool.query(
-      'INSERT INTO user_playlists (user_id, name, songs) VALUES ($1, $2, $3)', 
-      [session.user.id, name, '[]']
+    const { name, song } = await req.json();
+    
+    // Si mandaron una canción inicial desde el buscador, la armamos bien
+    let initialSongs = [];
+    if (song) {
+        initialSongs.push({
+            title: song.title,
+            artist: song.artist || song.author || "Desconocido",
+            url: song.url || `https://www.youtube.com/watch?v=${song.videoId}`,
+            videoId: song.videoId,
+            thumbnail: song.thumbnail,
+            requester: session.user.name,
+            requesterAvatar: session.user.image
+        });
+    }
+
+    // Insertamos y devolvemos la fila entera para que la web la pinte al instante
+    const res = await pool.query(
+      'INSERT INTO user_playlists (user_id, name, songs) VALUES ($1, $2, $3) RETURNING id, name, songs', 
+      [session.user.id, name, JSON.stringify(initialSongs)]
     );
-    return NextResponse.json({ success: true });
+    
+    return NextResponse.json(res.rows[0]);
   } catch (e) { 
     return NextResponse.json({ error: e.message }, { status: 500 }); 
   }
@@ -83,7 +101,8 @@ export async function PUT(req) {
     return NextResponse.json({ error: e.message }, { status: 500 }); 
   }
 }
-// Añade este método al final de tu app/api/playlists/route.js
+
+// Quitar una canción de la playlist
 export async function PATCH(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
