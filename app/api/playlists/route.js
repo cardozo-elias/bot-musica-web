@@ -102,35 +102,32 @@ export async function PUT(req) {
   }
 }
 
-// Quitar una canción de la playlist o Reordenar la lista completa
+// Quitar canción, Reordenar o Renombrar
 export async function PATCH(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     
     try {
-        const { playlistId, videoId, action, newSongs } = await req.json();
+        const { playlistId, videoId, action, newSongs, newName } = await req.json();
         
-        // 🔥 NUEVA LÓGICA: Si la acción es "reorder", sobreescribimos todo el array de canciones
-        if (action === 'reorder' && newSongs) {
-            await pool.query(
-                `UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`,
-                [JSON.stringify(newSongs), playlistId, session.user.id]
-            );
+        // Acción: Renombrar Playlist
+        if (action === 'rename' && newName) {
+            await pool.query(`UPDATE user_playlists SET name = $1 WHERE id = $2 AND user_id = $3`, [newName, playlistId, session.user.id]);
             return NextResponse.json({ success: true });
         }
 
-        // LÓGICA ANTERIOR: Eliminar una sola canción
+        // Acción: Reordenar
+        if (action === 'reorder' && newSongs) {
+            await pool.query(`UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`, [JSON.stringify(newSongs), playlistId, session.user.id]);
+            return NextResponse.json({ success: true });
+        }
+
+        // Acción: Eliminar una canción
         const res = await pool.query('SELECT songs FROM user_playlists WHERE id = $1 AND user_id = $2', [playlistId, session.user.id]);
         if (res.rows.length === 0) return NextResponse.json({ error: "No encontrada" });
-
         const updatedSongs = res.rows[0].songs.filter(s => s.videoId !== videoId);
-
-        await pool.query(
-            `UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`,
-            [JSON.stringify(updatedSongs), playlistId, session.user.id]
-        );
+        await pool.query(`UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`, [JSON.stringify(updatedSongs), playlistId, session.user.id]);
+        
         return NextResponse.json({ success: true });
-    } catch(e) { 
-        return NextResponse.json({ error: e.message }, { status: 500 }); 
-    }
+    } catch(e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
