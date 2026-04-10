@@ -10,20 +10,32 @@ const pool = new Pool({
 
 const DEFAULT_COVER = "https://ui-avatars.com/api/?name=🎵&background=1e1f22&color=57F287&size=512";
 
-// Función para obtener Token de acceso oficial de Spotify
+// 🟢 OBTENER TOKEN DE SPOTIFY
 async function getSpotifyToken() {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-  
   if (!clientId || !clientSecret) return null;
 
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   const res = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=client_credentials'
+  });
+  const data = await res.json();
+  return data.access_token;
+}
+
+// ⬛ OBTENER TOKEN DE TIDAL
+async function getTidalToken() {
+  const clientId = process.env.TIDAL_CLIENT_ID;
+  const clientSecret = process.env.TIDAL_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const res = await fetch('https://auth.tidal.com/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'grant_type=client_credentials'
   });
   const data = await res.json();
@@ -40,63 +52,44 @@ export async function POST(req) {
     let formattedSongs = [];
 
     // ==========================================
-    // 🟢 SPOTIFY (API OFICIAL - SIN LÍMITES Y CON PORTADAS HD)
+    // 🟢 MOTOR 1: SPOTIFY API OFICIAL
     // ==========================================
     if (url.includes('spotify.com')) {
       const token = await getSpotifyToken();
-      
-      if (!token) {
-        return NextResponse.json({ error: "El admin del bot necesita configurar las llaves de Spotify en el archivo .env" }, { status: 400 });
-      }
+      if (!token) return NextResponse.json({ error: "Faltan las credenciales de Spotify en el archivo .env" }, { status: 400 });
 
-      // Verificamos si es Playlist o Álbum y sacamos su ID
       const isPlaylist = url.includes('/playlist/');
       const isAlbum = url.includes('/album/');
-      
-      if (!isPlaylist && !isAlbum) {
-         return NextResponse.json({ error: "Solo se soportan enlaces de Playlists o Álbumes." }, { status: 400 });
-      }
+      if (!isPlaylist && !isAlbum) return NextResponse.json({ error: "Solo se soportan Playlists o Álbumes." }, { status: 400 });
 
-      let endpoint = '';
-      if (isPlaylist) {
-         const id = url.split('/playlist/')[1].split('?')[0];
-         endpoint = `https://api.spotify.com/v1/playlists/${id}`;
-      } else {
-         const id = url.split('/album/')[1].split('?')[0];
-         endpoint = `https://api.spotify.com/v1/albums/${id}`;
-      }
+      let endpoint = isPlaylist 
+        ? `https://api.spotify.com/v1/playlists/${url.split('/playlist/')[1].split('?')[0]}`
+        : `https://api.spotify.com/v1/albums/${url.split('/album/')[1].split('?')[0]}`;
 
-      // 1. Obtenemos la información general (Nombre de la playlist)
       const resInfo = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!resInfo.ok) return NextResponse.json({ error: "No se pudo acceder a la playlist. Asegúrate de que sea pública." }, { status: 404 });
+      if (!resInfo.ok) return NextResponse.json({ error: "No se pudo acceder a la playlist de Spotify." }, { status: 404 });
       const dataInfo = await resInfo.json();
       
       playlistName = dataInfo.name || "Playlist de Spotify";
 
-      // 2. Extraemos TODAS las canciones (Paginación Infinita)
       let tracksUrl = isPlaylist ? dataInfo.tracks.href : `${endpoint}/tracks`;
       let allItems = [];
 
+      // Paginación para traer más de 100
       while (tracksUrl) {
         const resTracks = await fetch(tracksUrl, { headers: { 'Authorization': `Bearer ${token}` } });
         const dataTracks = await resTracks.json();
         allItems = allItems.concat(dataTracks.items);
-        tracksUrl = dataTracks.next; // Si hay más de 100, Spotify nos da el link a la siguiente página
+        tracksUrl = dataTracks.next; 
       }
 
-      // 3. Formateamos las canciones
       formattedSongs = allItems.map(item => {
-        // En playlists la canción está dentro de "item.track". En álbumes es "item" directo.
         const track = isPlaylist ? item.track : item;
         if (!track) return null;
 
-        // Buscamos la portada exacta
         let thumb = DEFAULT_COVER;
-        if (isPlaylist && track.album?.images?.length > 0) {
-          thumb = track.album.images[0].url; // Portada HD de la canción
-        } else if (isAlbum && dataInfo.images?.length > 0) {
-          thumb = dataInfo.images[0].url; // Portada HD del álbum padre
-        }
+        if (isPlaylist && track.album?.images?.length > 0) thumb = track.album.images[0].url;
+        else if (isAlbum && dataInfo.images?.length > 0) thumb = dataInfo.images[0].url;
 
         return {
           title: track.name,
@@ -111,40 +104,61 @@ export async function POST(req) {
 
     } 
     // ==========================================
-    // ⬛ TIDAL (Scraper Nativo)
+    // ⬛ MOTOR 2: TIDAL API OFICIAL
     // ==========================================
     else if (url.includes('tidal.com')) {
-      const tidalRes = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
-      const html = await tidalRes.text();
+      const token = await getTidalToken();
+      if (!token) return NextResponse.json({ error: "Faltan las credenciales de Tidal en el archivo .env" }, { status: 400 });
 
-      const titleMatch = html.match(/<title>(.*?) en TIDAL<\/title>/i) || html.match(/<meta property="og:title" content="(.*?)"/i);
-      if (titleMatch && titleMatch[1]) playlistName = titleMatch[1].trim();
+      const isPlaylist = url.includes('/playlist/');
+      const isAlbum = url.includes('/album/');
+      if (!isPlaylist && !isAlbum) return NextResponse.json({ error: "Solo se soportan Playlists o Álbumes." }, { status: 400 });
 
-      const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(\{.*?\})<\/script>/);
+      // Extraemos el UUID del enlace
+      const idMatch = url.match(/(?:playlist|album)\/([a-zA-Z0-9-]+)/);
+      const tidalId = idMatch ? idMatch[1] : null;
       
-      if (nextDataMatch && nextDataMatch[1]) {
-        try {
-          const tidalData = JSON.parse(nextDataMatch[1]);
-          const items = tidalData?.props?.pageProps?.initialState?.resources?.items || tidalData?.props?.pageProps?.items || [];
-          
-          Object.values(items).forEach(item => {
-            const track = item.item || item;
-            if (track && track.title) {
-              formattedSongs.push({
-                title: track.title,
-                artist: track.artist?.name || track.artists?.[0]?.name || "Desconocido",
-                videoId: `tidal_${track.id}`,
-                url: track.url || url,
-                thumbnail: track.album?.cover ? `https://resources.tidal.com/images/${track.album.cover.replace(/-/g, '/')}/640x640.jpg` : DEFAULT_COVER,
-                requester: session.user.name,
-                requesterAvatar: session.user.image
-              });
-            }
-          });
-        } catch (e) { console.error("Error parseando Tidal:", e); }
-      }
+      if (!tidalId) return NextResponse.json({ error: "Enlace de Tidal inválido." }, { status: 400 });
 
-      if (formattedSongs.length === 0) return NextResponse.json({ error: "No se pudieron extraer las pistas de Tidal." }, { status: 404 });
+      const headers = { 
+        'Authorization': `Bearer ${token}`, 
+        'Accept': 'application/vnd.tidal.v1+json' 
+      };
+
+      // 1. Buscamos el Nombre de la Playlist/Álbum
+      const type = isPlaylist ? 'playlists' : 'albums';
+      const resInfo = await fetch(`https://openapi.tidal.com/${type}/${tidalId}`, { headers });
+      if (!resInfo.ok) return NextResponse.json({ error: "No se pudo acceder a Tidal. Verifica el enlace." }, { status: 404 });
+      
+      const infoData = await resInfo.json();
+      playlistName = infoData.resource?.title || infoData.title || "Playlist de Tidal";
+
+      // 2. Traemos las canciones
+      const resItems = await fetch(`https://openapi.tidal.com/${type}/${tidalId}/items?limit=150`, { headers });
+      const itemsData = await resItems.json();
+      const items = itemsData.data || itemsData.items || [];
+
+      formattedSongs = items.map(item => {
+        const track = item.resource || item.item || item;
+        if (!track || !track.title) return null;
+
+        // Construimos la URL de la imagen en alta calidad
+        let thumb = DEFAULT_COVER;
+        if (track.album?.cover) {
+           thumb = `https://resources.tidal.com/images/${track.album.cover.replace(/-/g, '/')}/640x640.jpg`;
+        }
+
+        return {
+          title: track.title,
+          artist: track.artist?.name || track.artists?.[0]?.name || "Desconocido",
+          videoId: `tidal_${track.id}`,
+          url: track.tidalUrl || track.url || url,
+          thumbnail: thumb,
+          requester: session.user.name,
+          requesterAvatar: session.user.image
+        };
+      }).filter(Boolean);
+
     } else {
       return NextResponse.json({ error: "Enlace no soportado. Usa Spotify o Tidal." }, { status: 400 });
     }
