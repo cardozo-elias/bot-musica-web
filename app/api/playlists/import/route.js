@@ -33,8 +33,7 @@ export async function POST(req) {
       if (!tracks || tracks.length === 0) return NextResponse.json({ error: "No se encontraron canciones." }, { status: 404 });
 
       formattedSongs = tracks.map(track => {
-        // Buscamos la portada en todas las propiedades posibles de la API de Spotify
-        let thumb = track.album?.images?.[0]?.url || track.coverArt?.sources?.[0]?.url || track.thumbnail || DEFAULT_COVER;
+        let thumb = track.album?.images?.[0]?.url || track.coverArt?.sources?.[0]?.url || track.thumbnail || 'https://i.imgur.com/Q2v1vV7.png';
         return {
           title: track.name,
           artist: track.artist || (track.artists ? track.artists[0].name : "Desconocido"),

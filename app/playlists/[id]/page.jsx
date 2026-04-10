@@ -23,18 +23,30 @@ export default async function PlaylistPage({ params }) {
   let playlist = null;
   let allLikes = [];
   let userPlaylists = [];
+  let isOwner = false;
 
   try {
-    const plRes = await pool.query('SELECT * FROM user_playlists WHERE id = $1 AND user_id = $2', [playlistId, session.user.id]);
+    // Buscamos la playlist sin importar de quién sea todavía
+    const plRes = await pool.query('SELECT * FROM user_playlists WHERE id = $1', [playlistId]);
     if (plRes.rows.length === 0) redirect('/playlists');
 
     const plData = plRes.rows[0];
+    isOwner = plData.user_id === session.user.id;
+
+    // 🔥 EL PORTERO: Si no es el dueño y tampoco es pública, ¡pa' fuera! 🔥
+    if (!isOwner && !plData.is_public) {
+        redirect('/playlists');
+    }
+
     playlist = {
       id: plData.id,
       name: plData.name,
+      is_public: plData.is_public || false,
+      owner_id: plData.user_id,
       songs: typeof plData.songs === 'string' ? JSON.parse(plData.songs) : plData.songs || []
     };
 
+    // Traemos datos para la barra lateral (de la sesión actual)
     const likesRes = await pool.query('SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC LIMIT 50', [session.user.id]);
     allLikes = likesRes.rows;
 
@@ -50,7 +62,7 @@ export default async function PlaylistPage({ params }) {
     <SocketProvider>
       <main className="h-screen bg-[#0a0a0c] text-white flex overflow-hidden font-sans">
         
-        <aside className="w-[280px] bg-[#000000] border-r border-[#1e1f22] flex flex-col pt-8 pb-8 z-10 shadow-xl shrink-0">
+        <aside className="w-[280px] bg-[#000000] border-r border-[#1e1f22] flex flex-col pt-8 pb-8 z-10 shadow-xl shrink-0 hidden md:flex">
           <div className="px-4 flex flex-col gap-2 mb-8">
             <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-600 tracking-widest mb-2">Navegación</div>
             <Link href={`/dashboard/${session.user.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#1e1f22]/50 rounded-lg font-bold text-sm transition">
@@ -81,10 +93,9 @@ export default async function PlaylistPage({ params }) {
           </div>
         </aside>
 
-        {/* COMPONENTE INTERACTIVO DE LA PLAYLIST INDIVIDUAL */}
-        <PlaylistDetailClient playlist={playlist} session={session} />
+        {/* Le pasamos isOwner al cliente para que oculte los botones de borrar si eres visitante */}
+        <PlaylistDetailClient playlist={playlist} session={session} isOwner={isOwner} />
 
-        {/* REPRODUCTOR GLOBAL OMNIPRESENTE */}
         <LivePlayer userId={session.user.id} />
 
       </main>

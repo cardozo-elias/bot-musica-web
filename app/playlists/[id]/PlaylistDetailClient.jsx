@@ -8,9 +8,19 @@ const MosaicCoverPanel = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return <div className="w-32 h-32 md:w-40 md:h-40 bg-[#1e1f22] rounded-xl flex items-center justify-center border border-[#2b2d31]"><span className="text-3xl text-gray-600">🎵</span></div>;
   }
-  const uniqueCovers = []; const seenIds = new Set();
-  for (const song of songs) { if (!seenIds.has(song.videoId) && song.thumbnail) { seenIds.add(song.videoId); uniqueCovers.push(song.thumbnail); } }
   
+  const uniqueCovers = []; 
+  const seenIds = new Set();
+  
+  for (const song of songs) { 
+    // Filtramos portadas por defecto feas o vacías
+    if (!seenIds.has(song.videoId) && song.thumbnail && !song.thumbnail.includes('ui-avatars') && !song.thumbnail.includes('Q2v1vV7.png')) { 
+      seenIds.add(song.videoId); 
+      uniqueCovers.push(song.thumbnail); 
+    } 
+  }
+  
+  if (uniqueCovers.length === 0) return <div className="w-32 h-32 md:w-40 md:h-40 bg-[#1e1f22] rounded-xl flex items-center justify-center border border-[#2b2d31]"><span className="text-3xl text-gray-600">🎵</span></div>;
   if (uniqueCovers.length < 4) return <img src={uniqueCovers[0]} alt="Cover" className="w-32 h-32 md:w-40 md:h-40 rounded-xl object-cover border border-[#2b2d31]" />;
   
   return (
@@ -23,7 +33,7 @@ const MosaicCoverPanel = ({ songs }) => {
   );
 };
 
-export default function PlaylistDetailClient({ playlist, session }) {
+export default function PlaylistDetailClient({ playlist, session, isOwner = true }) {
   // Evitar problemas de hidratación con Drag & Drop en Next.js
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
@@ -46,10 +56,12 @@ export default function PlaylistDetailClient({ playlist, session }) {
 
   // 🔥 Estados para Ajustes/Edición de la Playlist 🔥
   const [plName, setPlName] = useState(playlist.name);
+  const [isPublic, setIsPublic] = useState(playlist.is_public || false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState(playlist.name);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
@@ -58,12 +70,12 @@ export default function PlaylistDetailClient({ playlist, session }) {
     return () => newSocket.disconnect();
   }, []);
 
-  // Auto-cargar recomendaciones si hay canciones
+  // Auto-cargar recomendaciones si hay canciones y eres el dueño
   useEffect(() => {
-    if (songs.length > 0 && recommendations.length === 0) {
+    if (songs.length > 0 && recommendations.length === 0 && isOwner) {
       fetchRecommendations();
     }
-  }, [songs.length]);
+  }, [songs.length, isOwner]);
 
   // --- HANDLERS ---
 
@@ -119,6 +131,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
   };
 
   const handleRemoveSong = async (videoId) => {
+    if (!isOwner) return; // Protección de visitante
     setIsRemoving(videoId);
     try {
       const res = await fetch('/api/playlists', {
@@ -175,20 +188,23 @@ export default function PlaylistDetailClient({ playlist, session }) {
     setIsAdding(null);
   };
 
+  // 🔥 Función de Drag & Drop 🔥
   const handleDragEnd = async (result) => {
-    if (!result.destination) return;
+    if (!isOwner || !result.destination) return; // Visitantes no pueden reordenar
 
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
 
     if (sourceIndex === destinationIndex) return;
 
+    // 1. Reordenamos localmente
     const newSongsArray = Array.from(songs);
     const [movedSong] = newSongsArray.splice(sourceIndex, 1);
     newSongsArray.splice(destinationIndex, 0, movedSong);
     
     setSongs(newSongsArray);
 
+    // 2. Guardamos en Base de Datos
     try {
       await fetch('/api/playlists', {
         method: 'PATCH',
@@ -199,23 +215,35 @@ export default function PlaylistDetailClient({ playlist, session }) {
           newSongs: newSongsArray 
         })
       });
-    } catch (e) { console.error("Error al guardar el nuevo orden:", e); }
+    } catch (e) {
+      console.error("Error al guardar el nuevo orden:", e);
+    }
   };
 
-  // 🔥 NUEVO: Funciones de Edición/Eliminación 🔥
+  // 🔥 Funciones de Edición/Eliminación 🔥
   const handleSaveEdit = async () => {
-    if (!editName.trim() || editName === plName) return setIsEditModalOpen(false);
     setIsSavingEdit(true);
     try {
-      const res = await fetch('/api/playlists', { 
-        method: 'PATCH', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ playlistId: playlist.id, action: 'rename', newName: editName }) 
-      });
-      if (res.ok) { 
+      // Guardar Nombre
+      if (editName.trim() && editName !== plName) {
+        await fetch('/api/playlists', { 
+          method: 'PATCH', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ playlistId: playlist.id, action: 'rename', newName: editName }) 
+        });
         setPlName(editName); 
-        setIsEditModalOpen(false); 
       }
+      
+      // Guardar Privacidad
+      if (isPublic !== playlist.is_public) {
+        await fetch('/api/playlists', { 
+          method: 'PATCH', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ playlistId: playlist.id, action: 'visibility', isPublic: isPublic }) 
+        });
+      }
+      
+      setIsEditModalOpen(false); 
     } catch (e) { console.error(e); }
     setIsSavingEdit(false);
   };
@@ -230,6 +258,12 @@ export default function PlaylistDetailClient({ playlist, session }) {
     setIsDeleting(false);
   };
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   return (
     <>
       <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#0a0a0c] pb-32">
@@ -240,14 +274,15 @@ export default function PlaylistDetailClient({ playlist, session }) {
             <MosaicCoverPanel songs={songs} />
             
             <div className="flex flex-col flex-1 text-center md:text-left w-full">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Colección de Usuario</span>
-              {/* Usa plName en lugar de playlist.name para que se actualice al instante */}
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">
+                {isPublic ? '🌐 Playlist Pública' : '🔒 Playlist Privada'}
+              </span>
               <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4 truncate">{plName}</h1>
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-400 font-medium mb-6 bg-[#1e1f22]/50 w-fit px-4 py-2 rounded-lg border border-[#2b2d31]">
                 <div className="flex items-center gap-2">
-                  <img src={session.user.image} className="w-5 h-5 rounded-full" alt="User" />
-                  <span className="text-white">{session.user.name}</span>
+                  {isOwner && <img src={session.user.image} className="w-5 h-5 rounded-full" alt="User" />}
+                  <span className="text-white font-bold">{isOwner ? session.user.name : "Playlist de Comunidad"}</span>
                 </div>
                 <span>•</span>
                 <span className="font-mono text-xs">{songs.length} pistas</span>
@@ -263,28 +298,43 @@ export default function PlaylistDetailClient({ playlist, session }) {
                   Reproducir Todo
                 </button>
 
-                <button 
-                  onClick={() => { setShowSearch(!showSearch); setSearchResults([]); setSearchQuery(""); }}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold border transition-colors ${showSearch ? 'bg-[#1e1f22] border-[#57F287] text-white' : 'bg-transparent border-[#2b2d31] hover:bg-[#1e1f22] text-gray-300'}`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  Añadir Canciones
-                </button>
+                {/* Botón Compartir */}
+                {(isOwner || isPublic) && (
+                  <button 
+                    onClick={handleShare}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold border transition-colors ${copiedLink ? 'bg-[#1DB954] border-[#1DB954] text-black' : 'border-[#2b2d31] hover:bg-[#1e1f22] text-gray-400 hover:text-white'}`}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    {copiedLink ? '¡Copiado!' : 'Compartir'}
+                  </button>
+                )}
 
-                {/* 🔥 NUEVO: Botón de Ajustes/Editar 🔥 */}
-                <button 
-                  onClick={() => setIsEditModalOpen(true)} 
-                  className="flex items-center justify-center px-4 py-2.5 rounded-lg font-bold border border-[#2b2d31] hover:bg-[#1e1f22] text-gray-400 hover:text-white transition-colors" 
-                  title="Ajustes de Playlist"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </button>
+                {/* Botones de Dueño */}
+                {isOwner && (
+                  <>
+                    <button 
+                      onClick={() => { setShowSearch(!showSearch); setSearchResults([]); setSearchQuery(""); }}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold border transition-colors ${showSearch ? 'bg-[#1e1f22] border-[#57F287] text-white' : 'bg-transparent border-[#2b2d31] hover:bg-[#1e1f22] text-gray-300'}`}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      Añadir
+                    </button>
+
+                    <button 
+                      onClick={() => setIsEditModalOpen(true)} 
+                      className="flex items-center justify-center px-4 py-2.5 rounded-lg font-bold border border-[#2b2d31] hover:bg-[#1e1f22] text-gray-400 hover:text-white transition-colors" 
+                      title="Ajustes de Playlist"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           {/* BUSCADOR */}
-          {showSearch && (
+          {showSearch && isOwner && (
             <div className="bg-[#111214] border border-[#57F287]/30 rounded-2xl p-6 shadow-lg animate-slideDown">
               <h3 className="text-sm font-black uppercase text-white tracking-widest mb-4">Buscador Rápido</h3>
               <form onSubmit={handleSearch} className="flex gap-2 mb-4">
@@ -326,7 +376,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
             </div>
           )}
 
-          {/* TABLA DE CANCIONES (CON DRAG & DROP E ICONO DE BARRITAS) */}
+          {/* TABLA DE CANCIONES */}
           <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-[#1e1f22] bg-[#0a0a0c]/50 text-[10px] font-black text-gray-500 uppercase tracking-widest">
               <span className="w-8 text-center">#</span>
@@ -337,7 +387,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
 
             {isMounted && (
               <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="playlist-songs">
+                <Droppable droppableId="playlist-songs" isDropDisabled={!isOwner}>
                   {(provided) => (
                     <div 
                       {...provided.droppableProps} 
@@ -347,59 +397,78 @@ export default function PlaylistDetailClient({ playlist, session }) {
                       {songs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                           <p className="text-gray-500 font-medium mb-4">Esta playlist está vacía.</p>
-                          <button onClick={() => setShowSearch(true)} className="text-[#57F287] hover:underline font-bold text-sm">
-                            Usa el buscador arriba para empezar a añadir música.
-                          </button>
+                          {isOwner && (
+                            <button onClick={() => setShowSearch(true)} className="text-[#57F287] hover:underline font-bold text-sm">
+                              Usa el buscador arriba para empezar a añadir música.
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        songs.map((song, index) => (
-                          <Draggable key={`${song.videoId}-${index}`} draggableId={`${song.videoId}-${index}`} index={index}>
-                            {(provided, snapshot) => (
-                              <div 
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? 'bg-[#1e1f22] shadow-2xl opacity-90 ring-1 ring-[#57F287]/50 z-50' : 'hover:bg-[#1e1f22]'} ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}
-                                style={provided.draggableProps.style}
-                              >
-                                {/* 🔥 Grip Handle (Muestra número, en hover muestra 3 barras) 🔥 */}
+                        songs.map((song, index) => {
+                          // Determinamos si tiene una portada válida o ponemos el ícono default nuevo
+                          const hasValidCover = song.thumbnail && !song.thumbnail.includes('ui-avatars') && !song.thumbnail.includes('Q2v1vV7.png');
+
+                          return (
+                            <Draggable key={`${song.videoId}-${index}`} draggableId={`${song.videoId}-${index}`} index={index} isDragDisabled={!isOwner}>
+                              {(provided, snapshot) => (
                                 <div 
-                                  {...provided.dragHandleProps} 
-                                  className="w-8 h-8 flex items-center justify-center text-gray-500 rounded hover:bg-[#2b2d31] hover:text-white cursor-grab active:cursor-grabbing transition-colors"
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? 'bg-[#1e1f22] shadow-2xl opacity-90 ring-1 ring-[#57F287]/50 z-50' : 'hover:bg-[#1e1f22]'} ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}
+                                  style={provided.draggableProps.style}
                                 >
-                                  <div className="group-hover:hidden font-mono text-xs">{String(index + 1).padStart(2, '0')}</div>
-                                  <div className="hidden group-hover:block">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm0 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm1 4a1 1 0 100 2h14a1 1 0 100-2H3z"/></svg>
+                                  {/* Grip Handle */}
+                                  <div 
+                                    {...provided.dragHandleProps} 
+                                    className={`w-8 h-8 flex items-center justify-center text-gray-500 rounded ${isOwner ? 'hover:bg-[#2b2d31] hover:text-white cursor-grab active:cursor-grabbing' : ''} transition-colors`}
+                                  >
+                                    <div className={`${isOwner ? 'group-hover:hidden' : ''} font-mono text-xs`}>{String(index + 1).padStart(2, '0')}</div>
+                                    {isOwner && (
+                                      <div className="hidden group-hover:block">
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm0 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm1 4a1 1 0 100 2h14a1 1 0 100-2H3z"/></svg>
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-4 min-w-0">
-                                  <img src={song.thumbnail} className="w-10 h-10 object-cover rounded shadow-sm border border-white/5" alt="cover" />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-sm font-bold text-gray-200 truncate">{song.title}</span>
-                                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">{song.artist}</span>
+                                  
+                                  <div className="flex items-center gap-4 min-w-0">
+                                    {hasValidCover ? (
+                                      <img src={song.thumbnail} className="w-10 h-10 object-cover rounded shadow-sm border border-white/5" alt="cover" />
+                                    ) : (
+                                      <div className="w-10 h-10 flex items-center justify-center bg-[#2b2d31] rounded shadow-sm border border-white/5">
+                                        <span className="text-xl">🎵</span>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-sm font-bold text-gray-200 truncate">{song.title}</span>
+                                      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">{song.artist}</span>
+                                    </div>
                                   </div>
-                                </div>
 
-                                <div className="hidden md:flex items-center gap-2 min-w-0">
-                                  {song.requesterAvatar ? (
-                                    <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
-                                  ) : (
-                                    <div className="w-5 h-5 rounded-full bg-[#2b2d31]"></div>
-                                  )}
-                                  <span className="text-xs font-medium text-gray-400 truncate">{song.requester || session.user.name}</span>
-                                </div>
+                                  <div className="hidden md:flex items-center gap-2 min-w-0">
+                                    {song.requesterAvatar ? (
+                                      <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full bg-[#2b2d31]"></div>
+                                    )}
+                                    <span className="text-xs font-medium text-gray-400 truncate">{song.requester || session.user.name}</span>
+                                  </div>
 
-                                <button 
-                                  onClick={() => handleRemoveSong(song.videoId)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
-                                  title="Eliminar de la lista"
-                                >
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))
+                                  {isOwner ? (
+                                    <button 
+                                      onClick={() => handleRemoveSong(song.videoId)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                                      title="Eliminar de la lista"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  ) : <div></div>}
+
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        })
                       )}
                       {provided.placeholder}
                     </div>
@@ -410,7 +479,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
           </div>
 
           {/* RECOMENDACIONES */}
-          {songs.length > 0 && (
+          {songs.length > 0 && isOwner && (
             <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col">
@@ -477,8 +546,20 @@ export default function PlaylistDetailClient({ playlist, session }) {
                 />
               </div>
 
+              {/* Botón de Privacidad */}
+              <div className="flex items-center justify-between bg-[#1e1f22] p-4 rounded-lg border border-[#2b2d31]">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-white">Playlist Pública</span>
+                  <span className="text-xs text-gray-400">Cualquiera con el enlace podrá verla y reproducirla.</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" checked={isPublic} onChange={() => setIsPublic(!isPublic)} />
+                  <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#57F287]"></div>
+                </label>
+              </div>
+
               {/* Botón de Eliminación (Peligro) */}
-              <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-lg flex flex-col items-start gap-3 mt-4">
+              <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-lg flex flex-col items-start gap-3 mt-2">
                 <span className="text-sm font-bold text-red-400">Zona de Peligro</span>
                 <span className="text-xs text-gray-400">Una vez que elimines una playlist, no hay vuelta atrás. Por favor, asegúrate bien antes de continuar.</span>
                 <button 
