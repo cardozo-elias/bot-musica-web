@@ -146,7 +146,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
                <div className="w-16 h-16 rounded-full bg-[#1e1f22] flex items-center justify-center text-[#1DB954] transition-colors mb-4 shadow-inner relative z-10">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                </div>
-               <span className="font-bold text-gray-300 group-hover:text-white transition-colors relative z-10 text-center">Importar desde<br/><span className="text-[#1DB954]">Spotify</span></span>
+               <span className="font-bold text-gray-300 group-hover:text-white transition-colors relative z-10 text-center">Importar Playlist<br/><span className="text-xs font-normal text-gray-500">Spotify / Tidal</span></span>
             </div>
 
             {/* Mapeo de las Playlists Reales */}
@@ -258,7 +258,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
                 <input 
                   type="url" 
                   autoFocus
-                  placeholder="https://open.spotify.com/playlist/..." 
+                  placeholder="Pega un enlace de Spotify o Tidal..." 
                   className="w-full bg-[#1e1f22] text-white border border-transparent focus:border-[#1DB954] rounded-lg p-3 outline-none font-bold transition"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
