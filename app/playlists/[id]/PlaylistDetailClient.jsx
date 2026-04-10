@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { io } from "socket.io-client";
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
+// --- MOSAICO 2x2 ---
 const MosaicCoverPanel = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return <div className="w-32 h-32 md:w-40 md:h-40 bg-[#1e1f22] rounded-xl flex items-center justify-center border border-[#2b2d31]"><span className="text-3xl text-gray-600">🎵</span></div>;
@@ -22,11 +24,16 @@ const MosaicCoverPanel = ({ songs }) => {
 };
 
 export default function PlaylistDetailClient({ playlist, session }) {
+  // Evitar problemas de hidratación con Drag & Drop en Next.js
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const [songs, setSongs] = useState(playlist.songs || []);
   const [isRemoving, setIsRemoving] = useState(null);
   const [socket, setSocket] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Estados del Buscador
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -44,35 +51,29 @@ export default function PlaylistDetailClient({ playlist, session }) {
     return () => newSocket.disconnect();
   }, []);
 
-  // Disparar recomendaciones cuando cargan las canciones por primera vez
+  // Auto-cargar recomendaciones si hay canciones
   useEffect(() => {
     if (songs.length > 0 && recommendations.length === 0) {
       fetchRecommendations();
     }
   }, [songs.length]);
 
+  // --- HANDLERS ---
+
   const fetchRecommendations = async () => {
     if (songs.length === 0) return;
     setIsFetchingRecs(true);
     try {
-      // 1. Extraemos artistas únicos de la playlist
       const uniqueArtists = [...new Set(songs.map(s => s.artist).filter(Boolean))];
-      
-      // 2. Elegimos hasta 3 artistas al azar
       const shuffledArtists = uniqueArtists.sort(() => 0.5 - Math.random()).slice(0, 3);
       
       let allFetchedTracks = [];
-      
-      // 3. Buscamos canciones de esos artistas en iTunes
       for (const artist of shuffledArtists) {
         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&entity=song&limit=15`);
         const data = await res.json();
-        if (data.results) {
-          allFetchedTracks = allFetchedTracks.concat(data.results);
-        }
+        if (data.results) allFetchedTracks = allFetchedTracks.concat(data.results);
       }
 
-      // 4. Limpiamos y filtramos las que ya están en la playlist
       const existingIds = new Set(songs.map(s => s.videoId));
       const existingTitles = new Set(songs.map(s => s.title.toLowerCase()));
       const cleanRecs = [];
@@ -82,7 +83,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
         const fakeId = `itunes_${t.trackId}`;
         const titleLower = t.trackName.toLowerCase();
         
-        // Evitamos duplicados, canciones que ya están, y remixes/versiones raras si ya existe el título
         if (!existingIds.has(fakeId) && !existingTitles.has(titleLower) && !seenRecIds.has(fakeId)) {
           seenRecIds.add(fakeId);
           cleanRecs.push({
@@ -94,10 +94,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
           });
         }
       }
-
-      // 5. Mezclamos los resultados finales y mostramos 5
       setRecommendations(cleanRecs.sort(() => 0.5 - Math.random()).slice(0, 5));
-
     } catch (e) { console.error("[RECS ERROR]:", e); }
     setIsFetchingRecs(false);
   };
@@ -164,7 +161,6 @@ export default function PlaylistDetailClient({ playlist, session }) {
           requesterAvatar: session.user.image
         };
         setSongs([...songs, newSongData]);
-        // Quitar visualmente de las listas
         setSearchResults(searchResults.filter(t => t.videoId !== track.videoId));
         setRecommendations(recommendations.filter(t => t.videoId !== track.videoId));
       }
@@ -172,10 +168,43 @@ export default function PlaylistDetailClient({ playlist, session }) {
     setIsAdding(null);
   };
 
+  // 🔥 Función de Drag & Drop 🔥
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    // 1. Reordenamos localmente
+    const newSongsArray = Array.from(songs);
+    const [movedSong] = newSongsArray.splice(sourceIndex, 1);
+    newSongsArray.splice(destinationIndex, 0, movedSong);
+    
+    setSongs(newSongsArray);
+
+    // 2. Guardamos en Base de Datos
+    try {
+      await fetch('/api/playlists', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          playlistId: playlist.id, 
+          action: 'reorder', 
+          newSongs: newSongsArray 
+        })
+      });
+    } catch (e) {
+      console.error("Error al guardar el nuevo orden:", e);
+    }
+  };
+
   return (
     <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#0a0a0c] pb-32">
       <div className="p-6 md:p-10 max-w-[1400px] w-full mx-auto flex flex-col gap-6">
         
+        {/* HEADER */}
         <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-sm">
           <MosaicCoverPanel songs={songs} />
           
@@ -213,6 +242,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
           </div>
         </div>
 
+        {/* BUSCADOR */}
         {showSearch && (
           <div className="bg-[#111214] border border-[#57F287]/30 rounded-2xl p-6 shadow-lg animate-slideDown">
             <h3 className="text-sm font-black uppercase text-white tracking-widest mb-4">Buscador Rápido</h3>
@@ -255,6 +285,7 @@ export default function PlaylistDetailClient({ playlist, session }) {
           </div>
         )}
 
+        {/* TABLA DE CANCIONES (CON DRAG & DROP) */}
         <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl overflow-hidden shadow-sm">
           <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-[#1e1f22] bg-[#0a0a0c]/50 text-[10px] font-black text-gray-500 uppercase tracking-widest">
             <span className="w-6 text-center">#</span>
@@ -263,50 +294,82 @@ export default function PlaylistDetailClient({ playlist, session }) {
             <span className="w-8 text-center"></span>
           </div>
 
-          <div className="flex flex-col p-2">
-            {songs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                <p className="text-gray-500 font-medium mb-4">Esta playlist está vacía.</p>
-                <button onClick={() => setShowSearch(true)} className="text-[#57F287] hover:underline font-bold text-sm">
-                  Usa el buscador arriba para empezar a añadir música.
-                </button>
-              </div>
-            ) : (
-              songs.map((song, index) => (
-                <div key={`${song.videoId}-${index}`} className={`group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-3 rounded-xl hover:bg-[#1e1f22] items-center transition-colors ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}>
-                  <span className="w-6 text-center font-mono text-gray-500 text-xs">{String(index + 1).padStart(2, '0')}</span>
-                  
-                  <div className="flex items-center gap-4 min-w-0">
-                    <img src={song.thumbnail} className="w-10 h-10 object-cover rounded shadow-sm border border-white/5" alt="cover" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-bold text-gray-200 truncate">{song.title}</span>
-                      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">{song.artist}</span>
-                    </div>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-2 min-w-0">
-                    {song.requesterAvatar ? (
-                      <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-[#2b2d31]"></div>
-                    )}
-                    <span className="text-xs font-medium text-gray-400 truncate">{song.requester || session.user.name}</span>
-                  </div>
-
-                  <button 
-                    onClick={() => handleRemoveSong(song.videoId)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
-                    title="Eliminar de la lista"
+          {isMounted && (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="playlist-songs">
+                {(provided) => (
+                  <div 
+                    {...provided.droppableProps} 
+                    ref={provided.innerRef} 
+                    className="flex flex-col p-2 min-h-[100px]"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+                    {songs.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                        <p className="text-gray-500 font-medium mb-4">Esta playlist está vacía.</p>
+                        <button onClick={() => setShowSearch(true)} className="text-[#57F287] hover:underline font-bold text-sm">
+                          Usa el buscador arriba para empezar a añadir música.
+                        </button>
+                      </div>
+                    ) : (
+                      songs.map((song, index) => (
+                        <Draggable key={`${song.videoId}-${index}`} draggableId={`${song.videoId}-${index}`} index={index}>
+                          {(provided, snapshot) => (
+                            <div 
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className={`group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? 'bg-[#1e1f22] shadow-2xl opacity-90 ring-1 ring-[#57F287]/50 z-50' : 'hover:bg-[#1e1f22]'} ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}
+                              style={provided.draggableProps.style}
+                            >
+                              {/* Grip Handle para arrastrar */}
+                              <div 
+                                {...provided.dragHandleProps} 
+                                className="w-6 flex items-center justify-center text-gray-500 hover:text-white cursor-grab active:cursor-grabbing"
+                              >
+                                {snapshot.isDragging ? (
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16" /></svg>
+                                ) : (
+                                  <span className="font-mono text-xs">{String(index + 1).padStart(2, '0')}</span>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center gap-4 min-w-0">
+                                <img src={song.thumbnail} className="w-10 h-10 object-cover rounded shadow-sm border border-white/5" alt="cover" />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-sm font-bold text-gray-200 truncate">{song.title}</span>
+                                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">{song.artist}</span>
+                                </div>
+                              </div>
+
+                              <div className="hidden md:flex items-center gap-2 min-w-0">
+                                {song.requesterAvatar ? (
+                                  <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-[#2b2d31]"></div>
+                                )}
+                                <span className="text-xs font-medium text-gray-400 truncate">{song.requester || session.user.name}</span>
+                              </div>
+
+                              <button 
+                                onClick={() => handleRemoveSong(song.videoId)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                                title="Eliminar de la lista"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          )}
         </div>
 
-        {/* 🔥 NUEVO: SECCIÓN DE RECOMENDACIONES 🔥 */}
+        {/* RECOMENDACIONES */}
         {songs.length > 0 && (
           <div className="bg-[#111214] border border-[#1e1f22] rounded-2xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">

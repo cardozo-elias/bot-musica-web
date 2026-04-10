@@ -102,18 +102,27 @@ export async function PUT(req) {
   }
 }
 
-// Quitar una canción de la playlist
+// Quitar una canción de la playlist o Reordenar la lista completa
 export async function PATCH(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    
     try {
-        const { playlistId, videoId } = await req.json();
+        const { playlistId, videoId, action, newSongs } = await req.json();
         
-        // Obtenemos la playlist actual
+        // 🔥 NUEVA LÓGICA: Si la acción es "reorder", sobreescribimos todo el array de canciones
+        if (action === 'reorder' && newSongs) {
+            await pool.query(
+                `UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`,
+                [JSON.stringify(newSongs), playlistId, session.user.id]
+            );
+            return NextResponse.json({ success: true });
+        }
+
+        // LÓGICA ANTERIOR: Eliminar una sola canción
         const res = await pool.query('SELECT songs FROM user_playlists WHERE id = $1 AND user_id = $2', [playlistId, session.user.id]);
         if (res.rows.length === 0) return NextResponse.json({ error: "No encontrada" });
 
-        // Filtramos para quitar la canción por su videoId
         const updatedSongs = res.rows[0].songs.filter(s => s.videoId !== videoId);
 
         await pool.query(
@@ -121,5 +130,7 @@ export async function PATCH(req) {
             [JSON.stringify(updatedSongs), playlistId, session.user.id]
         );
         return NextResponse.json({ success: true });
-    } catch(e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+    } catch(e) { 
+        return NextResponse.json({ error: e.message }, { status: 500 }); 
+    }
 }
