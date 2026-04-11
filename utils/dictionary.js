@@ -47,6 +47,13 @@ export const dictionaries = {
       cancel: "Cancelar",
       save: "Guardar",
       delete: "Eliminar"
+    },
+    settings: {
+      title: "Ajustes",
+      language: "Idioma",
+      english: "Inglés (English)",
+      spanish: "Español",
+      close: "Cerrar"
     }
   },
   en: {
@@ -97,6 +104,13 @@ export const dictionaries = {
       cancel: "Cancel",
       save: "Save",
       delete: "Delete"
+    },
+    settings: {
+      title: "Settings",
+      language: "Language",
+      english: "English",
+      spanish: "Spanish (Español)",
+      close: "Close"
     }
   }
 };
