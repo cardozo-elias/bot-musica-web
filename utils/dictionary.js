@@ -145,6 +145,15 @@ export const dictionaries = {
       alerts: {
         saved: "Guardada."
       }
+    },
+    webSearch: {
+      title: "Buscador Global",
+      placeholder: "¿Qué quieres escuchar hoy?",
+      btnSearch: "Buscar",
+      loading: "Buscando...",
+      addToQueue: "Cola",
+      saveTo: "Guardar en...",
+      savedAlert: "Guardada."
     }
   },
   
@@ -294,6 +303,15 @@ export const dictionaries = {
       alerts: {
         saved: "Saved."
       }
+    },
+    webSearch: {
+      title: "Global Search",
+      placeholder: "What do you want to listen to today?",
+      btnSearch: "Search",
+      loading: "Searching...",
+      addToQueue: "Queue",
+      saveTo: "Save to...",
+      savedAlert: "Saved."
     }
   }
 };
