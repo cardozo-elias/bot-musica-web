@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { io } from "socket.io-client";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -57,6 +57,44 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // 🔥 NUEVO: SISTEMA DE ORDENAMIENTO (SORTING) 🔥
+  const [sortConfig, setSortConfig] = useState({ key: 'default', direction: 'none' });
+
+  const sortedSongs = useMemo(() => {
+    let sortableSongs = [...songs];
+    if (sortConfig.key !== 'default') {
+      sortableSongs.sort((a, b) => {
+        const aValue = (a[sortConfig.key] || "").toLowerCase();
+        const bValue = (b[sortConfig.key] || "").toLowerCase();
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableSongs;
+  }, [songs, sortConfig]);
+
+  const handleSort = (key) => {
+    if (key === 'default') {
+      setSortConfig({ key: 'default', direction: 'none' });
+      return;
+    }
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') setSortConfig({ key, direction: 'desc' });
+      else setSortConfig({ key: 'default', direction: 'none' }); // Al tercer clic, vuelve a la normalidad
+    } else {
+      setSortConfig({ key, direction: 'asc' });
+    }
+  };
+
+  // El Drag & Drop se desactiva si la lista está ordenada alfabéticamente para no corromper la base de datos
+  const canDrag = isOwner && !isLikesPlaylist && sortConfig.key === 'default';
+
+  // Ocultamos la columna extra si es la playlist de Likes
+  const gridColsClass = isLikesPlaylist 
+    ? "grid-cols-[auto_1fr_auto]" 
+    : "grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto]";
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
@@ -118,12 +156,11 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
       playlistId: playlist.id,
       userName: session.user.name,
       userAvatar: session.user.image,
-      isLikes: isLikesPlaylist // Indicador extra por si el bot lo necesita
+      isLikes: isLikesPlaylist 
     });
     setTimeout(() => setIsPlaying(false), 2000);
   };
 
-  // 🔥 NUEVA FUNCIÓN: Reproducir pista individual
   const handlePlaySingle = (song) => {
     if (!socket) return;
     socket.emit("cmd_play", {
@@ -139,14 +176,12 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
     setIsRemoving(videoId);
     try {
       if (isLikesPlaylist) {
-        // Lógica para borrar un like
         await fetch(`/api/likes`, { 
             method: 'DELETE', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ videoId }) 
         });
       } else {
-        // Lógica para borrar de playlist normal
         await fetch('/api/playlists', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -203,7 +238,7 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
   };
 
   const handleDragEnd = async (result) => {
-    if (!isOwner || isLikesPlaylist || !result.destination) return;
+    if (!canDrag || !result.destination) return;
 
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
@@ -278,7 +313,6 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
           {/* HEADER GLASSMORPHISM */}
           <div className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-xl">
             
-            {/* PORTADA CONDICIONAL (Me Gusta vs Playlist Normal) */}
             {isLikesPlaylist ? (
                 <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-[#a855f7] to-[#ec4899] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(236,72,153,0.3)] shrink-0">
                     <svg className="w-16 h-16 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -390,25 +424,44 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
             </div>
           )}
 
-          {/* TABLA DE CANCIONES (GLASSMORPHISM + PLAY SINGLE) */}
+          {/* TABLA DE CANCIONES */}
           <div className="glass-panel rounded-2xl overflow-hidden shadow-xl">
-            <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-white/5 bg-black/40 text-[10px] font-black text-[#a855f7] uppercase tracking-widest">
-              <span className="w-8 text-center">#</span>
-              <span>Pista</span>
-              <span className="hidden md:block">Guardado Por</span>
+            
+            {/* 🔥 ENCABEZADOS ORDENABLES 🔥 */}
+            <div className={`grid ${gridColsClass} gap-4 px-6 py-4 border-b border-white/5 bg-black/40 text-[10px] font-black text-[#a855f7] uppercase tracking-widest`}>
+              <span className="w-8 text-center cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('default')} title="Orden Original">
+                # {sortConfig.key === 'default' ? '↓' : ''}
+              </span>
+              
+              <div className="flex items-center gap-4">
+                  <span className="cursor-pointer hover:text-white transition-colors flex items-center gap-1" onClick={() => handleSort('title')} title="Ordenar por Título">
+                    Título {sortConfig.key === 'title' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                  </span>
+                  <span className="text-gray-600">/</span>
+                  <span className="cursor-pointer hover:text-white transition-colors flex items-center gap-1" onClick={() => handleSort('artist')} title="Ordenar por Artista">
+                    Artista {sortConfig.key === 'artist' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                  </span>
+              </div>
+              
+              {!isLikesPlaylist && (
+                <span className="hidden md:flex cursor-pointer hover:text-white transition-colors items-center gap-1" onClick={() => handleSort('requester')} title="Ordenar por Usuario">
+                  Guardado Por {sortConfig.key === 'requester' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </span>
+              )}
+              
               <span className="w-16 text-center"></span>
             </div>
 
             {isMounted && (
               <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="playlist-songs" isDropDisabled={!isOwner || isLikesPlaylist}>
+                <Droppable droppableId="playlist-songs" isDropDisabled={!canDrag}>
                   {(provided) => (
                     <div 
                       {...provided.droppableProps} 
                       ref={provided.innerRef} 
                       className="flex flex-col p-2 min-h-[100px]"
                     >
-                      {songs.length === 0 ? (
+                      {sortedSongs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                           <p className="text-gray-500 font-medium mb-4">Esta lista está vacía.</p>
                           {isOwner && !isLikesPlaylist && (
@@ -418,25 +471,25 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
                           )}
                         </div>
                       ) : (
-                        songs.map((song, index) => {
+                        sortedSongs.map((song, index) => {
                           const hasValidCover = song.thumbnail && !song.thumbnail.includes('ui-avatars') && !song.thumbnail.includes('Q2v1vV7.png');
 
                           return (
-                            <Draggable key={`${song.videoId}-${index}`} draggableId={`${song.videoId}-${index}`} index={index} isDragDisabled={!isOwner || isLikesPlaylist}>
+                            <Draggable key={`${song.videoId}-${index}`} draggableId={`${song.videoId}-${index}`} index={index} isDragDisabled={!canDrag}>
                               {(provided, snapshot) => (
                                 <div 
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  className={`group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? 'bg-white/10 shadow-2xl opacity-90 border border-[#a855f7]/50 z-50' : 'hover:bg-white/5 border border-transparent'} ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}
+                                  className={`group grid ${gridColsClass} gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? 'bg-white/10 shadow-2xl opacity-90 border border-[#a855f7]/50 z-50' : 'hover:bg-white/5 border border-transparent'} ${isRemoving === song.videoId ? 'opacity-30 scale-[0.98]' : ''}`}
                                   style={provided.draggableProps.style}
                                 >
-                                  {/* Grip Handle */}
+                                  {/* Grip Handle (Solo activo si no está ordenado) */}
                                   <div 
                                     {...provided.dragHandleProps} 
-                                    className={`w-8 h-8 flex items-center justify-center text-gray-500 rounded transition-colors ${!isLikesPlaylist && isOwner ? 'hover:bg-white/10 hover:text-white cursor-grab' : ''}`}
+                                    className={`w-8 h-8 flex items-center justify-center text-gray-500 rounded transition-colors ${canDrag ? 'hover:bg-white/10 hover:text-white cursor-grab' : ''}`}
                                   >
-                                    <div className={`${!isLikesPlaylist && isOwner ? 'group-hover:hidden' : ''} font-mono text-xs`}>{String(index + 1).padStart(2, '0')}</div>
-                                    {!isLikesPlaylist && isOwner && (
+                                    <div className={`${canDrag ? 'group-hover:hidden' : ''} font-mono text-xs`}>{String(index + 1).padStart(2, '0')}</div>
+                                    {canDrag && (
                                       <div className="hidden group-hover:block">
                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm0 5a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm1 4a1 1 0 100 2h14a1 1 0 100-2H3z"/></svg>
                                       </div>
@@ -458,19 +511,18 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
                                     </div>
                                   </div>
 
-                                  <div className="hidden md:flex items-center gap-2 min-w-0">
-                                    {isLikesPlaylist ? (
-                                      // Ícono de Corazón Rosado para Playlist de Likes
-                                      <svg className="w-4 h-4 text-[#ec4899]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                    ) : song.requesterAvatar ? (
-                                      <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-white/5"></div>
-                                    )}
-                                    <span className="text-xs font-medium text-gray-400 truncate">{isLikesPlaylist ? 'Tú' : (song.requester || session.user.name)}</span>
-                                  </div>
+                                  {!isLikesPlaylist && (
+                                    <div className="hidden md:flex items-center gap-2 min-w-0">
+                                      {song.requesterAvatar ? (
+                                        <img src={song.requesterAvatar} className="w-5 h-5 rounded-full" alt="avatar" />
+                                      ) : (
+                                        <div className="w-5 h-5 rounded-full bg-white/5"></div>
+                                      )}
+                                      <span className="text-xs font-medium text-gray-400 truncate">{song.requester || session.user.name}</span>
+                                    </div>
+                                  )}
 
-                                  {/* BOTONES ACCIÓN (REPRODUCIR SINGLE Y ELIMINAR) */}
+                                  {/* BOTONES ACCIÓN */}
                                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                       <button 
                                         onClick={() => handlePlaySingle(song)} 
