@@ -1,5 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "../components/LanguageContext";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,14 +21,21 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Leemos la cookie desde el servidor para establecer el idioma inicial sin parpadeos
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'es';
+
   return (
     <html
-      lang="es"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        {/* Envolvemos la app en el proveedor de idiomas para que todos los componentes tengan acceso */}
+        <LanguageProvider initialLang={locale}>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

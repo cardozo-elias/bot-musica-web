@@ -1,29 +1,62 @@
 "use client";
 import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { dictionaries } from "../../utils/dictionary";
 
-export default function Login() {
+// Íconos SVG
+const DiscordIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>;
+const MusicIcon = () => <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
+
+export default function LoginPage() {
+  const [lang, setLang] = useState("es"); // Español por defecto
+
+  useEffect(() => {
+    const match = document.cookie.match(/(^| )locale=([^;]+)/);
+    if (match) setLang(match[2]);
+  }, []);
+
+  const handleLanguageChange = (newLang) => {
+    setLang(newLang);
+    document.cookie = `locale=${newLang}; path=/; max-age=31536000`; 
+  };
+
   return (
-    <main className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4 relative overflow-hidden">
+    <main className="h-screen bg-[#0a0a0c] flex flex-col items-center justify-center font-sans text-white relative">
       
-      {/* Luces de fondo decorativas */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#5865F2] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#57F287] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse delay-700"></div>
+      {/* Selector de Idioma Minimalista */}
+      <div className="absolute top-6 right-6 flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+        <button 
+          onClick={() => handleLanguageChange("en")} 
+          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === "en" ? "bg-[#7e22ce] text-white" : "text-gray-400 hover:text-white"}`}
+        >
+          EN
+        </button>
+        <button 
+          onClick={() => handleLanguageChange("es")} 
+          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === "es" ? "bg-[#7e22ce] text-white" : "text-gray-400 hover:text-white"}`}
+        >
+          ES
+        </button>
+      </div>
 
-      <div className="bg-[#111214] border border-[#2b2d31] p-10 md:p-14 rounded-[3rem] shadow-2xl flex flex-col items-center max-w-md w-full text-center relative z-10">
+      <div className="flex flex-col items-center gap-6 max-w-sm w-full p-8">
+        <div className="w-20 h-20 bg-gradient-to-br from-[#a855f7] to-[#7e22ce] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(126,34,206,0.5)]">
+          <MusicIcon />
+        </div>
         
-        <div className="w-24 h-24 bg-gradient-to-br from-[#5865F2] to-[#57F287] rounded-3xl shadow-xl flex items-center justify-center mb-8 transform -rotate-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+        <div className="text-center">
+          <h1 className="text-3xl font-black tracking-tight mb-2">Musicardi</h1>
+          <p className="text-sm text-gray-500 font-medium">
+            {dictionaries[lang].login.title}
+          </p>
         </div>
 
-        <h1 className="text-4xl font-black text-white tracking-tighter mb-3">Musicardi</h1>
-        <p className="text-gray-400 text-sm font-medium mb-10">Inicia sesión para gestionar tu colección musical, estadísticas y controlar la reproducción en tiempo real.</p>
-
         <button 
-        onClick={() => signIn('discord', { callbackUrl: '/dashboard' })} 
-        className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black uppercase tracking-widest py-4 px-6 rounded-2xl shadow-lg shadow-[#5865F2]/30 transition transform hover:scale-105 flex items-center justify-center gap-3"
+          onClick={() => signIn("discord")} 
+          className="w-full py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center gap-3 mt-4"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a67.73,67.73,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.3,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-          Entrar con Discord
+          <DiscordIcon />
+          {dictionaries[lang].login.button}
         </button>
       </div>
     </main>
