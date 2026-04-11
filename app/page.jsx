@@ -51,7 +51,7 @@ export default async function LandingPage() {
         <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
           
           <Link 
-            href={session ? "/playlists" : "/login"} 
+            href={session ? `/dashboard/${session.user.id}` : "/login"} 
             className="flex items-center gap-3 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:brightness-110 w-full md:w-auto justify-center"
           >
             {session ? <PanelIcon /> : <DiscordIcon />}

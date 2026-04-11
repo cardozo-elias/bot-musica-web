@@ -41,9 +41,8 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* 👇 SOLUCIÓN AL LOOP: callbackUrl 👇 */}
         <button 
-          onClick={() => signIn("discord", { callbackUrl: "/playlists" })} 
+          onClick={() => signIn("discord", { callbackUrl: "/dashboard" })} 
           className="w-full mt-4 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-2xl font-bold shadow-[0_10px_20px_rgba(88,101,242,0.3)] hover:shadow-[0_10px_25px_rgba(88,101,242,0.5)] transition-all hover:-translate-y-1 flex items-center justify-center gap-3"
         >
           <DiscordIcon />
