@@ -33,7 +33,8 @@ export const dictionaries = {
       copied: "Copiado",
       add: "Añadir",
       settings: "Ajustes",
-      empty: "Esta lista está vacía."
+      empty: "Esta lista está vacía.",
+      play: "Reproducir"
     },
     search: {
       title: "Buscador",
@@ -54,8 +55,27 @@ export const dictionaries = {
       english: "Inglés (English)",
       spanish: "Español",
       close: "Cerrar"
+    },
+    dashboard: {
+      stats: {
+        saved: "Canciones Guardadas",
+        hours: "Horas Escuchadas",
+        requested: "Solicitadas"
+      },
+      recent: {
+        title: "Escuchado Recientemente",
+        subtitle: "Tu historial de reproducción",
+        empty: "No has escuchado nada aún."
+      },
+      recommendations: {
+        title: "Mix Personal",
+        subtitle: "Basado en tus gustos.",
+        empty: "Guarda canciones para recibir recomendaciones.",
+        refresh: "Actualizar"
+      }
     }
   },
+  
   en: {
     nav: {
       home: "Home",
@@ -90,7 +110,8 @@ export const dictionaries = {
       copied: "Copied",
       add: "Add",
       settings: "Settings",
-      empty: "This list is empty."
+      empty: "This list is empty.",
+      play: "Play"
     },
     search: {
       title: "Search",
@@ -111,6 +132,24 @@ export const dictionaries = {
       english: "English",
       spanish: "Spanish (Español)",
       close: "Close"
+    },
+    dashboard: {
+      stats: {
+        saved: "Saved Tracks",
+        hours: "Hours Listened",
+        requested: "Requested"
+      },
+      recent: {
+        title: "Recently Played",
+        subtitle: "Your listening history",
+        empty: "You haven't listened to anything yet."
+      },
+      recommendations: {
+        title: "Personal Mix",
+        subtitle: "Based on your taste.",
+        empty: "Save songs to get recommendations.",
+        refresh: "Refresh"
+      }
     }
   }
 };
