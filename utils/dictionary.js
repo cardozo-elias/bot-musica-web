@@ -72,6 +72,13 @@ export const dictionaries = {
         subtitle: "Basado en tus gustos.",
         empty: "Guarda canciones para recibir recomendaciones.",
         refresh: "Actualizar"
+      },
+      landing: {
+        subtitle: "El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.",
+        enter: "Entrar al Panel",
+        login: "Iniciar Sesión",
+        invite: "Invitar al Servidor",
+        footer: "© 2026 Musicardi Team • Built with Next.js"
       }
     }
   },
@@ -138,17 +145,24 @@ export const dictionaries = {
         saved: "Saved Tracks",
         hours: "Hours Listened",
         requested: "Requested"
-      },
+    },
       recent: {
         title: "Recently Played",
         subtitle: "Your listening history",
         empty: "You haven't listened to anything yet."
-      },
+    },
       recommendations: {
         title: "Personal Mix",
         subtitle: "Based on your taste.",
         empty: "Save songs to get recommendations.",
         refresh: "Refresh"
+    },
+      landing: {
+        subtitle: "The ultimate music bot for Discord. High-fidelity audio, adaptive Autoplay algorithm, and a real-time web panel.",
+        enter: "Enter Web Panel",
+        login: "Log In",
+        invite: "Invite to Server",
+        footer: "© 2026 Musicardi Team • Built with Next.js"
       }
     }
   }
