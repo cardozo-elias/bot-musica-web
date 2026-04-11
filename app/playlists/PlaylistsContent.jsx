@@ -152,13 +152,13 @@ export default function PlaylistsContent({ initialPlaylists }) {
                   </div>
               </button>
 
-              <button onClick={() => setIsImportModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#ec4899]/50 transition-all text-left overflow-hidden shadow-lg">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#ec4899]/0 to-[#ec4899]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#ec4899] group-hover:scale-110 transition-transform shadow-inner">
+              <button onClick={() => setIsImportModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#7e22ce]/50 transition-all text-left overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#7e22ce]/0 to-[#7e22ce]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#7e22ce] group-hover:scale-110 transition-transform shadow-inner">
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>
                   </div>
                   <div className="flex flex-col z-10">
-                      <span className="text-lg font-bold text-white group-hover:text-[#ec4899] transition-colors">Importar Externa</span>
+                      <span className="text-lg font-bold text-white group-hover:text-[#7e22ce] transition-colors">Importar Externa</span>
                       <span className="text-xs text-gray-500">Trae tu música de Spotify o Tidal.</span>
                   </div>
               </button>
@@ -167,12 +167,12 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             
             {/* TARJETA DE ME GUSTA */}
-            <Link href="/playlists/likes" className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(236,72,153,0.2)] transition-all duration-300 border hover:border-[#ec4899]/50">
-              <div className="aspect-square bg-gradient-to-br from-[#a855f7] to-[#ec4899] flex items-center justify-center p-8 relative overflow-hidden">
+            <Link href="/playlists/likes" className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(236,72,153,0.2)] transition-all duration-300 border hover:border-[#7e22ce]/50">
+              <div className="aspect-square bg-gradient-to-br from-[#a855f7] to-[#7e22ce] flex items-center justify-center p-8 relative overflow-hidden">
                   <svg className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
               </div>
               <div className="p-4 bg-black/40 backdrop-blur-md">
-                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#ec4899] transition-colors">Tus Me Gusta</h3>
+                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#7e22ce] transition-colors">Tus Me Gusta</h3>
                 <p className="text-xs text-gray-400 mt-1">Playlist Automática</p>
               </div>
             </Link>
@@ -183,7 +183,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
                 <div className="relative rounded-t-2xl overflow-hidden aspect-square bg-[#111214] border-b border-white/5">
                   <MosaicCover songs={pl.songs} />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end justify-end p-3 z-20">
-                      <button className="w-12 h-12 bg-gradient-to-r from-[#a855f7] to-[#ec4899] rounded-full flex items-center justify-center text-white opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:brightness-110 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                      <button className="w-12 h-12 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] rounded-full flex items-center justify-center text-white opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:brightness-110 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
                           <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                       </button>
                   </div>
@@ -259,7 +259,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
-              <button onClick={handleCreate} disabled={isSaving || !plName.trim()} className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110">
+              <button onClick={handleCreate} disabled={isSaving || !plName.trim()} className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110">
                 {isSaving ? 'Creando...' : 'Crear Playlist'}
               </button>
             </div>
@@ -271,11 +271,11 @@ export default function PlaylistsContent({ initialPlaylists }) {
       {/* VENTANA MODAL (IMPORTAR EXTERNA) */}
       {isImportModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel rounded-3xl p-8 w-full max-w-lg shadow-[0_0_50px_rgba(236,72,153,0.15)] border border-[#ec4899]/30 animate-slideUp">
+          <div className="glass-panel rounded-3xl p-8 w-full max-w-lg shadow-[0_0_50px_rgba(236,72,153,0.15)] border border-[#7e22ce]/30 animate-slideUp">
             
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <svg className="w-6 h-6 text-[#ec4899]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>
+                <svg className="w-6 h-6 text-[#7e22ce]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>
                 Importar Playlist
               </h2>
               <button onClick={() => setIsImportModalOpen(false)} className="text-gray-500 hover:text-white text-2xl leading-none">×</button>
@@ -289,7 +289,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
                   type="url" 
                   autoFocus
                   placeholder="https://open.spotify.com/playlist/..." 
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#ec4899] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
+                  className="w-full bg-white/5 border border-white/10 focus:border-[#7e22ce] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
                 />
@@ -298,7 +298,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsImportModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
-              <button onClick={handleImport} disabled={isImporting || !importUrl.trim()} className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#ec4899] to-[#a855f7] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:brightness-110">
+              <button onClick={handleImport} disabled={isImporting || !importUrl.trim()} className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#7e22ce] to-[#a855f7] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:brightness-110">
                 {isImporting ? <><span className="animate-spin text-xl leading-none">↻</span> Extrayendo...</> : 'Comenzar Importación'}
               </button>
             </div>

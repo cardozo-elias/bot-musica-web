@@ -3,9 +3,8 @@
 :root {
   --background: #0a0a0c;
   --foreground: #ededed;
-  /* Paleta oficial de Musicardi */
-  --brand-violet: #a855f7; /* Violeta brillante */
-  --brand-pink: #ec4899;   /* Rosado oscuro */
+  --brand-violet: #a855f7;
+  --brand-dark: #7e22ce;
 }
 
 body {

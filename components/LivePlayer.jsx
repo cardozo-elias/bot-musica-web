@@ -469,15 +469,15 @@ export default function LivePlayer({ userId, guildId }) {
                   <p className="text-[9px] font-black uppercase text-[#a855f7] mb-2 px-2 pt-1 text-center border-b border-white/10 pb-2 tracking-widest">Panel de Filtros</p>
                   <div className="flex flex-col gap-1">
                       <button onClick={()=>setFilter('clear')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 p-2 rounded transition">Apagar Todos</button>
-                      <button onClick={()=>setFilter('bass=g=15')} className="text-xs font-bold text-gray-300 hover:text-[#ec4899] hover:bg-white/10 p-2 rounded transition">Bassboost</button>
-                      <button onClick={()=>setFilter('apulsator=hz=0.09')} className="text-xs font-bold text-gray-300 hover:text-[#ec4899] hover:bg-white/10 p-2 rounded transition">8D Audio</button>
+                      <button onClick={()=>setFilter('bass=g=15')} className="text-xs font-bold text-gray-300 hover:text-[#7e22ce] hover:bg-white/10 p-2 rounded transition">Bassboost</button>
+                      <button onClick={()=>setFilter('apulsator=hz=0.09')} className="text-xs font-bold text-gray-300 hover:text-[#7e22ce] hover:bg-white/10 p-2 rounded transition">8D Audio</button>
                       <button onClick={()=>setFilter('asetrate=44100*1.25,aresample=44100,atempo=1')} className="text-xs font-bold text-gray-300 hover:text-[#a855f7] hover:bg-white/10 p-2 rounded transition">Nightcore</button>
                   </div>
                 </div>
               )}
             </div>
             <button onClick={handlePause} className="text-white transition transform hover:scale-105 p-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" title={status.isPaused ? "Reanudar" : "Pausar"}>{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
-            <button onClick={handleSkip} className="text-gray-400 hover:text-[#ec4899] transition transform hover:scale-110" title="Omitir"><SkipIcon /></button>
+            <button onClick={handleSkip} className="text-gray-400 hover:text-[#7e22ce] transition transform hover:scale-110" title="Omitir"><SkipIcon /></button>
             <div className="relative">
               <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-[#a855f7] transition transform hover:scale-110" title="Añadir a Playlist"><MenuIcon /></button>
               {showPlaylistMenu && (

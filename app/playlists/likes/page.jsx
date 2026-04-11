@@ -6,6 +6,7 @@ import Link from "next/link";
 import PlaylistDetailClient from "../[id]/PlaylistDetailClient";
 import { SocketProvider } from "../../../components/SocketContext";
 import LivePlayer from "../../../components/LivePlayer";
+import MobileNav from "../../../components/MobileNav";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -20,24 +21,21 @@ export default async function LikesPlaylistPage() {
   let userPlaylists = [];
 
   try {
-    // 1. Obtenemos las canciones que le gustaron al usuario
     const likesRes = await pool.query(
       'SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC',
       [session.user.id]
     );
 
-    // Formateamos para que el cliente lo entienda como si fuera una playlist normal
     likedSongs = likesRes.rows.map(row => ({
       title: row.title,
       artist: row.artist,
       videoId: row.videoId,
-      thumbnail: `https://img.youtube.com/vi/${row.videoId}/hqdefault.jpg`, // Usamos la miniatura de YouTube
+      thumbnail: `https://img.youtube.com/vi/${row.videoId}/hqdefault.jpg`,
       requester: session.user.name,
       requesterAvatar: session.user.image,
       url: `https://www.youtube.com/watch?v=${row.videoId}`
     }));
 
-    // 2. Obtenemos las playlists reales para renderizar el menú lateral
     const allPlRes = await pool.query(
       'SELECT id, name FROM user_playlists WHERE user_id = $1 ORDER BY id DESC',
       [session.user.id]
@@ -48,7 +46,6 @@ export default async function LikesPlaylistPage() {
     console.error("[LIKES DB ERROR]:", e.message);
   }
 
-  // 🔥 LA MAGIA: Creamos un objeto playlist "falso" (virtual) 🔥
   const pseudoPlaylist = {
     id: "likes",
     name: "Tus Me Gusta",
@@ -60,7 +57,7 @@ export default async function LikesPlaylistPage() {
     <SocketProvider>
       <main className="h-screen bg-transparent text-white flex overflow-hidden font-sans">
         
-        {/* SIDEBAR CON GLASSMORPHISM (Igual al del Dashboard) */}
+        {/* SIDEBAR */}
         <aside className="w-[280px] bg-[#0a0a0c]/80 backdrop-blur-xl border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] shrink-0 hidden md:flex">
           <div className="px-4 flex flex-col gap-2 mb-8">
             <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Navegación</div>
@@ -75,13 +72,13 @@ export default async function LikesPlaylistPage() {
           <div className="px-4 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
             <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Tu Biblioteca</div>
             
-            {/* Botón Activo de Likes (Gradiente Rosado) */}
-            <Link href="/playlists/likes" className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7]/20 to-[#ec4899]/20 text-white rounded-lg text-sm transition font-bold border border-[#ec4899]/30 shadow-inner">
+            {/* Botón Activo de Likes */}
+            <Link href="/playlists/likes" className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7]/20 to-[#7e22ce]/20 text-white rounded-lg text-sm transition font-bold border border-[#7e22ce]/30 shadow-inner">
               ❤️ Tus Me Gusta
             </Link>
 
             {userPlaylists.map(pl => (
-              <Link key={pl.id} href={`/playlists/${pl.id}`} className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition truncate text-gray-400 hover:text-[#ec4899] hover:bg-white/5 font-medium">
+              <Link key={pl.id} href={`/playlists/${pl.id}`} className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition truncate text-gray-400 hover:text-[#a855f7] hover:bg-white/5 font-medium">
                 📁 {pl.name}
               </Link>
             ))}
@@ -96,7 +93,6 @@ export default async function LikesPlaylistPage() {
           </div>
         </aside>
 
-        {/* Renderizamos el cliente que hicimos en el paso anterior */}
         <PlaylistDetailClient 
             playlist={pseudoPlaylist} 
             session={session} 
@@ -104,6 +100,7 @@ export default async function LikesPlaylistPage() {
             isLikesPlaylist={true} 
         />
 
+        <MobileNav userId={session.user.id} />
         <LivePlayer userId={session.user.id} />
 
       </main>

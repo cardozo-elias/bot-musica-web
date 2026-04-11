@@ -314,7 +314,7 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
           <div className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-xl">
             
             {isLikesPlaylist ? (
-                <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-[#a855f7] to-[#ec4899] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(236,72,153,0.3)] shrink-0">
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-[#a855f7] to-[#7e22ce] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(236,72,153,0.3)] shrink-0">
                     <svg className="w-16 h-16 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 </div>
             ) : (
@@ -342,7 +342,7 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
                 <button 
                   onClick={handlePlayPlaylist}
                   disabled={songs.length === 0}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] ${isPlaying ? 'bg-[#ec4899] text-white scale-95' : 'bg-gradient-to-r from-[#a855f7] to-[#ec4899] hover:brightness-110 text-white'} ${songs.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] ${isPlaying ? 'bg-[#7e22ce] text-white scale-95' : 'bg-gradient-to-r from-[#a855f7] to-[#7e22ce] hover:brightness-110 text-white'} ${songs.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   Reproducir Todo
@@ -534,7 +534,7 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
                                       {isOwner && (
                                           <button 
                                             onClick={() => handleRemoveSong(song.videoId)} 
-                                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-[#ec4899] hover:bg-[#ec4899]/10 transition-all" 
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-[#7e22ce] hover:bg-[#7e22ce]/10 transition-all" 
                                             title="Quitar"
                                           >
                                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -637,13 +637,13 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
               </div>
 
               {/* Botón de Eliminación (Peligro) */}
-              <div className="p-4 border border-[#ec4899]/30 bg-[#ec4899]/10 rounded-xl flex flex-col items-start gap-3 mt-2">
-                <span className="text-sm font-bold text-[#ec4899]">Zona de Peligro</span>
+              <div className="p-4 border border-[#7e22ce]/30 bg-[#7e22ce]/10 rounded-xl flex flex-col items-start gap-3 mt-2">
+                <span className="text-sm font-bold text-[#7e22ce]">Zona de Peligro</span>
                 <span className="text-xs text-gray-400">Una vez que elimines una playlist, no hay vuelta atrás.</span>
                 <button 
                   onClick={handleDeletePlaylist} 
                   disabled={isDeleting} 
-                  className="px-4 py-2 bg-[#ec4899]/20 text-[#ec4899] hover:bg-[#ec4899] hover:text-white rounded-lg text-xs font-bold transition-colors mt-2"
+                  className="px-4 py-2 bg-[#7e22ce]/20 text-[#7e22ce] hover:bg-[#7e22ce] hover:text-white rounded-lg text-xs font-bold transition-colors mt-2"
                 >
                   {isDeleting ? 'Eliminando...' : 'Eliminar Playlist'}
                 </button>
@@ -655,7 +655,7 @@ export default function PlaylistDetailClient({ playlist, session, isOwner = true
               <button 
                 onClick={handleSaveEdit} 
                 disabled={isSavingEdit || !editName.trim()} 
-                className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110"
+                className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110"
               >
                 {isSavingEdit ? 'Guardando...' : 'Guardar Cambios'}
               </button>
