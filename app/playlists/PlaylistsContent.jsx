@@ -6,7 +6,7 @@ import Link from 'next/link';
 const MosaicCover = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return (
-      <div className="w-full h-full bg-[#1e1f22] flex items-center justify-center text-gray-600">
+      <div className="w-full h-full bg-[#111214] flex items-center justify-center text-gray-600">
         <svg className="w-12 h-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
         </svg>
@@ -17,10 +17,20 @@ const MosaicCover = ({ songs }) => {
   const uniqueCovers = [];
   const seenIds = new Set();
   for (const song of songs) {
-    if (!seenIds.has(song.videoId) && song.thumbnail) {
+    if (!seenIds.has(song.videoId) && song.thumbnail && !song.thumbnail.includes('ui-avatars') && !song.thumbnail.includes('Q2v1vV7.png')) {
       seenIds.add(song.videoId);
       uniqueCovers.push(song.thumbnail);
     }
+  }
+
+  if (uniqueCovers.length === 0) {
+    return (
+      <div className="w-full h-full bg-[#111214] flex items-center justify-center text-gray-600">
+        <svg className="w-12 h-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+      </div>
+    );
   }
 
   if (uniqueCovers.length < 4) {
@@ -96,7 +106,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
   };
 
   const handleImport = async () => {
-    if (!importUrl.trim()) return alert("Pega un enlace de Spotify.");
+    if (!importUrl.trim()) return alert("Pega un enlace de Spotify o Tidal.");
     setIsImporting(true);
     try {
       const res = await fetch('/api/playlists/import', {
@@ -120,50 +130,70 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
   return (
     <>
-      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#0a0a0c] pb-32">
-        <div className="p-8 md:p-12 max-w-[1600px] w-full mx-auto">
-          <h1 className="text-4xl font-black tracking-tight mb-8 text-white">Tus Playlists</h1>
+      <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-transparent pb-32 pt-10">
+        <div className="max-w-[1200px] w-full mx-auto px-6 md:px-10 flex flex-col gap-10">
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div>
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-2">Tu Biblioteca</h1>
+              <p className="text-gray-400 font-medium">Gestiona tus colecciones, importa desde Spotify o Tidal.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button onClick={() => setIsModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#a855f7]/50 transition-all text-left overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/0 to-[#a855f7]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#a855f7] group-hover:scale-110 transition-transform shadow-inner">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                  </div>
+                  <div className="flex flex-col z-10">
+                      <span className="text-lg font-bold text-white group-hover:text-[#a855f7] transition-colors">Crear Playlist Vacía</span>
+                      <span className="text-xs text-gray-500">Arma tu lista desde cero.</span>
+                  </div>
+              </button>
+
+              <button onClick={() => setIsImportModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#ec4899]/50 transition-all text-left overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#ec4899]/0 to-[#ec4899]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#ec4899] group-hover:scale-110 transition-transform shadow-inner">
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>
+                  </div>
+                  <div className="flex flex-col z-10">
+                      <span className="text-lg font-bold text-white group-hover:text-[#ec4899] transition-colors">Importar Externa</span>
+                      <span className="text-xs text-gray-500">Trae tu música de Spotify o Tidal.</span>
+                  </div>
+              </button>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             
-            {/* TARJETA 1: Crear Manualmente */}
-            <div 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all cursor-pointer group flex flex-col items-center justify-center aspect-[3/4] shadow-md"
-            >
-               <div className="w-16 h-16 rounded-full bg-[#2b2d31] flex items-center justify-center text-[#57F287] group-hover:bg-[#57F287] group-hover:text-black transition-colors mb-4 shadow-inner">
-                  <span className="text-3xl leading-none font-light">+</span>
-               </div>
-               <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Crear Playlist</span>
-            </div>
+            {/* TARJETA DE ME GUSTA */}
+            <Link href="/playlists/likes" className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(236,72,153,0.2)] transition-all duration-300 border hover:border-[#ec4899]/50">
+              <div className="aspect-square bg-gradient-to-br from-[#a855f7] to-[#ec4899] flex items-center justify-center p-8 relative overflow-hidden">
+                  <svg className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+              <div className="p-4 bg-black/40 backdrop-blur-md">
+                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#ec4899] transition-colors">Tus Me Gusta</h3>
+                <p className="text-xs text-gray-400 mt-1">Playlist Automática</p>
+              </div>
+            </Link>
 
-            {/* TARJETA 2: IMPORTAR DE SPOTIFY */}
-            <div 
-              onClick={() => setIsImportModalOpen(true)}
-              className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#1DB954] transition-all cursor-pointer group flex flex-col items-center justify-center aspect-[3/4] shadow-md relative overflow-hidden"
-            >
-               <div className="absolute inset-0 bg-[#1DB954]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <div className="w-16 h-16 rounded-full bg-[#1e1f22] flex items-center justify-center text-[#1DB954] transition-colors mb-4 shadow-inner relative z-10">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-               </div>
-               <span className="font-bold text-gray-300 group-hover:text-white transition-colors relative z-10 text-center">Importar Playlist<br/><span className="text-xs font-normal text-gray-500">Spotify / Tidal</span></span>
-            </div>
-
-            {/* Mapeo de las Playlists Reales */}
+            {/* MAPEO DE PLAYLISTS */}
             {playlists.map(pl => (
-              <Link href={`/playlists/${pl.id}`} key={pl.id} className="bg-[#111214] hover:bg-[#1e1f22] p-4 rounded-xl border border-transparent hover:border-[#2b2d31] transition-all group flex flex-col shadow-md">
-                <div className="relative mb-4 rounded-md overflow-hidden shadow-lg aspect-square bg-[#1e1f22]">
+              <Link href={`/playlists/${pl.id}`} key={pl.id} className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(168,85,247,0.2)] transition-all duration-300 border hover:border-[#a855f7]/50">
+                <div className="relative rounded-t-2xl overflow-hidden aspect-square bg-[#111214] border-b border-white/5">
                   <MosaicCover songs={pl.songs} />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end justify-end p-3">
-                      <button className="w-12 h-12 bg-[#57F287] rounded-full flex items-center justify-center text-black opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:bg-[#45d16f] shadow-xl">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end justify-end p-3 z-20">
+                      <button className="w-12 h-12 bg-gradient-to-r from-[#a855f7] to-[#ec4899] rounded-full flex items-center justify-center text-white opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:brightness-110 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
                           <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                       </button>
                   </div>
                 </div>
-                <h3 className="font-bold text-white text-base truncate mb-1">{pl.name}</h3>
-                <p className="text-xs text-gray-500 font-medium truncate">
-                  {pl.songs?.length || 0} pistas • {pl.songs?.length > 0 ? pl.songs[0].artist : 'Vacía'}
-                </p>
+                <div className="p-4 bg-black/40 backdrop-blur-md">
+                  <h3 className="font-bold text-white text-sm truncate mb-1 group-hover:text-[#a855f7] transition-colors">{pl.name}</h3>
+                  <p className="text-xs text-gray-500 font-medium truncate">
+                    {pl.songs?.length || 0} pistas • {pl.is_public ? 'Pública' : 'Privada'}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>
@@ -172,22 +202,21 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
       {/* VENTANA MODAL (CREAR PLAYLIST) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#111214] border border-[#2b2d31] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-slideUp">
-            
-            <div className="p-6 border-b border-[#2b2d31] flex justify-between items-center">
-              <h2 className="text-xl font-black text-white">Nueva Playlist</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl border border-[#a855f7]/30 animate-slideUp">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-white">Nueva Playlist</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
             </div>
 
-            <div className="p-6 flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Nombre de la Playlist</label>
                 <input 
                   type="text" 
                   autoFocus
-                  placeholder="Ej: Rock Clásico..." 
-                  className="w-full bg-[#1e1f22] text-white border border-transparent focus:border-[#57F287] rounded-lg p-3 outline-none font-bold transition"
+                  placeholder="Ej: Cyberpunk Vibes..." 
+                  className="w-full bg-white/5 border border-white/10 focus:border-[#a855f7] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
                   value={plName}
                   onChange={(e) => setPlName(e.target.value)}
                 />
@@ -199,11 +228,11 @@ export default function PlaylistsContent({ initialPlaylists }) {
                   <input 
                     type="text" 
                     placeholder="Busca un artista o tema..." 
-                    className="flex-1 bg-[#1e1f22] text-white rounded-lg p-3 outline-none text-sm focus:bg-[#2b2d31] transition"
+                    className="flex-1 bg-white/5 border border-white/10 focus:border-[#a855f7] text-white rounded-xl p-3 outline-none text-sm transition shadow-inner"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <button type="submit" disabled={isSearching} className="bg-[#2b2d31] hover:bg-white hover:text-black text-white px-4 rounded-lg font-bold transition">
+                  <button type="submit" disabled={isSearching} className="bg-white/10 hover:bg-white/20 text-white px-4 rounded-xl font-bold transition border border-white/5 hover:border-white/10">
                     {isSearching ? '...' : 'Buscar'}
                   </button>
                 </form>
@@ -214,12 +243,12 @@ export default function PlaylistsContent({ initialPlaylists }) {
                       <div 
                         key={i} 
                         onClick={() => setSelectedSong(track)}
-                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition border ${selectedSong?.videoId === track.videoId ? 'border-[#57F287] bg-[#57F287]/10' : 'border-transparent hover:bg-[#1e1f22]'}`}
+                        className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition border ${selectedSong?.videoId === track.videoId ? 'border-[#a855f7] bg-[#a855f7]/10 shadow-[0_0_15px_rgba(168,85,247,0.2)]' : 'border-transparent hover:bg-white/5'}`}
                       >
                         <img src={track.thumbnail} className="w-10 h-10 rounded object-cover" alt="Cover" />
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className="text-sm font-bold text-white truncate">{track.title}</span>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase truncate">{track.artist}</span>
+                          <span className="text-[10px] text-[#a855f7] font-bold uppercase truncate">{track.artist}</span>
                         </div>
                       </div>
                     ))}
@@ -228,9 +257,9 @@ export default function PlaylistsContent({ initialPlaylists }) {
               </div>
             </div>
 
-            <div className="p-4 border-t border-[#2b2d31] bg-[#0a0a0c] flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-lg font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
-              <button onClick={handleCreate} disabled={isSaving || !plName.trim()} className="px-5 py-2.5 rounded-lg font-bold text-sm bg-[#57F287] hover:bg-[#45d16f] text-black transition disabled:opacity-50 shadow-lg">
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setIsModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
+              <button onClick={handleCreate} disabled={isSaving || !plName.trim()} className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110">
                 {isSaving ? 'Creando...' : 'Crear Playlist'}
               </button>
             </div>
@@ -239,37 +268,37 @@ export default function PlaylistsContent({ initialPlaylists }) {
         </div>
       )}
 
-      {/* VENTANA MODAL (IMPORTAR SPOTIFY) */}
+      {/* VENTANA MODAL (IMPORTAR EXTERNA) */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#111214] border border-[#1DB954]/50 rounded-2xl shadow-[0_0_50px_rgba(29,185,84,0.1)] w-full max-w-md overflow-hidden flex flex-col animate-slideUp">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="glass-panel rounded-3xl p-8 w-full max-w-lg shadow-[0_0_50px_rgba(236,72,153,0.15)] border border-[#ec4899]/30 animate-slideUp">
             
-            <div className="p-6 border-b border-[#2b2d31] flex justify-between items-center bg-gradient-to-r from-[#111214] to-[#1DB954]/10">
-              <h2 className="text-xl font-black text-white flex items-center gap-2">
-                <svg className="w-6 h-6 text-[#1DB954]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.54.6.3 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.6.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <svg className="w-6 h-6 text-[#ec4899]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>
                 Importar Playlist
               </h2>
               <button onClick={() => setIsImportModalOpen(false)} className="text-gray-500 hover:text-white text-2xl leading-none">×</button>
             </div>
+            
+            <p className="text-xs text-gray-400 mb-6 font-medium">Pega un enlace público de Spotify o Tidal.</p>
 
-            <div className="p-6 flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Enlace de Spotify</label>
                 <input 
                   type="url" 
                   autoFocus
-                  placeholder="Pega un enlace de Spotify o Tidal..." 
-                  className="w-full bg-[#1e1f22] text-white border border-transparent focus:border-[#1DB954] rounded-lg p-3 outline-none font-bold transition"
+                  placeholder="https://open.spotify.com/playlist/..." 
+                  className="w-full bg-white/5 border border-white/10 focus:border-[#ec4899] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-gray-500 mt-2">Asegúrate de que la playlist sea pública. Puede tardar unos segundos dependiendo del tamaño de la lista.</p>
               </div>
             </div>
 
-            <div className="p-4 border-t border-[#2b2d31] bg-[#0a0a0c] flex justify-end gap-3">
-              <button onClick={() => setIsImportModalOpen(false)} className="px-5 py-2.5 rounded-lg font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
-              <button onClick={handleImport} disabled={isImporting || !importUrl.trim()} className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm bg-[#1DB954] hover:bg-[#1ed760] text-black transition disabled:opacity-50 shadow-lg">
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setIsImportModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">Cancelar</button>
+              <button onClick={handleImport} disabled={isImporting || !importUrl.trim()} className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#ec4899] to-[#a855f7] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:brightness-110">
                 {isImporting ? <><span className="animate-spin text-xl leading-none">↻</span> Extrayendo...</> : 'Comenzar Importación'}
               </button>
             </div>
