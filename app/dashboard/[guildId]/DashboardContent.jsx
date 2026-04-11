@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
-import Link from 'next/link'; // Importante para la navegación
-import WebSearch from "../../../components/WebSearch";
+import Link from 'next/link'; 
 import Recommendations from "../../../components/Recommendations";
 import RecentlyPlayed from "../../../components/RecentlyPlayed"; 
 import { useSocketStats } from "../../../components/SocketContext";
@@ -48,7 +47,7 @@ export default function DashboardContent({ initialStats, session, guildId, userH
                   <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#a855f7] shadow-inner group-hover:scale-110 group-hover:border-[#a855f7]/50 transition-all duration-300">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
                   </div>
-                  <svg className="w-5 h-5 text-gray-600 group-hover:text-[#7e22ce] transition-colors transform group-hover:translate-x-1 group-hover:-translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  <svg className="w-5 h-5 text-gray-600 group-hover:text-[#a855f7] transition-colors transform group-hover:translate-x-1 group-hover:-translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </div>
                 
                 <div>
@@ -60,16 +59,12 @@ export default function DashboardContent({ initialStats, session, guildId, userH
               </div>
             </Link>
 
-            <div className="w-full">
-                <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} guildId={guildId} />
-            </div>
-
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <div className="w-full">
-                <RecentlyPlayed history={userHistory} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+                  <RecentlyPlayed history={userHistory} userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
                 </div>
                 <div className="w-full">
-                <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
+                  <Recommendations userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
                 </div>
             </div>
 

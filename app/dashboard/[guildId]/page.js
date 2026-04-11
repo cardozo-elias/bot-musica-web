@@ -6,6 +6,8 @@ import { Pool } from 'pg';
 import LivePlayer from "../../../components/LivePlayer";
 import ServerSelector from "../../../components/ServerSelector";
 import MobileNav from "../../../components/MobileNav";
+import SearchTrigger from "../../../components/SearchTrigger";
+import WebSearch from "../../../components/WebSearch";
 import { SocketProvider } from "../../../components/SocketContext";
 import DashboardContent from "./DashboardContent"; 
 
@@ -58,15 +60,19 @@ export default async function DashboardPage({ params }) {
         {/* SIDEBAR con Glassmorphism */}
         <aside className="w-[280px] bg-[#0a0a0c]/80 backdrop-blur-xl border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] hidden md:flex shrink-0">
             <div className="px-4 flex flex-col gap-2 mb-8">
-            <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Navegación</div>
-            
-            {/* Botón Activo con Gradiente Violeta */}
-            <button className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition">
-                Panel Principal
-            </button>
-            <div className="mt-1">
-                <ServerSelector userId={session.user.id} currentGuildId={guildId} />
-            </div>
+                <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Navegación</div>
+                
+                {/* Botón Activo con Gradiente Violeta */}
+                <button className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition">
+                    Panel Principal
+                </button>
+
+                {/* 👇 BOTÓN DISPARADOR DE BÚSQUEDA 👇 */}
+                <SearchTrigger />
+
+                <div className="mt-1">
+                    <ServerSelector userId={session.user.id} currentGuildId={guildId} />
+                </div>
             </div>
 
             {/* BOTÓN ESTILO SPOTIFY PARA "TUS ME GUSTA" */}
@@ -81,27 +87,27 @@ export default async function DashboardPage({ params }) {
             </a>
 
             <div className="px-4 mt-6 flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar">
-            <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 flex justify-between items-center">
-                Playlists
-                <a href="/playlists" className="text-lg leading-none cursor-pointer text-gray-500 hover:text-[#a855f7] transition">+</a>
-            </div>
-            {userPlaylists.length === 0 ? (
-                <p className="px-4 text-xs text-gray-600 mt-2">No hay playlists.</p>
-            ) : (
-                userPlaylists.map(pl => (
-                <a key={pl.id} href={`/playlists/${pl.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-[#a855f7] hover:bg-[#7e22ce]/10 rounded-lg text-sm transition truncate font-medium">
-                    📁 {pl.name}
-                </a>
-                ))
-            )}
+                <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 flex justify-between items-center">
+                    Playlists
+                    <a href="/playlists" className="text-lg leading-none cursor-pointer text-gray-500 hover:text-[#a855f7] transition">+</a>
+                </div>
+                {userPlaylists.length === 0 ? (
+                    <p className="px-4 text-xs text-gray-600 mt-2">No hay playlists.</p>
+                ) : (
+                    userPlaylists.map(pl => (
+                    <a key={pl.id} href={`/playlists/${pl.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-[#a855f7] hover:bg-[#7e22ce]/10 rounded-lg text-sm transition truncate font-medium">
+                        📁 {pl.name}
+                    </a>
+                    ))
+                )}
             </div>
 
             <div className="px-6 flex items-center gap-4 mt-auto border-t border-[#1e1f22] pt-6 mb-2">
-            <img src={session.user.image} className="w-10 h-10 rounded-full border border-[#a855f7]/50" alt="Avatar" />
-            <div className="flex flex-col min-w-0">
-                <span className="text-sm font-bold truncate text-gray-200">{session.user.name}</span>
-                <a href="/api/auth/signout" className="text-[10px] text-gray-500 hover:text-red-400 font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
-            </div>
+                <img src={session.user.image} className="w-10 h-10 rounded-full border border-[#a855f7]/50" alt="Avatar" />
+                <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold truncate text-gray-200">{session.user.name}</span>
+                    <a href="/api/auth/signout" className="text-[10px] text-gray-500 hover:text-red-400 font-bold uppercase tracking-wider transition">Cerrar Sesión</a>
+                </div>
             </div>
         </aside>
 
@@ -113,6 +119,8 @@ export default async function DashboardPage({ params }) {
             userHistory={userHistory} 
         />
 
+        {/* 👇 MODAL FLOTANTE DE BÚSQUEDA Y REPRODUCTORES 👇 */}
+        <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
         <MobileNav userId={session.user.id} />
         <LivePlayer userId={session.user.id} guildId={guildId} />
         </main>

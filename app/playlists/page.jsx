@@ -7,6 +7,8 @@ import PlaylistsContent from "./PlaylistsContent";
 import { SocketProvider } from "../../components/SocketContext";
 import LivePlayer from "../../components/LivePlayer";
 import MobileNav from "../../components/MobileNav";
+import SearchTrigger from "../../components/SearchTrigger";
+import WebSearch from "../../components/WebSearch";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -41,6 +43,10 @@ export default async function PlaylistsPage() {
             <Link href={`/dashboard/${session.user.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold text-sm transition">
                Panel Principal
             </Link>
+            
+            {/* 👇 BOTÓN DISPARADOR DE BÚSQUEDA 👇 */}
+            <SearchTrigger />
+
             <Link href="/playlists" className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition mt-1">
                Tus Playlists
             </Link>
@@ -78,6 +84,8 @@ export default async function PlaylistsPage() {
 
         <PlaylistsContent initialPlaylists={userPlaylists} />
         
+        {/* 👇 MODAL FLOTANTE DE BÚSQUEDA Y REPRODUCTORES 👇 */}
+        <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
         <MobileNav userId={session.user.id} />
         <LivePlayer userId={session.user.id} />
       </main>
