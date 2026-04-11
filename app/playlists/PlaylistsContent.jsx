@@ -5,18 +5,16 @@ import { useLanguage } from '../../components/LanguageContext';
 
 // --- ÍCONOS SVG MINIMALISTAS ---
 const PlusIcon = () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>;
-const ImportIcon = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.69 14.4c-.15.25-.46.33-.7.18-1.92-1.17-4.34-1.44-7.2-.79-.28.06-.54-.11-.6-.39-.06-.28.11-.54.39-.6 3.12-.71 5.79-.4 7.93.9.25.15.33.46.18.7zm.96-2.14c-.19.31-.58.42-.89.23-2.2-1.35-5.6-1.73-8.08-.94-.35.11-.72-.08-.83-.43-.11-.35.08-.72.43-.83 2.84-.89 6.6-.46 9.14 1.08.31.19.42.58.23.89zm.06-2.25c-2.63-1.56-6.96-1.7-9.48-.94-.41.13-.85-.11-.98-.52-.13-.41.11-.85.52-.98 2.96-.89 7.78-.71 10.82.79.38.19.53.66.34 1.04-.19.38-.66.53-1.04.34z"/></svg>;
 const MusicNoteIcon = () => <svg className="w-12 h-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
 const HeartIcon = () => <svg className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>;
 const PlayIcon = () => <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
 const LoadingSpinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
-const FolderIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>;
 
 // --- GENERADOR DE MOSAICOS 2x2 ---
 const MosaicCover = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return (
-      <div className="w-full h-full bg-[#111214] flex items-center justify-center text-gray-600">
+      <div className="w-full h-full bg-white/5 flex items-center justify-center text-gray-600 shadow-inner">
         <MusicNoteIcon />
       </div>
     );
@@ -33,7 +31,7 @@ const MosaicCover = ({ songs }) => {
 
   if (uniqueCovers.length === 0) {
     return (
-      <div className="w-full h-full bg-[#111214] flex items-center justify-center text-gray-600">
+      <div className="w-full h-full bg-white/5 flex items-center justify-center text-gray-600 shadow-inner">
         <MusicNoteIcon />
       </div>
     );
@@ -66,11 +64,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
   const [selectedSong, setSelectedSong] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Estados para Importación de Spotify
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importUrl, setImportUrl] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
-
   // --- HANDLERS ---
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -94,7 +87,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
   };
 
   const handleCreate = async () => {
-    if (!plName.trim()) return alert("Ponle un nombre a tu playlist.");
+    if (!plName.trim()) return;
     setIsSaving(true);
     try {
       const res = await fetch('/api/playlists', {
@@ -112,29 +105,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
     setIsSaving(false);
   };
 
-  const handleImport = async () => {
-    if (!importUrl.trim()) return alert("Pega un enlace de Spotify o Tidal.");
-    setIsImporting(true);
-    try {
-      const res = await fetch('/api/playlists/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: importUrl })
-      });
-
-      if (res.ok) {
-        const newPlaylist = await res.json();
-        setPlaylists([{ ...newPlaylist, songs: typeof newPlaylist.songs === 'string' ? JSON.parse(newPlaylist.songs) : newPlaylist.songs }, ...playlists]);
-        setIsImportModalOpen(false); 
-        setImportUrl("");
-      } else {
-        const errorData = await res.json();
-        alert(errorData.error || "Ocurrió un error al importar.");
-      }
-    } catch (err) { console.error(err); alert("Error de conexión."); }
-    setIsImporting(false);
-  };
-
   return (
     <>
       <section className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-transparent pb-32 pt-10">
@@ -143,30 +113,21 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-2">{t('playlists.title')}</h1>
-              <p className="text-gray-400 font-medium">{t('playlists.subtitle')}</p>
+              {/* Actualizamos el subtítulo para quitar la mención de importar */}
+              <p className="text-gray-400 font-medium">Gestiona y crea tus colecciones musicales.</p> 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Ajustado a una sola columna para el botón de crear */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <button onClick={() => setIsModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#a855f7]/50 transition-all text-left overflow-hidden shadow-lg">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/0 to-[#a855f7]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#a855f7] group-hover:scale-110 transition-transform shadow-inner">
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#a855f7] group-hover:scale-110 transition-transform shadow-inner shrink-0">
                       <PlusIcon />
                   </div>
-                  <div className="flex flex-col z-10">
-                      <span className="text-lg font-bold text-white group-hover:text-[#a855f7] transition-colors">{t('playlists.create')}</span>
-                      <span className="text-xs text-gray-500">{t('playlists.createDesc')}</span>
-                  </div>
-              </button>
-
-              <button onClick={() => setIsImportModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#7e22ce]/50 transition-all text-left overflow-hidden shadow-lg">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#7e22ce]/0 to-[#7e22ce]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#7e22ce] group-hover:scale-110 transition-transform shadow-inner">
-                      <ImportIcon />
-                  </div>
-                  <div className="flex flex-col z-10">
-                      <span className="text-lg font-bold text-white group-hover:text-[#7e22ce] transition-colors">{t('playlists.import')}</span>
-                      <span className="text-xs text-gray-500">{t('playlists.importDesc')}</span>
+                  <div className="flex flex-col z-10 min-w-0">
+                      <span className="text-lg font-bold text-white group-hover:text-[#a855f7] transition-colors truncate">{t('playlists.create')}</span>
+                      <span className="text-xs text-gray-500 truncate">{t('playlists.createDesc')}</span>
                   </div>
               </button>
           </div>
@@ -266,45 +227,6 @@ export default function PlaylistsContent({ initialPlaylists }) {
               <button onClick={() => setIsModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">{t('common.cancel')}</button>
               <button onClick={handleCreate} disabled={isSaving || !plName.trim()} className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110 flex items-center gap-2">
                 {isSaving ? <LoadingSpinner /> : t('common.save')}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* VENTANA MODAL (IMPORTAR EXTERNA) */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel rounded-3xl p-8 w-full max-w-lg shadow-[0_0_50px_rgba(236,72,153,0.15)] border border-[#7e22ce]/30 animate-slideUp">
-            
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <ImportIcon />
-                {t('playlists.import')}
-              </h2>
-              <button onClick={() => setIsImportModalOpen(false)} className="text-gray-500 hover:text-white text-2xl leading-none">×</button>
-            </div>
-            
-            <p className="text-xs text-gray-400 mb-6 font-medium">{t('playlists.importDesc')}</p>
-
-            <div className="flex flex-col gap-6">
-              <div>
-                <input 
-                  type="url" 
-                  autoFocus
-                  placeholder="https://open.spotify.com/playlist/..." 
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#7e22ce] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
-                  value={importUrl}
-                  onChange={(e) => setImportUrl(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setIsImportModalOpen(false)} className="px-5 py-3 rounded-full font-bold text-sm text-gray-400 hover:text-white transition">{t('common.cancel')}</button>
-              <button onClick={handleImport} disabled={isImporting || !importUrl.trim()} className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#7e22ce] to-[#a855f7] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:brightness-110">
-                {isImporting ? <LoadingSpinner /> : t('playlists.import')}
               </button>
             </div>
 
