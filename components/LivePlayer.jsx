@@ -418,7 +418,7 @@ export default function LivePlayer({ userId, guildId }) {
           <div className="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar">
             {localQueue.length > 0 ? localQueue.map((s, i) => (
               <div key={`queue-${s.queueId || i}`} draggable onDragStart={(e)=>handleDragStart(e,i)} onDragOver={(e)=>handleDragOver(e,i)} onDragEnd={handleDragEnd}
-                className={`group relative overflow-hidden flex items-center gap-3 md:gap-4 p-2 md:p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing hover:bg-white/5 ${draggingIndex === i ? 'opacity-30 scale-95 border-white/20 bg-white/5' : 'border-transparent'}`}
+                className={`group relative overflow-hidden flex items-center gap-3 md:gap-4 p-2 md:p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing hover:bg-white/5 shrink-0 ${draggingIndex === i ? 'opacity-30 scale-95 border-white/20 bg-white/5' : 'border-transparent'}`}
               >
                 <span className="text-[10px] font-black opacity-30 w-3 text-center hidden md:block">≡</span>
                 <img src={s.thumbnail} className="w-8 h-8 md:w-10 md:h-10 rounded object-cover flex-shrink-0 border border-white/5" alt="" />
