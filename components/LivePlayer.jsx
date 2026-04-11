@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-import { useSocketStats } from "./SocketContext"; // 🔥 NUEVO: Contexto para el Dashboard
+import { useSocketStats } from "./SocketContext";
 
 const formatTime = (ms) => {
   const totalSeconds = Math.floor((ms || 0) / 1000);
@@ -44,10 +44,10 @@ const LyricsIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24
 const TrashIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
 
 export default function LivePlayer({ userId, guildId }) {
-  // 🔥 NUEVO: Traemos el "setter" del Contexto para enviar los datos hacia arriba
   const { setSocketStats } = useSocketStats();
 
-  const [status, setStatus] = useState({ playing: false, queueList: [], color: '#57F287', voiceMembers: [] });
+  // El color por defecto ahora es tu Violeta Oficial
+  const [status, setStatus] = useState({ playing: false, queueList: [], color: '#a855f7', voiceMembers: [] });
   const [isLiked, setIsLiked] = useState(false); 
   const [currentVideoId, setCurrentVideoId] = useState(null); 
   const [playlists, setPlaylists] = useState([]);
@@ -86,10 +86,10 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
       
-      // 🔥 NUEVO: Enviamos toda la data fresca al Contexto para que el Dashboard la lea
       setSocketStats(data);
       
-      setStatus(prev => ({ ...data, color: data.color || '#57F287', voiceMembers: data.voiceMembers || [] }));
+      // Fallback a Violeta
+      setStatus(prev => ({ ...data, color: data.color || '#a855f7', voiceMembers: data.voiceMembers || [] }));
       
       if (data.playing && data.song) {
         document.title = data.isPaused ? `|| ${data.song.title}` : `▶ ${data.song.title}`;
@@ -199,19 +199,18 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current?.emit("cmd_remove_queue", { userId, guildId, trackIndex: index });
   };
 
-  // 🔥 NUEVO: INTERFAZ OPTIMISTA PARA MEJORAR LA SENSACIÓN DE VELOCIDAD 🔥
   const handleLike = () => { 
-      setIsLiked(true); // Cambia al instante en la web
+      setIsLiked(true); 
       socketRef.current?.emit("cmd_like", userId); 
   };
   
   const handlePause = () => {
-      setStatus(prev => ({ ...prev, isPaused: !prev.isPaused })); // Cambia el icono sin delay
+      setStatus(prev => ({ ...prev, isPaused: !prev.isPaused }));
       socketRef.current?.emit("cmd_pause", userId);
   };
   
   const handleSkip = () => {
-      setStatus(prev => ({ ...prev, playing: false })); // Oculta el reproductor asumiendo que el bot ya obedeció
+      setStatus(prev => ({ ...prev, playing: false })); 
       socketRef.current?.emit("cmd_skip", userId);
   };
 
@@ -259,13 +258,12 @@ export default function LivePlayer({ userId, guildId }) {
 
   if (!status.playing || !status.song) {
     return (
-      <div className="fixed bottom-0 left-0 w-full bg-[#111214] border-t border-[#1e1f22] p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
-        {/* Skeleton Loader */}
+      <div className="fixed bottom-0 left-0 w-full glass-panel border-t border-white/5 p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[90px] shadow-2xl">
       </div>
     );
   }
 
-  // 👇 RENDER PANTALLA COMPLETA MEJORADO 👇
+  // PANTALLA COMPLETA
   if (isFullscreen) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
@@ -290,7 +288,6 @@ export default function LivePlayer({ userId, guildId }) {
             </button>
         </div>
 
-        {/* 👇 min-h-0 evita que el contenido rompa el Flexbox. max-w-[40vh] limita la imagen a la altura de la pantalla 👇 */}
         <div className="z-10 flex-1 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-16 px-6 md:px-10 h-full min-h-0 overflow-hidden">
             <div className={`flex flex-col items-center max-w-lg w-full transition-transform duration-700 ${showLyrics ? 'scale-90 md:-translate-x-4' : 'scale-100'}`}>
                 
@@ -377,10 +374,11 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
+      {/* LETRAS MODAL CON EFECTO CRISTAL */}
       {showLyrics && (
-        <div className="fixed inset-0 bg-[#0a0a0c]/90 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-sm">
-          <div className="bg-[#111214] border border-[#1e1f22] rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
-            <div className="p-6 border-b border-[#1e1f22] flex justify-between items-center bg-[#111214] shrink-0 z-10">
+        <div className="fixed inset-0 bg-[#0a0a0c]/80 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-md">
+          <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center shrink-0 z-10 bg-black/40">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-white truncate">{status.song.title}</h2>
                 <p className="text-xs font-bold uppercase tracking-widest" style={{color: activeColor}}>{String(status.song.artist)}</p>
@@ -388,10 +386,10 @@ export default function LivePlayer({ userId, guildId }) {
               <button onClick={() => setShowLyrics(false)} className="text-gray-500 hover:text-white transition text-sm font-bold uppercase tracking-widest">Cerrar</button>
             </div>
             
-            <div className="flex-1 relative bg-black/40">
+            <div className="flex-1 relative bg-black/20">
                 {!isAutoScroll && parsedLyrics.length > 0 && (
                     <div className="absolute bottom-6 right-6 z-50 animate-fadeIn">
-                        <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-white/10">
+                        <button onClick={() => setIsAutoScroll(true)} className="bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold border border-white/20 shadow-2xl hover:scale-105 transition hover:bg-[#a855f7]/50">
                             ↓ Sincronizar
                         </button>
                     </div>
@@ -409,17 +407,17 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
-      {/* 👇 COLA DE CANCIONES CON BOTÓN DE ELIMINAR 👇 */}
+      {/* 👇 COLA DE CANCIONES (GLASSMORPHISM) 👇 */}
       {showQueue && (
-        <div className="fixed right-6 top-6 bottom-[110px] w-[380px] bg-[#111214] border border-[#1e1f22] z-[40] shadow-2xl rounded-2xl p-6 flex flex-col animate-slideInRight">
-          <div className="flex justify-between items-center mb-6 border-b border-[#1e1f22] pb-4">
-            <h3 className="font-bold uppercase text-xs tracking-widest text-gray-400">Próximos temas</h3>
+        <div className="fixed right-6 top-6 bottom-[110px] w-[380px] bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 z-[40] shadow-2xl rounded-2xl p-6 flex flex-col animate-slideInRight">
+          <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <h3 className="font-bold uppercase text-xs tracking-widest text-[#a855f7]">Próximos temas</h3>
             <button onClick={() => setShowQueue(false)} className="text-gray-500 hover:text-white text-xl">&times;</button>
           </div>
           <div className="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar">
             {localQueue.length > 0 ? localQueue.map((s, i) => (
               <div key={`queue-${s.queueId || i}`} draggable onDragStart={(e)=>handleDragStart(e,i)} onDragOver={(e)=>handleDragOver(e,i)} onDragEnd={handleDragEnd}
-                className={`group relative overflow-hidden flex items-center gap-4 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing hover:bg-[#1e1f22] ${draggingIndex === i ? 'opacity-30 scale-95 border-white/20 bg-[#1e1f22]' : 'border-transparent'}`}
+                className={`group relative overflow-hidden flex items-center gap-4 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing hover:bg-white/5 ${draggingIndex === i ? 'opacity-30 scale-95 border-[#a855f7]/50 bg-white/5' : 'border-transparent'}`}
               >
                 <span className="text-[10px] font-black opacity-30 w-4 text-center">≡</span>
                 <img src={s.thumbnail} className="w-10 h-10 rounded-md object-cover flex-shrink-0" alt="" />
@@ -429,24 +427,24 @@ export default function LivePlayer({ userId, guildId }) {
                   <span className="text-[10px] text-gray-500 font-bold uppercase truncate">{String(s.artist)}</span>
                 </div>
 
-                {/* Botón X con escudo (Igual que en Favoritos) */}
-                <div className="absolute right-0 top-0 bottom-0 flex items-center px-3 bg-[#1e1f22] opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-[-10px_0_15px_#1e1f22]">
+                <div className="absolute right-0 top-0 bottom-0 flex items-center px-3 bg-gradient-to-l from-[#111214] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
                     <button 
                       onClick={(e) => handleRemoveFromQueue(e, i)} 
-                      className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer" 
+                      className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors cursor-pointer" 
                       title="Quitar de la cola"
                     >
                         <TrashIcon />
                     </button>
                 </div>
-
               </div>
-            )) : <p className="text-gray-600 text-xs italic text-center py-4">No hay más pistas.</p>}
+            )) : <p className="text-gray-500 text-xs italic text-center py-4">No hay más pistas.</p>}
           </div>
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 w-full border-t border-[#1e1f22] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] flex flex-col md:flex-row items-center justify-between px-6 md:px-10 h-[90px] transition-colors duration-1000" style={{ background: `linear-gradient(90deg, ${activeColor}33 0%, rgba(10,10,12,0.95) 30%, rgba(10,10,12,0.95) 100%)`, backdropFilter: 'blur(16px)' }}>
+      {/* BOTTOM BAR CON GLASSMORPHISM Y GRADIENTE */}
+      <div className="fixed bottom-0 left-0 w-full border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] flex flex-col md:flex-row items-center justify-between px-6 md:px-10 h-[90px] transition-colors duration-1000" 
+           style={{ background: `linear-gradient(90deg, ${activeColor}20 0%, rgba(10,10,12,0.85) 30%, rgba(10,10,12,0.85) 100%)`, backdropFilter: 'blur(20px)' }}>
         <div className="flex items-center justify-start w-1/4 gap-4 overflow-hidden">
           <div className="relative group cursor-pointer" onClick={toggleFullscreen}>
               <img src={status.song.thumbnail} alt="Cover" className="w-14 h-14 rounded-md shadow-md object-cover group-hover:opacity-50 transition" />
@@ -465,28 +463,28 @@ export default function LivePlayer({ userId, guildId }) {
           <div className="hidden md:flex items-center gap-6 mb-1 relative">
             <button onClick={handleLike} className={`transition transform active:scale-95 ${isLiked ? 'scale-110' : 'text-gray-400 hover:text-white'}`} style={{ color: isLiked ? activeColor : '' }} title="Guardar pista"><HeartIcon filled={isLiked} /></button>
             <div className="relative">
-              <button onClick={() => setShowFilterMenu(!showFilterMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Filtros de Audio"><FilterIcon /></button>
+              <button onClick={() => setShowFilterMenu(!showFilterMenu)} className="text-gray-400 hover:text-[#a855f7] transition transform hover:scale-110" title="Filtros de Audio"><FilterIcon /></button>
               {showFilterMenu && (
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 bg-[#18191c] border border-[#2b2d31] rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
-                  <p className="text-[9px] font-black uppercase text-gray-500 mb-2 px-2 pt-1 text-center border-b border-[#2b2d31] pb-2 tracking-widest">Panel de Filtros</p>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 bg-[#0a0a0c]/90 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
+                  <p className="text-[9px] font-black uppercase text-[#a855f7] mb-2 px-2 pt-1 text-center border-b border-white/10 pb-2 tracking-widest">Panel de Filtros</p>
                   <div className="flex flex-col gap-1">
-                      <button onClick={()=>setFilter('clear')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-[#2b2d31] p-2 rounded transition">Apagar Todos</button>
-                      <button onClick={()=>setFilter('bass=g=15')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-[#2b2d31] p-2 rounded transition">Bassboost</button>
-                      <button onClick={()=>setFilter('apulsator=hz=0.09')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-[#2b2d31] p-2 rounded transition">8D Audio</button>
-                      <button onClick={()=>setFilter('asetrate=44100*1.25,aresample=44100,atempo=1')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-[#2b2d31] p-2 rounded transition">Nightcore</button>
+                      <button onClick={()=>setFilter('clear')} className="text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 p-2 rounded transition">Apagar Todos</button>
+                      <button onClick={()=>setFilter('bass=g=15')} className="text-xs font-bold text-gray-300 hover:text-[#ec4899] hover:bg-white/10 p-2 rounded transition">Bassboost</button>
+                      <button onClick={()=>setFilter('apulsator=hz=0.09')} className="text-xs font-bold text-gray-300 hover:text-[#ec4899] hover:bg-white/10 p-2 rounded transition">8D Audio</button>
+                      <button onClick={()=>setFilter('asetrate=44100*1.25,aresample=44100,atempo=1')} className="text-xs font-bold text-gray-300 hover:text-[#a855f7] hover:bg-white/10 p-2 rounded transition">Nightcore</button>
                   </div>
                 </div>
               )}
             </div>
-            <button onClick={handlePause} className="text-white transition transform hover:scale-105 p-1" title={status.isPaused ? "Reanudar" : "Pausar"}>{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
-            <button onClick={handleSkip} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Omitir"><SkipIcon /></button>
+            <button onClick={handlePause} className="text-white transition transform hover:scale-105 p-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" title={status.isPaused ? "Reanudar" : "Pausar"}>{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
+            <button onClick={handleSkip} className="text-gray-400 hover:text-[#ec4899] transition transform hover:scale-110" title="Omitir"><SkipIcon /></button>
             <div className="relative">
-              <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-white transition transform hover:scale-110" title="Añadir a Playlist"><MenuIcon /></button>
+              <button onClick={() => setShowPlaylistMenu(!showPlaylistMenu)} className="text-gray-400 hover:text-[#a855f7] transition transform hover:scale-110" title="Añadir a Playlist"><MenuIcon /></button>
               {showPlaylistMenu && (
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 bg-[#18191c] border border-[#2b2d31] rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
-                  <p className="text-[9px] font-black uppercase text-gray-500 mb-2 px-2 pt-1 text-center border-b border-[#2b2d31] pb-2 tracking-widest">Añadir a</p>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 bg-[#0a0a0c]/90 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl shadow-2xl p-2 z-[60] animate-fadeIn">
+                  <p className="text-[9px] font-black uppercase text-[#a855f7] mb-2 px-2 pt-1 text-center border-b border-white/10 pb-2 tracking-widest">Añadir a</p>
                   <div className="max-h-48 overflow-y-auto custom-scrollbar flex flex-col gap-1">
-                    {playlists.map(pl => <button key={pl.id} onClick={() => saveToPlaylist(pl.id)} className="w-full text-left text-[11px] p-2 hover:bg-[#2b2d31] rounded-md transition truncate font-bold text-gray-300">{pl.name}</button>)}
+                    {playlists.map(pl => <button key={pl.id} onClick={() => saveToPlaylist(pl.id)} className="w-full text-left text-[11px] p-2 hover:bg-[#a855f7]/20 rounded-md transition truncate font-bold text-gray-300">{pl.name}</button>)}
                   </div>
                 </div>
               )}
@@ -495,7 +493,7 @@ export default function LivePlayer({ userId, guildId }) {
 
           <div className="w-full max-w-2xl flex items-center gap-3 px-2 mt-1">
             <span className="text-[10px] text-gray-400 font-mono w-10 text-right">{formatTime(status.currentMs)}</span>
-            <div onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const percent = (e.clientX - rect.left) / rect.width; socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) }); }} className="flex-1 bg-[#2b2d31]/50 rounded-full h-1.5 relative overflow-hidden cursor-pointer group">
+            <div onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const percent = (e.clientX - rect.left) / rect.width; socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) }); }} className="flex-1 bg-white/10 rounded-full h-1.5 relative overflow-hidden cursor-pointer group">
               <div className="h-full transition-all duration-500 ease-linear rounded-r-full" style={{ width: `${progressPercent}%`, backgroundColor: activeColor }} />
             </div>
             <span className="text-[10px] text-gray-400 font-mono w-10">{formatTime(status.song.durationSec * 1000)}</span>
@@ -503,9 +501,9 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
 
         <div className="hidden md:flex w-1/4 justify-end gap-4 items-center">
-          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-white' : 'text-gray-400'} hover:text-gray-200 transition`} title="Letra"><LyricsIcon /></button>
-          <button onClick={toggleFullscreen} className="text-gray-400 hover:text-gray-200 transition" title="Pantalla Completa"><FullscreenIcon /></button>
-          <button onClick={() => setShowQueue(!showQueue)} className={`transition-all duration-300 transform ${showQueue ? 'scale-110' : 'text-gray-400 hover:text-gray-200'}`} style={{ color: showQueue || isQueueBouncing ? activeColor : '' }} title="Cola"><ListIcon /></button>
+          <button onClick={() => setShowLyrics(!showLyrics)} className={`${showLyrics && !isFullscreen ? 'text-[#a855f7]' : 'text-gray-400'} hover:text-white transition`} title="Letra"><LyricsIcon /></button>
+          <button onClick={toggleFullscreen} className="text-gray-400 hover:text-white transition" title="Pantalla Completa"><FullscreenIcon /></button>
+          <button onClick={() => setShowQueue(!showQueue)} className={`transition-all duration-300 transform ${showQueue ? 'scale-110' : 'text-gray-400 hover:text-white'}`} style={{ color: showQueue || isQueueBouncing ? activeColor : '' }} title="Cola"><ListIcon /></button>
         </div>
       </div>
     </>
