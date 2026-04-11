@@ -111,6 +111,40 @@ export const dictionaries = {
         saveBtn: "Guardar Cambios",
         saving: "Guardando..."
       }
+    },
+    livePlayer: {
+      searching: "Buscando letras...",
+      noLyrics: "No se encontraron letras.",
+      sync: "↓ Sincronizar",
+      liveSession: "Live Session",
+      mysterious: "Pista Misteriosa",
+      unknown: "Desconocido",
+      close: "Cerrar",
+      queue: {
+        title: "Próximos temas",
+        empty: "No hay más pistas.",
+        remove: "Quitar de la cola"
+      },
+      tooltips: {
+        save: "Guardar pista",
+        filters: "Filtros de Audio",
+        pause: "Pausar",
+        resume: "Reanudar",
+        skip: "Omitir",
+        addTo: "Añadir a Playlist",
+        lyrics: "Letra",
+        fullscreen: "Pantalla Completa"
+      },
+      filters: {
+        title: "Panel de Filtros",
+        clear: "Apagar Todos"
+      },
+      menu: {
+        title: "Añadir a"
+      },
+      alerts: {
+        saved: "Guardada."
+      }
     }
   },
   
@@ -225,6 +259,40 @@ export const dictionaries = {
         deleting: "Deleting...",
         saveBtn: "Save Changes",
         saving: "Saving..."
+      }
+    },
+    livePlayer: {
+      searching: "Searching lyrics...",
+      noLyrics: "No lyrics found.",
+      sync: "↓ Sync",
+      liveSession: "Live Session",
+      mysterious: "Mystery Track",
+      unknown: "Unknown",
+      close: "Close",
+      queue: {
+        title: "Up Next",
+        empty: "No more tracks in queue.",
+        remove: "Remove from queue"
+      },
+      tooltips: {
+        save: "Save track",
+        filters: "Audio Filters",
+        pause: "Pause",
+        resume: "Resume",
+        skip: "Skip",
+        addTo: "Add to Playlist",
+        lyrics: "Lyrics",
+        fullscreen: "Fullscreen"
+      },
+      filters: {
+        title: "Filter Panel",
+        clear: "Clear All"
+      },
+      menu: {
+        title: "Add to"
+      },
+      alerts: {
+        saved: "Saved."
       }
     }
   }
