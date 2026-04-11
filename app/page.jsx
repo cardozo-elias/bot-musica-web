@@ -8,16 +8,36 @@ const DiscordIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="
 const PanelIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
 
 export default async function LandingPage() {
-  const session = await getServerSession(authOptions);
+  // 1. Manejo seguro de la sesión
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (e) {
+    console.error("Error de sesión:", e);
+  }
 
-  const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'es';
-  const dict = dictionaries[locale] || dictionaries['es'];
+  // 2. Manejo seguro de la cookie de idioma
+  let locale = 'es';
+  try {
+    const cookieStore = await cookies();
+    locale = cookieStore.get('locale')?.value || 'es';
+  } catch (e) {
+    console.error("Error de cookie:", e);
+  }
+
+  // 3. Manejo ultra-seguro del Diccionario (Fallback si algo falla)
+  const dict = dictionaries[locale] || dictionaries['es'] || {};
+  const landingTexts = dict.landing || {
+    subtitle: "El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.",
+    enter: "Entrar al Panel",
+    login: "Iniciar Sesión",
+    invite: "Invitar al Servidor",
+    footer: "© 2026 Musicardi Team • Built with Next.js"
+  };
 
   return (
     <main className="min-h-screen bg-[#0a0a0c] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
       
-      {/* Fondo decorativo unificado con la paleta violeta */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#a855f7]/15 via-transparent to-transparent -z-10"></div>
 
       <div className="text-center max-w-2xl animate-slideUp">
@@ -25,7 +45,7 @@ export default async function LandingPage() {
           Musicardi
         </h1>
         <p className="text-gray-400 text-lg md:text-xl font-medium mb-12 leading-relaxed">
-          {dict.landing.subtitle}
+          {landingTexts.subtitle}
         </p>
 
         <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
@@ -35,7 +55,7 @@ export default async function LandingPage() {
             className="flex items-center gap-3 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:brightness-110 w-full md:w-auto justify-center"
           >
             {session ? <PanelIcon /> : <DiscordIcon />}
-            {session ? dict.landing.enter : dict.landing.login}
+            {session ? landingTexts.enter : landingTexts.login}
           </Link>
 
           <a 
@@ -44,13 +64,13 @@ export default async function LandingPage() {
             rel="noopener noreferrer"
             className="flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all transform hover:scale-105 w-full md:w-auto justify-center"
           >
-            {dict.landing.invite}
+            {landingTexts.invite}
           </a>
         </div>
       </div>
 
       <footer className="absolute bottom-8 text-gray-600 text-[10px] font-black uppercase tracking-[0.3em]">
-        {dict.landing.footer}
+        {landingTexts.footer}
       </footer>
     </main>
   );
