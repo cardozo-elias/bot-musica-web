@@ -52,7 +52,7 @@ export default function SettingsModal() {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         const socket = io(botUrl, { 
-            extraHeaders: { "ngrok-skip-browser-warning": "true" } 
+            extraHeaders: { "ngrok-skip-browser-warning": "true" }  
         });
         
         socket.emit("save_preferences", { userId, prefs });
