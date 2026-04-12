@@ -78,14 +78,10 @@ export default function LivePlayer({ userId, guildId }) {
 
   useEffect(() => {
     if (!userId) return;
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Asegurarnos de que la URL de Ngrok use wss:// (WebSocket Seguro)
-    let rawUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    let secureUrl = rawUrl.replace("https://", "wss://").replace("http://", "ws://");
-    
-    socketRef.current = io(secureUrl, { 
-        transports: ["websocket"], // 👈 OBLIGATORIO: Solo WebSockets, cero Polling
-        upgrade: false,            // 👈 No intentes "subir" de nivel, entra directo por WS
+    // Conexión estándar limpia para que el HTTP Server del bot la reciba
+    socketRef.current = io(botUrl, { 
         extraHeaders: { "ngrok-skip-browser-warning": "true" } 
     });
 

@@ -35,12 +35,10 @@ export default function SettingsModal() {
     // Cargar preferencias cuando se abre
     useEffect(() => {
         if (!isOpen || !userId) return;
-        let rawUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-        let secureUrl = rawUrl.replace("https://", "wss://").replace("http://", "ws://");
+        const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        const socket = io(secureUrl, { 
-            transports: ["websocket"], 
-            upgrade: false,
+        // Conexión estándar limpia
+        const socket = io(botUrl, { 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
         });
         
@@ -54,12 +52,10 @@ export default function SettingsModal() {
 
     const handleSave = () => {
         if (!userId) return;
-        let rawUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-        let secureUrl = rawUrl.replace("https://", "wss://").replace("http://", "ws://");
+        const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        const socket = io(secureUrl, { 
-            transports: ["websocket"], 
-            upgrade: false,
+        // Conexión estándar limpia
+        const socket = io(botUrl, { 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
         });
         

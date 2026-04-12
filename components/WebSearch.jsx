@@ -37,15 +37,12 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   }, []);
 
   useEffect(() => {
-    let rawUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    let secureUrl = rawUrl.replace("https://", "wss://").replace("http://", "ws://");
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    socketRef.current = io(secureUrl, { 
-        transports: ["websocket"], 
-        upgrade: false,
+    // Conexión estándar limpia
+    socketRef.current = io(botUrl, { 
         extraHeaders: { "ngrok-skip-browser-warning": "true" } 
     });
-    // ... (resto del useEffect)
     
     socketRef.current.emit("cmd_get_recommendations", userId);
     
