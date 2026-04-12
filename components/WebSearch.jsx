@@ -37,13 +37,11 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   }, []);
 
   useEffect(() => {
+    if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // 🔥 FORZAMOS WEBSOCKET DIRECTO
-    socketRef.current = io(botUrl, { 
-        transports: ["websocket"],
-        upgrade: false 
-    });
+    // Conexión limpia Cloudflare
+    socketRef.current = io(botUrl);
     
     socketRef.current.emit("cmd_get_recommendations", userId);
     
@@ -54,10 +52,6 @@ export default function WebSearch({ userId, userName, userAvatar }) {
     
     socketRef.current.on("recommendations_results", (videos) => { 
         setRecommendations(videos || []); 
-    });
-    
-    fetch("/api/playlists").then(res => res.json()).then(data => { 
-        if(Array.isArray(data)) setPlaylists(data); 
     });
     
     return () => socketRef.current?.disconnect();

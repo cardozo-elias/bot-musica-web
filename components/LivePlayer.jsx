@@ -80,13 +80,8 @@ export default function LivePlayer({ userId, guildId }) {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // 🔥 FORZAMOS WEBSOCKET DIRECTO (Sin headers para evitar el error de OPTIONS)
-    socketRef.current = io(botUrl, { 
-        transports: ["websocket"],
-        upgrade: false 
-    });
-
-    fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
+    // Conexión limpia para Cloudflare
+    socketRef.current = io(botUrl);
 
     const interval = setInterval(() => { 
         if (!isReordering.current) socketRef.current?.emit("get_status", { userId, guildId }); 
@@ -95,27 +90,16 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
       setSocketStats(data);
-      setStatus(prev => ({ ...data, color: data.color || '#7e22ce', voiceMembers: data.voiceMembers || [] }));
+      setStatus(prev => ({ ...data, color: data.color || '#7e22ce' }));
       
       if (data.playing && data.song) {
-        document.title = data.isPaused ? `|| ${data.song.title}` : `▶ ${data.song.title}`;
-        if (draggingIndex === null) setLocalQueue(data.queueList || []);
-        setCurrentVideoId(data.song.videoId);
+        setLocalQueue(data.queueList || []);
         setIsLiked(data.isLiked); 
-      } else { 
-        document.title = "Musicardi Panel";
       }
     });
 
     socketRef.current.on("lyrics_data", (data) => {
       setLyrics({ title: data.title || "", text: data.lyrics || data.error, loading: false });
-      setParsedLyrics(data.synced ? parseLrc(data.synced) : []);
-      setIsAutoScroll(true); 
-    });
-
-    socketRef.current.on("track_added", (title) => { 
-        setToastMsg(title); setIsQueueBouncing(true);
-        setTimeout(() => setIsQueueBouncing(false), 500); setTimeout(() => setToastMsg(null), 3500); 
     });
 
     return () => { 
@@ -356,9 +340,22 @@ export default function LivePlayer({ userId, guildId }) {
 
             <div className="flex items-center justify-center gap-8 md:gap-10">
                 <button onClick={() => setShowLyrics(!showLyrics)} className={`transition p-2 md:p-3 rounded-full ${showLyrics ? 'bg-white/20 text-white' : 'opacity-50 hover:opacity-100'}`}><LyricsIcon /></button>
-                <button onClick={handlePause} className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-                    {status.isPaused ? <PlayIcon /> : <PauseIcon />}
-                </button>
+                <div className="flex items-center gap-6">
+              <button onClick={() => handleAction("cmd_toggle_discovery")} 
+                className={`p-3 rounded-full transition-all ${status.discovery ? 'bg-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.5)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                title={status.discovery ? "Modo Descubrimiento" : "Modo Estricto"}
+              >
+                {status.discovery ? '🚀' : '🎯'}
+              </button>
+
+              <button onClick={handlePause} className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                {status.isPaused ? <PlayIcon /> : <PauseIcon />}
+              </button>
+
+              <button onClick={handleSkip} className="opacity-70 hover:opacity-100 hover:scale-110 transition scale-110 md:scale-125">
+                <SkipIcon />
+              </button>
+          </div>
                 <button onClick={handleSkip} className="opacity-70 hover:opacity-100 hover:scale-110 transition scale-110 md:scale-125"><SkipIcon /></button>
             </div>
         </div>

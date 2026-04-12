@@ -25,7 +25,6 @@ export default function SettingsModal() {
         accent_color: '#a855f7'
     });
 
-    // Escuchador de apertura
     useEffect(() => {
         const handleOpen = () => setIsOpen(true);
         window.addEventListener("open-settings-modal", handleOpen);
@@ -36,33 +35,24 @@ export default function SettingsModal() {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // 🔥 FORZAMOS WEBSOCKET DIRECTO
-        const socket = io(botUrl, { 
-            transports: ["websocket"],
-            upgrade: false 
-        });
-        
+        const socket = io(botUrl);
         socket.emit("get_preferences", userId);
         socket.on("preferences_data", (data) => { setPrefs(data); });
+
         return () => socket.disconnect();
     }, [isOpen, userId]);
 
     const handleSave = () => {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-        
-        // 🔥 FORZAMOS WEBSOCKET DIRECTO
-        const socket = io(botUrl, { 
-            transports: ["websocket"],
-            upgrade: false 
-        });
-        
+        const socket = io(botUrl);
         socket.emit("save_preferences", { userId, prefs });
-        setTimeout(() => socket.disconnect(), 1000);
-        setIsOpen(false);
+        setTimeout(() => {
+            socket.disconnect();
+            setIsOpen(false);
+        }, 500);
     };
 
-    // Si no está abierto, no renderiza nada y no gasta recursos
     if (!isOpen) return null;
 
     return (
