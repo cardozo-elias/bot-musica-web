@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "../components/LanguageContext";
+import GlobalWrapper from "../components/GlobalWrapper"; // 👇 Importamos el envoltorio
 import { cookies } from "next/headers";
 
 const geistSans = Geist({
@@ -32,7 +33,10 @@ export default async function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0c]">
         <LanguageProvider initialLang={locale}>
-          {children}
+          {/* 👇 Envolvemos la aplicación entera 👇 */}
+          <GlobalWrapper>
+            {children}
+          </GlobalWrapper>
         </LanguageProvider>
       </body>
     </html>

@@ -46,8 +46,7 @@ export default function DashboardContent({ initialStats, session, guildId, userH
                 </div>
             </section>
 
-            {/* 🔥 AQUÍ PONEMOS EL REPRODUCTOR SEGURO 🔥 */}
-            <LivePlayer userId={session.user.id} guildId={null} />
+           
         </>
     );
 }
