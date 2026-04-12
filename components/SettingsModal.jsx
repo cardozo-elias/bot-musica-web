@@ -37,8 +37,14 @@ export default function SettingsModal() {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // Conexión pura y directa
-        const socket = io(botUrl);
+        // 🔥 FORZAMOS WEBSOCKETS Y PASES VIP 🔥
+        const socket = io(botUrl, { 
+            transports: ["websocket"], 
+            extraHeaders: { 
+                "ngrok-skip-browser-warning": "true", // Pase VIP para Ngrok
+                "Bypass-Tunnel-Reminder": "true"      // Pase VIP para LocalTunnel
+            } 
+        });
         
         socket.emit("get_preferences", userId);
         socket.on("preferences_data", (data) => {
@@ -53,8 +59,14 @@ export default function SettingsModal() {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // Conexión pura y directa
-        const socket = io(botUrl);
+        // 🔥 FORZAMOS WEBSOCKETS Y PASES VIP 🔥
+        const socket = io(botUrl, { 
+            transports: ["websocket"], 
+            extraHeaders: { 
+                "ngrok-skip-browser-warning": "true", // Pase VIP para Ngrok
+                "Bypass-Tunnel-Reminder": "true"      // Pase VIP para LocalTunnel
+            } 
+        });
         
         socket.emit("save_preferences", { userId, prefs });
         setTimeout(() => socket.disconnect(), 1000);
