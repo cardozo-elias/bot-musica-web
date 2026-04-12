@@ -1,13 +1,13 @@
 "use client";
 import { SessionProvider, useSession } from "next-auth/react";
 import LivePlayer from "./LivePlayer";
-import { SocketProvider } from "./SocketContext"; // 🔥 Corregido aquí
+import { SocketProvider } from "./SocketContext"; 
 
 function PlayerInjector({ children }) {
   const { data: session } = useSession();
   
   return (
-    <SocketProvider> {/* 🔥 Y corregido aquí */}
+    <SocketProvider>
       {children}
       {/* Si el usuario tiene sesión, el reproductor flotará mágicamente sobre toda la app */}
       {session?.user?.id && <LivePlayer userId={session.user.id} guildId={null} />}

@@ -79,16 +79,23 @@ export default function LivePlayer({ userId, guildId }) {
   useEffect(() => {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    socketRef.current = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
+    
+    // 🔥 CONEXIÓN WEBSOCKET PURA 🔥
+    socketRef.current = io(botUrl, { 
+        transports: ["websocket"], 
+        extraHeaders: { "ngrok-skip-browser-warning": "true" } 
+    });
+
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 
-    const interval = setInterval(() => { if (!isReordering.current) socketRef.current?.emit("get_status", { userId, guildId }); }, 1000);
+    const interval = setInterval(() => { 
+        if (!isReordering.current) socketRef.current?.emit("get_status", { userId, guildId }); 
+    }, 1000);
     
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
       
       setSocketStats(data);
-      
       setStatus(prev => ({ ...data, color: data.color || '#7e22ce', voiceMembers: data.voiceMembers || [] }));
       
       if (data.playing && data.song) {
@@ -112,8 +119,11 @@ export default function LivePlayer({ userId, guildId }) {
         setTimeout(() => setIsQueueBouncing(false), 500); setTimeout(() => setToastMsg(null), 3500); 
     });
 
-    return () => { clearInterval(interval); socketRef.current?.disconnect(); };
-  }, [userId, guildId, setSocketStats]); 
+    return () => { 
+        clearInterval(interval); 
+        socketRef.current?.disconnect(); 
+    };
+  }, [userId, guildId, setSocketStats]);
 
   useEffect(() => { if (showLyrics && currentVideoId) fetchLyrics(); }, [currentVideoId, showLyrics]);
 

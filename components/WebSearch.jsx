@@ -37,13 +37,31 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   }, []);
 
   useEffect(() => {
-    socketRef.current = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
+    const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+    
+    // 🔥 CONEXIÓN WEBSOCKET PURA 🔥
+    socketRef.current = io(botUrl, { 
+        transports: ["websocket"], 
+        extraHeaders: { "ngrok-skip-browser-warning": "true" } 
+    });
+    
     socketRef.current.emit("cmd_get_recommendations", userId);
-    socketRef.current.on("search_results", (videos) => { setResults(videos || []); setLoading(false); });
-    socketRef.current.on("recommendations_results", (videos) => { setRecommendations(videos || []); });
-    fetch("/api/playlists").then(res => res.json()).then(data => { if(Array.isArray(data)) setPlaylists(data); });
+    
+    socketRef.current.on("search_results", (videos) => { 
+        setResults(videos || []); 
+        setLoading(false); 
+    });
+    
+    socketRef.current.on("recommendations_results", (videos) => { 
+        setRecommendations(videos || []); 
+    });
+    
+    fetch("/api/playlists").then(res => res.json()).then(data => { 
+        if(Array.isArray(data)) setPlaylists(data); 
+    });
+    
     return () => socketRef.current?.disconnect();
-  }, [userId, botUrl]);
+  }, [userId]);
 
   const handleAddToPlaylist = async (playlistId, video) => {
     const songObj = { 
