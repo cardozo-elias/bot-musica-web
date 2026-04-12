@@ -2,9 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from './LanguageContext';
 import { io } from "socket.io-client";
+import { useSession } from "next-auth/react";
 
-export default function SettingsModal({ isOpen, onClose, userId }) {
+// 🔥 LA MAGIA: Esta función le avisa al componente que se abra desde cualquier lugar
+export const openSettingsModal = () => {
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("open-settings-modal"));
+};
+
+export default function SettingsModal() {
+    const { data: session } = useSession();
+    const userId = session?.user?.id;
+    
     const { t, language, setLanguage } = useLanguage();
+    const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('general');
     
     // Estados de Preferencias
@@ -15,11 +25,17 @@ export default function SettingsModal({ isOpen, onClose, userId }) {
         accent_color: '#a855f7'
     });
 
+    // Escuchador de apertura
+    useEffect(() => {
+        const handleOpen = () => setIsOpen(true);
+        window.addEventListener("open-settings-modal", handleOpen);
+        return () => window.removeEventListener("open-settings-modal", handleOpen);
+    }, []);
+
+    // Cargar preferencias cuando se abre
     useEffect(() => {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-        
-        // 🔥 CONEXIÓN WEBSOCKET PURA 🔥
         const socket = io(botUrl, { 
             transports: ["websocket"], 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
@@ -34,9 +50,8 @@ export default function SettingsModal({ isOpen, onClose, userId }) {
     }, [isOpen, userId]);
 
     const handleSave = () => {
+        if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-        
-        // 🔥 CONEXIÓN WEBSOCKET PURA 🔥
         const socket = io(botUrl, { 
             transports: ["websocket"], 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
@@ -44,9 +59,10 @@ export default function SettingsModal({ isOpen, onClose, userId }) {
         
         socket.emit("save_preferences", { userId, prefs });
         setTimeout(() => socket.disconnect(), 1000);
-        onClose();
+        setIsOpen(false); // Cierra el modal
     };
 
+    // Si no está abierto, no renderiza nada y no gasta recursos
     if (!isOpen) return null;
 
     return (
@@ -56,7 +72,7 @@ export default function SettingsModal({ isOpen, onClose, userId }) {
                 {/* Header */}
                 <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
                     <h2 className="text-2xl font-black text-white">{t('settings.title')}</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-white transition text-3xl leading-none">&times;</button>
+                    <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-white transition text-3xl leading-none">&times;</button>
                 </div>
 
                 <div className="flex flex-col md:flex-row h-[60vh] md:h-[500px]">
@@ -131,7 +147,7 @@ export default function SettingsModal({ isOpen, onClose, userId }) {
 
                 {/* Footer */}
                 <div className="p-4 border-t border-white/5 bg-black/40 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-6 py-2.5 rounded-full font-bold text-gray-400 hover:text-white transition">{t('common.cancel')}</button>
+                    <button onClick={() => setIsOpen(false)} className="px-6 py-2.5 rounded-full font-bold text-gray-400 hover:text-white transition">{t('common.cancel')}</button>
                     <button onClick={handleSave} className="px-8 py-2.5 rounded-full font-bold bg-[#a855f7] text-white hover:brightness-110 transition shadow-[0_0_15px_rgba(168,85,247,0.4)]">{t('common.save')}</button>
                 </div>
             </div>
