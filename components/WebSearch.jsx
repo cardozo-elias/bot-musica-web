@@ -39,14 +39,8 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // 🔥 FORZAMOS WEBSOCKETS (Ahora que el bot está vivo, esto funcionará) 🔥
-    socketRef.current = io(botUrl, { 
-        transports: ["websocket"], 
-        extraHeaders: { 
-            "ngrok-skip-browser-warning": "true", // Pase VIP para Ngrok
-            "Bypass-Tunnel-Reminder": "true"      // Pase VIP para LocalTunnel
-        } 
-    });
+    // 🔥 CONEXIÓN PURA 🔥
+    socketRef.current = io(botUrl);
     
     socketRef.current.emit("cmd_get_recommendations", userId);
     

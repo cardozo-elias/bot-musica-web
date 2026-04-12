@@ -32,19 +32,13 @@ export default function SettingsModal() {
         return () => window.removeEventListener("open-settings-modal", handleOpen);
     }, []);
 
-    // Bloque 1: Cargar preferencias cuando se abre
+    // BLOQUE 1: Carga inicial
     useEffect(() => {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // 🔥 FORZAMOS WEBSOCKETS Y PASES VIP 🔥
-        const socket = io(botUrl, { 
-            transports: ["websocket"], 
-            extraHeaders: { 
-                "ngrok-skip-browser-warning": "true", // Pase VIP para Ngrok
-                "Bypass-Tunnel-Reminder": "true"      // Pase VIP para LocalTunnel
-            } 
-        });
+        // 🔥 CONEXIÓN PURA 🔥
+        const socket = io(botUrl);
         
         socket.emit("get_preferences", userId);
         socket.on("preferences_data", (data) => {
@@ -54,23 +48,17 @@ export default function SettingsModal() {
         return () => socket.disconnect();
     }, [isOpen, userId]);
 
-    // Bloque 2: Guardar preferencias
+    // BLOQUE 2: Al guardar
     const handleSave = () => {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // 🔥 FORZAMOS WEBSOCKETS Y PASES VIP 🔥
-        const socket = io(botUrl, { 
-            transports: ["websocket"], 
-            extraHeaders: { 
-                "ngrok-skip-browser-warning": "true", // Pase VIP para Ngrok
-                "Bypass-Tunnel-Reminder": "true"      // Pase VIP para LocalTunnel
-            } 
-        });
+        // 🔥 CONEXIÓN PURA 🔥
+        const socket = io(botUrl);
         
         socket.emit("save_preferences", { userId, prefs });
         setTimeout(() => socket.disconnect(), 1000);
-        setIsOpen(false); // Cierra el modal
+        setIsOpen(false);
     };
 
     // Si no está abierto, no renderiza nada y no gasta recursos
