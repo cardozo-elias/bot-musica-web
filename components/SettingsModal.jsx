@@ -37,7 +37,6 @@ export default function SettingsModal() {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         const socket = io(botUrl, { 
-            transports: ["websocket"], 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
         });
         
@@ -53,7 +52,6 @@ export default function SettingsModal() {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         const socket = io(botUrl, { 
-            transports: ["websocket"], 
             extraHeaders: { "ngrok-skip-browser-warning": "true" } 
         });
         

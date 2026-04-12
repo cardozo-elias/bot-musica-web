@@ -39,9 +39,8 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // 🔥 CONEXIÓN WEBSOCKET PURA 🔥
+    // RESTAURADO A SU FORMA ORIGINAL
     socketRef.current = io(botUrl, { 
-        transports: ["websocket"], 
         extraHeaders: { "ngrok-skip-browser-warning": "true" } 
     });
     
