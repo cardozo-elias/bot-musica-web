@@ -80,10 +80,8 @@ export default function LivePlayer({ userId, guildId }) {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Conexión estándar limpia para que el HTTP Server del bot la reciba
-    socketRef.current = io(botUrl, { 
-        extraHeaders: { "ngrok-skip-browser-warning": "true" } 
-    });
+    // Conexión pura y directa (Perfecta para LocalTunnel)
+    socketRef.current = io(botUrl);
 
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 

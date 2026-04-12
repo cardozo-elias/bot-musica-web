@@ -32,15 +32,13 @@ export default function SettingsModal() {
         return () => window.removeEventListener("open-settings-modal", handleOpen);
     }, []);
 
-    // Cargar preferencias cuando se abre
+    // Bloque 1: Cargar preferencias cuando se abre
     useEffect(() => {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // Conexión estándar limpia
-        const socket = io(botUrl, { 
-            extraHeaders: { "ngrok-skip-browser-warning": "true" } 
-        });
+        // Conexión pura y directa
+        const socket = io(botUrl);
         
         socket.emit("get_preferences", userId);
         socket.on("preferences_data", (data) => {
@@ -50,14 +48,13 @@ export default function SettingsModal() {
         return () => socket.disconnect();
     }, [isOpen, userId]);
 
+    // Bloque 2: Guardar preferencias
     const handleSave = () => {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // Conexión estándar limpia
-        const socket = io(botUrl, { 
-            extraHeaders: { "ngrok-skip-browser-warning": "true" } 
-        });
+        // Conexión pura y directa
+        const socket = io(botUrl);
         
         socket.emit("save_preferences", { userId, prefs });
         setTimeout(() => socket.disconnect(), 1000);

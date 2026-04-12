@@ -39,10 +39,8 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Conexión estándar limpia
-    socketRef.current = io(botUrl, { 
-        extraHeaders: { "ngrok-skip-browser-warning": "true" } 
-    });
+    // Conexión pura y directa
+    socketRef.current = io(botUrl);
     
     socketRef.current.emit("cmd_get_recommendations", userId);
     
