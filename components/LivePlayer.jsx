@@ -48,7 +48,12 @@ export default function LivePlayer({ userId, guildId }) {
   const { setSocketStats } = useSocketStats();
   const { t } = useLanguage();
 
-  const [status, setStatus] = useState({ playing: false, queueList: [], color: '#7e22ce', voiceMembers: [], discovery: false });
+  // Añadimos autoplay y discovery al estado inicial
+  const [status, setStatus] = useState({ 
+      playing: false, queueList: [], color: '#7e22ce', voiceMembers: [], 
+      autoplay: false, discovery: false 
+  });
+  
   const [isLiked, setIsLiked] = useState(false); 
   const [currentVideoId, setCurrentVideoId] = useState(null); 
   const [playlists, setPlaylists] = useState([]);
@@ -246,13 +251,16 @@ export default function LivePlayer({ userId, guildId }) {
     }
     return (
         <pre className="font-sans text-lg md:text-xl font-semibold leading-relaxed opacity-80 whitespace-pre-wrap text-center md:text-left pt-[10vh] pb-10 px-4 md:px-8 uppercase tracking-tighter">
-            {lyrics.text || t('livePlayer.noLyrics')}
+            {lyrics.text || "NO LYRICS FOUND"}
         </pre>
     );
   };
 
   if (!status.playing || !status.song) return null;
 
+  // ==========================================
+  // VISTA: PANTALLA COMPLETA
+  // ==========================================
   if (isFullscreen) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
@@ -313,15 +321,26 @@ export default function LivePlayer({ userId, guildId }) {
                 <span className="text-[10px] font-black opacity-30 tracking-widest">{formatTime(status.song.durationSec * 1000)}</span>
             </div>
 
-            <div className="flex items-center justify-center gap-8 md:gap-12">
+            <div className="flex items-center justify-center gap-6 md:gap-10">
                 <button onClick={() => setShowLyrics(!showLyrics)} className={`transition p-2 rounded-full ${showLyrics ? 'bg-white/10 text-white' : 'opacity-30 hover:opacity-100'}`}><LyricsIcon /></button>
                 
-                <button onClick={() => handleAction("cmd_toggle_discovery")} className={`px-4 py-1.5 rounded-full text-[9px] font-black tracking-[0.2em] uppercase border transition-all ${status.discovery ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-white/10 hover:border-white/20'}`}>
-                    {status.discovery ? 'Discovery' : 'Strict'}
-                </button>
+                {/* BOTONES DEL MOTOR DUAL (FULLSCREEN) */}
+                <div className="flex items-center gap-2 border border-white/5 bg-black/40 rounded-xl p-1 shadow-lg">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleAction("cmd_toggle_autoplay"); }} 
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black tracking-widest uppercase transition-all ${status.autoplay ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Autoplay
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleAction("cmd_toggle_discovery"); }} 
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black tracking-widest uppercase transition-all ${status.discovery ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Discovery
+                    </button>
+                </div>
 
                 <button onClick={handlePause} className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-2xl">{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
-                
                 <button onClick={handleSkip} className="opacity-30 hover:opacity-100 hover:scale-110 transition scale-110 md:scale-125"><SkipIcon /></button>
             </div>
         </div>
@@ -329,6 +348,9 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
+  // ==========================================
+  // VISTA: BARRA INFERIOR (REDUCIDA)
+  // ==========================================
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
@@ -352,7 +374,7 @@ export default function LivePlayer({ userId, guildId }) {
                 <h2 className="text-sm font-black text-white truncate uppercase italic tracking-tighter">{status.song.title}</h2>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{color: activeColor}}>{status.song.artist}</p>
               </div>
-              <button onClick={() => setShowLyrics(false)} className="text-gray-500 hover:text-white transition text-[10px] font-black uppercase tracking-widest italic">Cerrar</button>
+              <button onClick={() => setShowLyrics(false)} className="text-gray-500 hover:text-white transition text-[10px] font-black uppercase tracking-widest italic">CERRAR</button>
             </div>
             <div className="flex-1 relative bg-black/20">
                 {!isAutoScroll && parsedLyrics.length > 0 && (
@@ -371,7 +393,7 @@ export default function LivePlayer({ userId, guildId }) {
       {showQueue && (
         <div className="fixed right-4 md:right-6 top-6 bottom-[130px] md:bottom-[110px] w-full max-w-[340px] bg-[#050505]/95 backdrop-blur-3xl border border-white/5 z-[40] shadow-2xl rounded-2xl p-6 flex flex-col animate-slideInRight">
           <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-            <h3 className="font-black uppercase text-[10px] tracking-[0.3em] italic" style={{ color: activeColor }}>Lista de Espera</h3>
+            <h3 className="font-black uppercase text-[10px] tracking-[0.3em] italic" style={{ color: activeColor }}>LISTA DE ESPERA</h3>
             <button onClick={() => setShowQueue(false)} className="text-gray-600 hover:text-white text-xl font-light">&times;</button>
           </div>
           <div className="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar">
@@ -386,7 +408,7 @@ export default function LivePlayer({ userId, guildId }) {
                 </div>
                 <button onClick={(e) => handleRemoveFromQueue(e, i)} className="p-1 text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><TrashIcon /></button>
               </div>
-            )) : <p className="text-gray-700 text-[10px] uppercase font-black tracking-widest text-center py-10 italic">Cola Vacía</p>}
+            )) : <p className="text-gray-700 text-[10px] uppercase font-black tracking-widest text-center py-10 italic">COLA VACÍA</p>}
           </div>
         </div>
       )}
@@ -401,7 +423,7 @@ export default function LivePlayer({ userId, guildId }) {
           </div>
           <div className="flex flex-col min-w-0 w-full text-left">
             <span className={`font-black text-gray-200 text-xs uppercase tracking-tighter italic ${isLongTitle ? 'animate-marquee' : 'truncate'}`}>
-              {status.song.isTrivia ? 'Mystery Track' : status.song.title}
+              {status.song.isTrivia ? 'MYSTERY TRACK' : status.song.title}
             </span>
             <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest mt-0.5">{status.song.isTrivia ? "????" : status.song.artist}</span>
           </div>
@@ -409,29 +431,44 @@ export default function LivePlayer({ userId, guildId }) {
 
         <div className="flex w-[25%] md:w-2/4 justify-end md:justify-center items-center gap-4">
           <div className="hidden md:flex flex-col items-center w-full max-w-lg">
-            <div className="flex items-center gap-8 mb-2">
+            <div className="flex items-center gap-6 mb-2">
               <button onClick={handleLike} className={`transition transform active:scale-95 ${isLiked ? 'text-white' : 'text-gray-600 hover:text-white'}`} style={{ color: isLiked ? activeColor : '' }}><HeartIcon filled={isLiked} /></button>
               
-              <button onClick={() => handleAction("cmd_toggle_discovery")} className={`px-3 py-1 rounded-md text-[8px] font-black tracking-[0.2em] uppercase border transition-all ${status.discovery ? 'bg-white text-black border-white' : 'bg-transparent text-gray-700 border-white/5 hover:border-white/10'}`}>
-                {status.discovery ? 'Discovery' : 'Strict'}
-              </button>
+              {/* BOTONES DEL MOTOR DUAL (BARRA INFERIOR) */}
+              <div className="flex items-center gap-1 border border-white/5 bg-black/40 rounded-lg p-0.5">
+                  <button 
+                      onClick={(e) => { e.stopPropagation(); handleAction("cmd_toggle_autoplay"); }} 
+                      className={`px-2.5 py-1 rounded text-[8px] font-black tracking-widest uppercase transition-all ${status.autoplay ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'text-gray-600 hover:text-white'}`}
+                  >
+                      Autoplay
+                  </button>
+                  <button 
+                      onClick={(e) => { e.stopPropagation(); handleAction("cmd_toggle_discovery"); }} 
+                      className={`px-2.5 py-1 rounded text-[8px] font-black tracking-widest uppercase transition-all ${status.discovery ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'text-gray-600 hover:text-white'}`}
+                  >
+                      Discovery
+                  </button>
+              </div>
 
-              <button onClick={handlePause} className="text-white hover:scale-110 transition drop-shadow-2xl">{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
+              <button onClick={handlePause} className="text-white hover:scale-110 transition drop-shadow-2xl ml-2">{status.isPaused ? <PlayIcon /> : <PauseIcon />}</button>
               <button onClick={handleSkip} className="text-gray-600 hover:text-white hover:scale-110 transition"><SkipIcon /></button>
               
-              <button onClick={(e) => { e.stopPropagation(); setShowFilterMenu(!showFilterMenu); }} className={`transition ${showFilterMenu ? 'text-white' : 'text-gray-600 hover:text-white'}`}><FilterIcon /></button>
-              {showFilterMenu && (
-                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-40 bg-black/95 border border-white/5 rounded-xl shadow-2xl p-2 z-[70] animate-fadeIn">
-                    <div className="flex flex-col gap-1">
-                        {['clear', 'bass=g=15', 'apulsator=hz=0.09', 'asetrate=44100*1.25,aresample=44100,atempo=1'].map((f) => (
-                            <button key={f} onClick={(e)=>{ e.stopPropagation(); setFilter(f); }} className="text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-white p-2 rounded transition text-left">
-                                {f === 'clear' ? 'Default' : f.split('=')[0]}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-              )}
+              <div className="relative">
+                <button onClick={(e) => { e.stopPropagation(); setShowFilterMenu(!showFilterMenu); }} className={`transition ml-2 ${showFilterMenu ? 'text-white' : 'text-gray-600 hover:text-white'}`}><FilterIcon /></button>
+                {showFilterMenu && (
+                  <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 bg-black/95 border border-white/5 rounded-xl shadow-2xl p-2 z-[70] animate-fadeIn">
+                      <div className="flex flex-col gap-1">
+                          {['clear', 'bass=g=15', 'apulsator=hz=0.09', 'asetrate=44100*1.25,aresample=44100,atempo=1'].map((f) => (
+                              <button key={f} onClick={(e)=>{ e.stopPropagation(); setFilter(f); }} className="text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-white p-2 rounded transition text-left">
+                                  {f === 'clear' ? 'DEFAULT' : f.split('=')[0]}
+                              </button>
+                          ))}
+                      </div>
+                  </div>
+                )}
+              </div>
             </div>
+            
             <div className="w-full flex items-center gap-3">
               <span className="text-[9px] text-gray-700 font-black tracking-widest w-10 text-right">{formatTime(status.currentMs)}</span>
               <div onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); const percent = (e.clientX - rect.left) / rect.width; socketRef.current?.emit("cmd_seek", { userId, targetSec: Math.floor(percent * status.song.durationSec) }); }} className="flex-1 bg-white/5 rounded-full h-1 relative overflow-hidden cursor-pointer">
