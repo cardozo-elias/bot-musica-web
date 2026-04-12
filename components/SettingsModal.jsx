@@ -32,29 +32,30 @@ export default function SettingsModal() {
         return () => window.removeEventListener("open-settings-modal", handleOpen);
     }, []);
 
-    // BLOQUE 1: Carga inicial
     useEffect(() => {
         if (!isOpen || !userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // 🔥 CONEXIÓN PURA 🔥
-        const socket = io(botUrl);
+        // 🔥 FORZAMOS WEBSOCKET DIRECTO
+        const socket = io(botUrl, { 
+            transports: ["websocket"],
+            upgrade: false 
+        });
         
         socket.emit("get_preferences", userId);
-        socket.on("preferences_data", (data) => {
-            setPrefs(data);
-        });
-
+        socket.on("preferences_data", (data) => { setPrefs(data); });
         return () => socket.disconnect();
     }, [isOpen, userId]);
 
-    // BLOQUE 2: Al guardar
     const handleSave = () => {
         if (!userId) return;
         const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
         
-        // 🔥 CONEXIÓN PURA 🔥
-        const socket = io(botUrl);
+        // 🔥 FORZAMOS WEBSOCKET DIRECTO
+        const socket = io(botUrl, { 
+            transports: ["websocket"],
+            upgrade: false 
+        });
         
         socket.emit("save_preferences", { userId, prefs });
         setTimeout(() => socket.disconnect(), 1000);

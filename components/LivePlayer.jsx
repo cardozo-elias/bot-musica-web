@@ -80,8 +80,11 @@ export default function LivePlayer({ userId, guildId }) {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // 🔥 CONEXIÓN PURA: Sin hacks, sin headers, directa al túnel 🔥
-    socketRef.current = io(botUrl);
+    // 🔥 FORZAMOS WEBSOCKET DIRECTO (Sin headers para evitar el error de OPTIONS)
+    socketRef.current = io(botUrl, { 
+        transports: ["websocket"],
+        upgrade: false 
+    });
 
     fetch('/api/playlists').then(res => res.json()).then(data => { if (Array.isArray(data)) setPlaylists(data); });
 
@@ -91,7 +94,6 @@ export default function LivePlayer({ userId, guildId }) {
     
     socketRef.current.on("sync_status", (data) => {
       if (isReordering.current) return;
-      
       setSocketStats(data);
       setStatus(prev => ({ ...data, color: data.color || '#7e22ce', voiceMembers: data.voiceMembers || [] }));
       
