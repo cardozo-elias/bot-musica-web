@@ -186,7 +186,6 @@ const LoadingSpinner = () => (
   </svg>
 );
 
-// --- MOSAICO 2x2 ---
 const MosaicCoverPanel = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return (
