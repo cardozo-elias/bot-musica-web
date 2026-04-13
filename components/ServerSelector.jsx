@@ -14,9 +14,10 @@ export default function ServerSelector({ userId, currentGuildId }) {
     if (!userId) return;
 
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    const socket = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
+    const socket = io(botUrl, {
+      extraHeaders: { "ngrok-skip-browser-warning": "true" },
+    });
 
-    
     socket.emit("get_user_guilds", userId);
 
     socket.on("user_guilds_result", (data) => {
@@ -27,7 +28,6 @@ export default function ServerSelector({ userId, currentGuildId }) {
     return () => socket.disconnect();
   }, [userId]);
 
-  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -38,7 +38,6 @@ export default function ServerSelector({ userId, currentGuildId }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  
   const currentGuild = guilds.find((g) => g.id === currentGuildId);
 
   return (
@@ -51,18 +50,34 @@ export default function ServerSelector({ userId, currentGuildId }) {
           {loading ? (
             <div className="w-6 h-6 rounded-full bg-[#2b2d31] animate-pulse"></div>
           ) : currentGuild?.icon ? (
-            <img src={currentGuild.icon} alt="Server" className="w-6 h-6 rounded-full object-cover shadow-sm" />
+            <img
+              src={currentGuild.icon}
+              alt="Server"
+              className="w-6 h-6 rounded-full object-cover shadow-sm"
+            />
           ) : (
             <div className="w-6 h-6 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-[10px] font-black">
               {currentGuild?.name?.charAt(0) || "?"}
             </div>
           )}
           <span className="font-bold text-sm text-gray-200 truncate max-w-[120px]">
-            {loading ? "Cargando..." : currentGuild?.name || "Seleccionar Servidor"}
+            {loading
+              ? "Cargando..."
+              : currentGuild?.name || "Seleccionar Servidor"}
           </span>
         </div>
-        <svg className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        <svg
+          className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -71,14 +86,14 @@ export default function ServerSelector({ userId, currentGuildId }) {
           <p className="text-[10px] text-gray-500 px-4 pb-2 border-b border-[#2b2d31] mb-2 uppercase font-black tracking-widest">
             Tus Servidores ({guilds.length})
           </p>
-          
+
           <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col px-2 gap-1">
             {guilds.map((guild) => (
               <button
                 key={guild.id}
                 onClick={() => {
                   setIsOpen(false);
-                  
+
                   router.push(`/dashboard/${guild.id}`);
                 }}
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all w-full text-left ${
@@ -88,23 +103,38 @@ export default function ServerSelector({ userId, currentGuildId }) {
                 }`}
               >
                 {guild.icon ? (
-                  <img src={guild.icon} alt="Server" className="w-8 h-8 rounded-full object-cover shadow-sm flex-shrink-0" />
+                  <img
+                    src={guild.icon}
+                    alt="Server"
+                    className="w-8 h-8 rounded-full object-cover shadow-sm flex-shrink-0"
+                  />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-[#2b2d31] flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                     {guild.name.charAt(0)}
                   </div>
                 )}
-                <span className="font-bold text-sm truncate flex-1">{guild.name}</span>
-                
-                
+                <span className="font-bold text-sm truncate flex-1">
+                  {guild.name}
+                </span>
+
                 {guild.id === currentGuildId && (
-                  <svg className="w-4 h-4 text-[#57F287] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-[#57F287] flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
               </button>
             ))}
-            
+
             {guilds.length === 0 && !loading && (
               <div className="px-4 py-6 text-center text-gray-500 text-xs font-bold">
                 No tienes servidores en común con el bot.

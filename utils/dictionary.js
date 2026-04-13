@@ -5,18 +5,19 @@ export const dictionaries = {
       search: "Búsqueda",
       playlists: "Listas",
       likes: "Favoritos",
-      logout: "Salir"
+      logout: "Salir",
     },
     login: {
       title: "Conecta tu cuenta de Discord para continuar.",
-      button: "Ingresar con Discord"
+      button: "Ingresar con Discord",
     },
     landing: {
-      subtitle: "El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.",
+      subtitle:
+        "El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.",
       enter: "Entrar al Panel",
       login: "Iniciar Sesión",
       invite: "Invitar al Servidor",
-      footer: "© 2026 Musicardi Team • Built with Next.js"
+      footer: "© 2026 Musicardi Team • Built with Next.js",
     },
     playlists: {
       title: "Tu Biblioteca",
@@ -30,7 +31,7 @@ export const dictionaries = {
       songs: "canciones",
       empty: "No hay listas.",
       public: "Pública",
-      private: "Privada"
+      private: "Privada",
     },
     player: {
       queue: "Cola",
@@ -41,7 +42,7 @@ export const dictionaries = {
       add: "Añadir",
       settings: "Ajustes",
       empty: "Esta lista está vacía.",
-      play: "Reproducir"
+      play: "Reproducir",
     },
     search: {
       title: "Buscador",
@@ -49,37 +50,37 @@ export const dictionaries = {
       btn: "Buscar",
       clear: "Limpiar",
       loading: "Buscando...",
-      addQueue: "Cola"
+      addQueue: "Cola",
     },
     common: {
       cancel: "Cancelar",
       save: "Guardar",
-      delete: "Eliminar"
+      delete: "Eliminar",
     },
     settings: {
       title: "Ajustes",
       language: "Idioma",
       english: "Inglés (English)",
       spanish: "Español",
-      close: "Cerrar"
+      close: "Cerrar",
     },
     dashboard: {
       stats: {
         saved: "Canciones Guardadas",
         hours: "Horas Escuchadas",
-        requested: "Solicitadas"
+        requested: "Solicitadas",
       },
       recent: {
         title: "Escuchado Recientemente",
         subtitle: "Tu historial de reproducción",
-        empty: "No has escuchado nada aún."
+        empty: "No has escuchado nada aún.",
       },
       recommendations: {
         title: "Mix Personal",
         subtitle: "Basado en tus gustos.",
         empty: "Guarda canciones para recibir recomendaciones.",
-        refresh: "Actualizar"
-      }
+        refresh: "Actualizar",
+      },
     },
     detail: {
       public: "Playlist Pública",
@@ -97,7 +98,7 @@ export const dictionaries = {
         artist: "Artista",
         addedBy: "Guardado Por",
         empty: "Esta lista está vacía.",
-        useSearch: "Usa el buscador arriba para empezar a añadir música."
+        useSearch: "Usa el buscador arriba para empezar a añadir música.",
       },
       settings: {
         title: "Ajustes de Playlist",
@@ -109,8 +110,8 @@ export const dictionaries = {
         deleteBtn: "Eliminar Playlist",
         deleting: "Eliminando...",
         saveBtn: "Guardar Cambios",
-        saving: "Guardando..."
-      }
+        saving: "Guardando...",
+      },
     },
     livePlayer: {
       searching: "Buscando letras...",
@@ -123,7 +124,7 @@ export const dictionaries = {
       queue: {
         title: "Próximos temas",
         empty: "No hay más pistas.",
-        remove: "Quitar de la cola"
+        remove: "Quitar de la cola",
       },
       tooltips: {
         save: "Guardar pista",
@@ -133,18 +134,18 @@ export const dictionaries = {
         skip: "Omitir",
         addTo: "Añadir a Playlist",
         lyrics: "Letra",
-        fullscreen: "Pantalla Completa"
+        fullscreen: "Pantalla Completa",
       },
       filters: {
         title: "Panel de Filtros",
-        clear: "Apagar Todos"
+        clear: "Apagar Todos",
       },
       menu: {
-        title: "Añadir a"
+        title: "Añadir a",
       },
       alerts: {
-        saved: "Guardada."
-      }
+        saved: "Guardada.",
+      },
     },
     webSearch: {
       title: "Buscador Global",
@@ -153,28 +154,29 @@ export const dictionaries = {
       loading: "Buscando...",
       addToQueue: "Cola",
       saveTo: "Guardar en...",
-      savedAlert: "Guardada."
-    }
+      savedAlert: "Guardada.",
+    },
   },
-  
+
   en: {
     nav: {
       home: "Home",
       search: "Search",
       playlists: "Library",
       likes: "Favorites",
-      logout: "Log Out"
+      logout: "Log Out",
     },
     login: {
       title: "Connect your Discord account to continue.",
-      button: "Login with Discord"
+      button: "Login with Discord",
     },
     landing: {
-      subtitle: "The ultimate music bot for Discord. High-fidelity audio, adaptive Autoplay algorithm, and a real-time web panel.",
+      subtitle:
+        "The ultimate music bot for Discord. High-fidelity audio, adaptive Autoplay algorithm, and a real-time web panel.",
       enter: "Enter Web Panel",
       login: "Log In",
       invite: "Invite to Server",
-      footer: "© 2026 Musicardi Team • Built with Next.js"
+      footer: "© 2026 Musicardi Team • Built with Next.js",
     },
     playlists: {
       title: "Your Library",
@@ -188,7 +190,7 @@ export const dictionaries = {
       songs: "songs",
       empty: "No lists found.",
       public: "Public",
-      private: "Private"
+      private: "Private",
     },
     player: {
       queue: "Queue",
@@ -199,7 +201,7 @@ export const dictionaries = {
       add: "Add",
       settings: "Settings",
       empty: "This list is empty.",
-      play: "Play"
+      play: "Play",
     },
     search: {
       title: "Search",
@@ -207,37 +209,37 @@ export const dictionaries = {
       btn: "Search",
       clear: "Clear",
       loading: "Searching...",
-      addQueue: "Queue"
+      addQueue: "Queue",
     },
     common: {
       cancel: "Cancel",
       save: "Save",
-      delete: "Delete"
+      delete: "Delete",
     },
     settings: {
       title: "Settings",
       language: "Language",
       english: "English",
       spanish: "Spanish (Español)",
-      close: "Close"
+      close: "Close",
     },
     dashboard: {
       stats: {
         saved: "Saved Tracks",
         hours: "Hours Listened",
-        requested: "Requested"
+        requested: "Requested",
       },
       recent: {
         title: "Recently Played",
         subtitle: "Your listening history",
-        empty: "You haven't listened to anything yet."
+        empty: "You haven't listened to anything yet.",
       },
       recommendations: {
         title: "Personal Mix",
         subtitle: "Based on your taste.",
         empty: "Save songs to get recommendations.",
-        refresh: "Refresh"
-      }
+        refresh: "Refresh",
+      },
     },
     detail: {
       public: "Public Playlist",
@@ -255,7 +257,7 @@ export const dictionaries = {
         artist: "Artist",
         addedBy: "Added By",
         empty: "This list is empty.",
-        useSearch: "Use the search bar above to start adding music."
+        useSearch: "Use the search bar above to start adding music.",
       },
       settings: {
         title: "Playlist Settings",
@@ -267,8 +269,8 @@ export const dictionaries = {
         deleteBtn: "Delete Playlist",
         deleting: "Deleting...",
         saveBtn: "Save Changes",
-        saving: "Saving..."
-      }
+        saving: "Saving...",
+      },
     },
     livePlayer: {
       searching: "Searching lyrics...",
@@ -281,7 +283,7 @@ export const dictionaries = {
       queue: {
         title: "Up Next",
         empty: "No more tracks in queue.",
-        remove: "Remove from queue"
+        remove: "Remove from queue",
       },
       tooltips: {
         save: "Save track",
@@ -291,18 +293,18 @@ export const dictionaries = {
         skip: "Skip",
         addTo: "Add to Playlist",
         lyrics: "Lyrics",
-        fullscreen: "Fullscreen"
+        fullscreen: "Fullscreen",
       },
       filters: {
         title: "Filter Panel",
-        clear: "Clear All"
+        clear: "Clear All",
       },
       menu: {
-        title: "Add to"
+        title: "Add to",
       },
       alerts: {
-        saved: "Saved."
-      }
+        saved: "Saved.",
+      },
     },
     webSearch: {
       title: "Global Search",
@@ -311,7 +313,7 @@ export const dictionaries = {
       loading: "Searching...",
       addToQueue: "Queue",
       saveTo: "Save to...",
-      savedAlert: "Saved."
-    }
-  }
+      savedAlert: "Saved.",
+    },
+  },
 };

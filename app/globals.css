@@ -12,12 +12,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-y: overlay;
-  /* Brillo sutil violeta en la parte superior central */
-  background-image: radial-gradient(circle at 50% 0%, #1a1025 0%, transparent 70%);
+  background-image: radial-gradient(
+    circle at 50% 0%,
+    #1a1025 0%,
+    transparent 70%
+  );
   background-attachment: fixed;
 }
 
-/* Selección de Texto Premium */
 ::selection {
   background-color: var(--brand-violet);
   color: #ffffff;
@@ -25,13 +27,23 @@ body {
 
 @layer utilities {
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   .animate-fadeIn {
@@ -41,8 +53,7 @@ body {
   .animate-slideInRight {
     animation: slideInRight 0.5s ease-out forwards;
   }
-  
-  /* Scrollbar Minimalista adaptada al tema */
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -55,15 +66,17 @@ body {
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    /* El scrollbar brilla con el gradiente del bot al pasar el mouse */
-    background: linear-gradient(to bottom, var(--brand-violet), var(--brand-pink));
+    background: linear-gradient(
+      to bottom,
+      var(--brand-violet),
+      var(--brand-pink)
+    );
   }
 
-  /* Clase universal de Glassmorphism para paneles, reproductores y modales */
   .glass-panel {
     background: rgba(10, 10, 12, 0.7);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(168, 85, 247, 0.15); /* Borde sutilmente violeta */
+    border: 1px solid rgba(168, 85, 247, 0.15);
   }
 }

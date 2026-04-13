@@ -6,7 +6,8 @@ export const authOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      authorization: "https://discord.com/api/oauth2/authorize?scope=identify+guilds",
+      authorization:
+        "https://discord.com/api/oauth2/authorize?scope=identify+guilds",
       profile(profile) {
         if (profile.avatar === null) {
           const defaultAvatarNumber = parseInt(profile.discriminator) % 5;
@@ -17,7 +18,7 @@ export const authOptions = {
         }
         return {
           id: profile.id,
-          
+
           name: profile.global_name || profile.username,
           email: profile.email,
           image: profile.image_url,
@@ -27,7 +28,6 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, token }) {
-      
       if (session.user) {
         session.user.id = token.sub;
       }
@@ -35,9 +35,8 @@ export const authOptions = {
     },
   },
   pages: {
-    
-    signIn: '/login',
-    signOut: '/signout',
+    signIn: "/login",
+    signOut: "/signout",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
