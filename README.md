@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Musicardi Web - Real-Time Studio Dashboard
 
-## Getting Started
+Musicardi Web es la interfaz de control oficial para el ecosistema Musicardi. Desarrollada en Next.js, proporciona un panel de grado de estudio, minimalista y orientado a datos, que permite la monitorización y manipulación de la reproducción en Discord con latencia sub-50ms.
 
-First, run the development server:
+## Características Principales
 
+* **Sincronización Bidireccional:** Implementación de WebSockets para reflejar el estado del motor de audio (tiempo, pausa, cola) instantáneamente en el cliente.
+* **Procesamiento de Letras (LRC):** Integración con LRCLib para el análisis y desplazamiento sincronizado de letras basado en el timestamp del flujo de audio activo.
+* **Interfaz de Estudio Minimalista:** Diseño utilitario y libre de elementos distractores, con adaptación colorimétrica dinámica basada en el análisis del cover art actual.
+* **Control de Motor de Automatización:** Acceso directo a los parámetros del algoritmo del backend, permitiendo alternar los módulos Autoplay y Discovery en tiempo real.
+* **Gestión de Cola:** Interfaz de usuario interactiva con soporte para operaciones Drag & Drop sobre la lista de reproducción activa.
+
+## Stack Tecnológico
+
+* **Framework:** Next.js (App Router)
+* **Librería UI:** React
+* **Estilos:** Tailwind CSS
+* **Protocolo de Red:** Socket.io-client
+
+## Requisitos del Sistema
+
+1. Node.js (v18.x o superior)
+2. Instancia de Musicardi Core en ejecución y accesible vía red.
+
+## Configuración del Entorno
+
+Crear un archivo `.env.local` en el directorio raíz:
+
+```env
+NEXT_PUBLIC_BOT_URL=http://localhost:3001
+```
+*(Nota: Especificar la URL exacta de transmisión del servicio WebSocket del backend).*
+
+## Despliegue
+
+1. Instalar dependencias:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <url-del-repositorio>
+cd musicardi-web
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Iniciar el servidor de desarrollo:
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El panel estará accesible a través de `http://localhost:3000`.
