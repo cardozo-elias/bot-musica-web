@@ -45,7 +45,7 @@ export default async function PlaylistsPage() {
     <SocketProvider>
       <main className="h-screen bg-transparent text-white flex overflow-hidden font-sans">
         
-        {/* SIDEBAR */}
+        
         <aside className="w-[280px] bg-[#0a0a0c]/80 backdrop-blur-xl border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] hidden md:flex shrink-0">
           <div className="px-4 flex flex-col gap-2 mb-8">
             <Link href={`/dashboard/${session.user.id}`} className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold text-sm transition">

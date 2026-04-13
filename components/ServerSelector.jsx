@@ -16,7 +16,7 @@ export default function ServerSelector({ userId, currentGuildId }) {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     const socket = io(botUrl, { extraHeaders: { "ngrok-skip-browser-warning": "true" } });
 
-    // Pedimos la lista de servidores compartidos
+    
     socket.emit("get_user_guilds", userId);
 
     socket.on("user_guilds_result", (data) => {
@@ -27,7 +27,7 @@ export default function ServerSelector({ userId, currentGuildId }) {
     return () => socket.disconnect();
   }, [userId]);
 
-  // Cierra el menú si haces clic afuera
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -38,7 +38,7 @@ export default function ServerSelector({ userId, currentGuildId }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Encontramos el servidor actual para mostrarlo en el botón
+  
   const currentGuild = guilds.find((g) => g.id === currentGuildId);
 
   return (
@@ -78,7 +78,7 @@ export default function ServerSelector({ userId, currentGuildId }) {
                 key={guild.id}
                 onClick={() => {
                   setIsOpen(false);
-                  // La magia de Next.js: te lleva al panel de ese servidor sin recargar todo feo
+                  
                   router.push(`/dashboard/${guild.id}`);
                 }}
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all w-full text-left ${
@@ -96,7 +96,7 @@ export default function ServerSelector({ userId, currentGuildId }) {
                 )}
                 <span className="font-bold text-sm truncate flex-1">{guild.name}</span>
                 
-                {/* Un check verde si es el servidor actual */}
+                
                 {guild.id === currentGuildId && (
                   <svg className="w-4 h-4 text-[#57F287] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

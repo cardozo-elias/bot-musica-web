@@ -1,7 +1,7 @@
 "use client";
 import { SessionProvider, useSession } from "next-auth/react";
 import LivePlayer from "./LivePlayer";
-import SettingsModal from "./SettingsModal"; // 👇 Importamos el modal
+import SettingsModal from "./SettingsModal"; 
 import { SocketProvider } from "./SocketContext";
 
 function PlayerInjector({ children }) {
@@ -10,10 +10,10 @@ function PlayerInjector({ children }) {
   return (
     <SocketProvider>
       {children}
-      {/* El reproductor flotante */}
+      
       {session?.user?.id && <LivePlayer userId={session.user.id} guildId={null} />}
       
-      {/* 👇 El modal de Ajustes oculto, esperando a ser llamado 👇 */}
+      
       <SettingsModal />
     </SocketProvider>
   );

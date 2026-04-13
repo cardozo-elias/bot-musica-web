@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../components/LanguageContext';
 
-// --- ÍCONOS SVG MINIMALISTAS ---
+
 const PlusIcon = () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>;
 const MusicNoteIcon = () => <svg className="w-12 h-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
 const HeartIcon = () => <svg className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>;
 const PlayIcon = () => <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
 const LoadingSpinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
-// --- GENERADOR DE MOSAICOS 2x2 ---
+
 const MosaicCover = ({ songs }) => {
   if (!songs || songs.length === 0) {
     return (
@@ -55,7 +55,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
   const { t } = useLanguage();
   const [playlists, setPlaylists] = useState(initialPlaylists);
   
-  // Estados para la Modal de Creación
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [plName, setPlName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,7 +64,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
   const [selectedSong, setSelectedSong] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- HANDLERS ---
+  
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -113,12 +113,12 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-2">{t('playlists.title')}</h1>
-              {/* Actualizamos el subtítulo para quitar la mención de importar */}
+              
               <p className="text-gray-400 font-medium">Gestiona y crea tus colecciones musicales.</p> 
             </div>
           </div>
 
-          {/* Ajustado a una sola columna para el botón de crear */}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <button onClick={() => setIsModalOpen(true)} className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#a855f7]/50 transition-all text-left overflow-hidden shadow-lg">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/0 to-[#a855f7]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -134,7 +134,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             
-            {/* TARJETA DE ME GUSTA */}
+            
             <Link href="/playlists/likes" className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(236,72,153,0.2)] transition-all duration-300 border hover:border-[#7e22ce]/50">
               <div className="aspect-square bg-gradient-to-br from-[#a855f7] to-[#7e22ce] flex items-center justify-center p-8 relative overflow-hidden">
                   <HeartIcon />
@@ -145,7 +145,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
               </div>
             </Link>
 
-            {/* MAPEO DE PLAYLISTS */}
+            
             {playlists.map(pl => (
               <Link href={`/playlists/${pl.id}`} key={pl.id} className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(168,85,247,0.2)] transition-all duration-300 border hover:border-[#a855f7]/50">
                 <div className="relative rounded-t-2xl overflow-hidden aspect-square bg-[#111214] border-b border-white/5">
@@ -168,7 +168,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
         </div>
       </section>
 
-      {/* VENTANA MODAL (CREAR PLAYLIST) */}
+      
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div className="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl border border-[#a855f7]/30 animate-slideUp">

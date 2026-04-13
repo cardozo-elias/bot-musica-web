@@ -8,7 +8,7 @@ const DiscordIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="
 const PanelIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
 
 export default async function LandingPage() {
-  // 1. Manejo seguro de la sesión
+  
   let session = null;
   try {
     session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export default async function LandingPage() {
     console.error("Error de sesión:", e);
   }
 
-  // 2. Manejo seguro de la cookie de idioma
+  
   let locale = 'es';
   try {
     const cookieStore = await cookies();
@@ -25,7 +25,7 @@ export default async function LandingPage() {
     console.error("Error de cookie:", e);
   }
 
-  // 3. Manejo ultra-seguro del Diccionario (Fallback si algo falla)
+  
   const dict = dictionaries[locale] || dictionaries['es'] || {};
   const landingTexts = dict.landing || {
     subtitle: "El bot de música definitivo para Discord. Audio de alta fidelidad, algoritmo de Autoplay adaptativo y un panel web en tiempo real.",

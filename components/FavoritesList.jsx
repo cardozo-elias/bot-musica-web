@@ -32,7 +32,7 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
     setTimeout(() => setLoadingTrackId(null), 1500);
   };
 
-  // --- FUNCIÓN PARA ELIMINAR FAVORITO ---
+  
   const handleDelete = async (videoId) => {
     if (!confirm("¿Eliminar pista de tus favoritos?")) return;
     
@@ -44,7 +44,7 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
       });
       
       if (res.ok) {
-        router.refresh(); // Esto actualiza los props de la página automáticamente
+        router.refresh(); 
       }
     } catch (e) {
       console.error("Error al borrar:", e);
@@ -76,7 +76,7 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* BOTÓN ELIMINAR */}
+                
                 <button 
                   onClick={() => handleDelete(song.videoId)}
                   className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-500 transition-all transform hover:scale-110"

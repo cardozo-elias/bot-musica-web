@@ -10,7 +10,7 @@ const pool = new Pool({
 
 const DEFAULT_COVER = "https://ui-avatars.com/api/?name=🎵&background=1e1f22&color=a855f7&size=512";
 
-// 🟢 OBTENER TOKEN DE SPOTIFY
+
 async function getSpotifyToken() {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -35,9 +35,9 @@ export async function POST(req) {
     let playlistName = "Playlist Importada";
     let formattedSongs = [];
 
-    // ==========================================
-    // 🟢 MOTOR 1: SPOTIFY API OFICIAL
-    // ==========================================
+    
+    
+    
     if (url.includes('spotify.com')) {
       const token = await getSpotifyToken();
       if (!token) return NextResponse.json({ error: "Faltan las credenciales de Spotify en el archivo .env" }, { status: 400 });
@@ -86,9 +86,9 @@ export async function POST(req) {
       }).filter(Boolean);
 
     } 
-    // ==========================================
-    // ⬛ MOTOR 2: TIDAL (API PÚBLICA + SCRAPER SEO)
-    // ==========================================
+    
+    
+    
     else if (url.includes('tidal.com')) {
       const isPlaylist = url.includes('/playlist/');
       const isAlbum = url.includes('/album/');
@@ -102,7 +102,7 @@ export async function POST(req) {
       let tracks = [];
       let apiSuccess = false;
 
-      // 1. Intentamos con los Tokens Públicos de la App Oficial de Tidal
+      
       const publicTokens = ['gsFXkJqGrUNoYMQPZe4k3WKwijnrp8iGSwn3bApe', '4zx46pyr9o8qZNRw', '_DSTon1kC8pABnTw'];
       
       for (const token of publicTokens) {
@@ -128,7 +128,7 @@ export async function POST(req) {
         }
       }
 
-      // 2. Si la API falla, usamos el Scraper de Respaldo leyendo los metadatos de Google (JSON-LD)
+      
       if (!apiSuccess) {
         const resHtml = await fetch(url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
@@ -162,7 +162,7 @@ export async function POST(req) {
         return NextResponse.json({ error: "No se encontraron canciones. Es posible que el enlace sea privado o inválido." }, { status: 404 });
       }
 
-      // 3. Formateamos las canciones extraídas de Tidal
+      
       formattedSongs = tracks.map(track => {
           let thumb = DEFAULT_COVER;
           if (track.album && track.album.cover) {
@@ -184,9 +184,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Enlace no soportado. Usa Spotify o Tidal." }, { status: 400 });
     }
 
-    // ==========================================
-    // 💾 GUARDADO EN BASE DE DATOS
-    // ==========================================
+    
+    
+    
     const res = await pool.query(
       'INSERT INTO user_playlists (user_id, name, songs) VALUES ($1, $2, $3) RETURNING id, name, songs', 
       [session.user.id, `${playlistName} (Importada)`, JSON.stringify(formattedSongs)]

@@ -31,7 +31,7 @@ const parseLrc = (lrcString) => {
   return parsed;
 };
 
-// ÍCONOS SVG
+
 const PlayIcon = () => <svg className="w-7 h-7 md:w-8 md:h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
 const PauseIcon = () => <svg className="w-7 h-7 md:w-8 md:h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>;
 const SkipIcon = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>;
@@ -271,9 +271,9 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
-  // ==========================================
-  // VISTA: PANTALLA COMPLETA
-  // ==========================================
+  
+  
+  
   if (isFullscreen) {
     return (
       <div className={`fixed inset-0 z-[200] bg-black text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? 'cursor-none' : ''}`}>
@@ -355,9 +355,9 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
-  // ==========================================
-  // VISTA: BARRA INFERIOR NORMAL
-  // ==========================================
+  
+  
+  
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
@@ -444,7 +444,7 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
-      {/* BARRA INFERIOR: ESTILO ORIGINAL CON BOTONES DUALES SUTILES A LA DERECHA */}
+      
       <div 
         className="fixed bottom-[65px] md:bottom-0 left-0 w-full border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] z-[60] flex items-center justify-between px-4 md:px-10 h-[60px] md:h-[90px] transition-colors duration-1000 cursor-pointer md:cursor-auto" 
         style={{ background: `linear-gradient(90deg, ${activeColor}20 0%, rgba(10,10,12,0.95) 30%, rgba(10,10,12,0.95) 100%)`, backdropFilter: 'blur(20px)' }}
@@ -518,7 +518,7 @@ export default function LivePlayer({ userId, guildId }) {
           </div>
         </div>
 
-        {/* CONTROLES DERECHOS CON AUTOPLAY Y DISCOVERY SUTILES */}
+        
         <div className="hidden md:flex w-1/4 justify-end gap-5 items-center">
           
           <div className="flex items-center gap-1.5 mr-2">

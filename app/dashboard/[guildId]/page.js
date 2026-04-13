@@ -3,7 +3,7 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { Pool } from 'pg';
 import { cookies } from "next/headers";
-import Link from "next/link"; // 👇 Importamos Link
+import Link from "next/link"; 
 import { dictionaries } from "../../../utils/dictionary";
 
 import LivePlayer from "../../../components/LivePlayer";
@@ -27,7 +27,7 @@ export default async function DashboardPage({ params }) {
   
   if (!session || !session.user) redirect('/login');
 
-  // Traducción desde el servidor
+  
   const cookieStore = await cookies();
   const locale = cookieStore.get('locale')?.value || 'es';
   const dict = dictionaries[locale] || dictionaries['es'];
@@ -66,12 +66,12 @@ export default async function DashboardPage({ params }) {
     <SocketProvider>
         <main className="h-screen bg-transparent text-white flex overflow-hidden font-sans">
         
-        {/* SIDEBAR con Glassmorphism */}
+        
         <aside className="w-[280px] bg-[#0a0a0c]/80 backdrop-blur-xl border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] hidden md:flex shrink-0">
             <div className="px-4 flex flex-col gap-2 mb-8">
                 <div className="px-4 py-1 text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Navegación</div>
                 
-                {/* Botón Activo (Inicio) */}
+                
                 <button className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                     {dict.nav.home}
@@ -79,14 +79,14 @@ export default async function DashboardPage({ params }) {
 
                 <SearchTrigger />
                 
-                {/* 👇 Botón de Playlists (Reemplaza al ServerSelector) 👇 */}
+                
                 <Link href="/playlists" className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold text-sm transition mt-1">
                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg>
                    {dict.nav.playlists}
                 </Link>
             </div>
 
-            {/* BOTÓN ESTILO SPOTIFY PARA "TUS ME GUSTA" */}
+            
             <Link href="/playlists/likes" className="flex items-center gap-4 px-4 py-3 mx-4 mt-2 bg-gradient-to-r from-[#7e22ce]/10 to-transparent hover:from-[#7e22ce]/20 border border-[#7e22ce]/20 hover:border-[#7e22ce]/40 rounded-xl transition-all shadow-lg group">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#a855f7] to-[#7e22ce] flex items-center justify-center text-white shadow-[0_0_15px_rgba(126,34,206,0.4)] group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -125,7 +125,7 @@ export default async function DashboardPage({ params }) {
             </div>
         </aside>
 
-        {/* CONTENIDO CENTRAL */}
+        
         <DashboardContent 
             initialStats={stats} 
             session={session} 
@@ -133,7 +133,7 @@ export default async function DashboardPage({ params }) {
             userHistory={userHistory} 
         />
 
-        {/* MODALES Y REPRODUCTOR */}
+        
         <WebSearch userId={session.user.id} userName={session.user.name} userAvatar={session.user.image} />
         <SettingsModal />
         <MobileNav userId={session.user.id} />

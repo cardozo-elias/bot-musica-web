@@ -4,7 +4,7 @@ import Recommendations from "../../../components/Recommendations";
 import RecentlyPlayed from "../../../components/RecentlyPlayed"; 
 import { useSocketStats } from "../../../components/SocketContext";
 import { useLanguage } from "../../../components/LanguageContext";
-import LivePlayer from "../../../components/LivePlayer"; // 👇 Importamos el reproductor
+import LivePlayer from "../../../components/LivePlayer"; 
 
 export default function DashboardContent({ initialStats, session, guildId, userHistory }) {
     const { socketStats } = useSocketStats();

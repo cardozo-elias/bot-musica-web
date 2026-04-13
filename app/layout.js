@@ -33,7 +33,7 @@ export default async function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0c]">
         <LanguageProvider initialLang={locale}>
-          {/* 👇 Envolvemos la aplicación entera con nuestro Provider Global 👇 */}
+          
           <GlobalWrapper>
             {children}
           </GlobalWrapper>

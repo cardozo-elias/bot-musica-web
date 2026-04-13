@@ -21,9 +21,9 @@ export default function SidebarFavorites({ initialLikes, userId, userName, userA
       }
     });
 
-    // 👇 EL RECEPTOR DEL PLAN B 👇
+    
     socketRef.current.on('fallback_to_play', (data) => {
-      // Si el bot avisa que no hay música, lo mandamos como un "Play" directo
+      
       socketRef.current.emit("cmd_play_specific", data);
     });
 

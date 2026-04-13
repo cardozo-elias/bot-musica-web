@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { useLanguage } from "./LanguageContext";
 
-// 🔥 LA MAGIA: Esta función le avisa al componente que se abra desde cualquier lugar
+
 export const openSearchModal = () => {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("open-search-modal"));
 };
 
-// Íconos SVG
+
 const CloseIcon = () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
 const SearchIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 const LoadingSpinner = () => <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
@@ -40,7 +40,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
     
-    // Conexión limpia Cloudflare
+    
     socketRef.current = io(botUrl);
     
     socketRef.current.emit("cmd_get_recommendations", userId);

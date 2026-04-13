@@ -8,10 +8,10 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// Auto-migración silenciosa: Agrega la columna is_public si no existe
+
 pool.query(`ALTER TABLE user_playlists ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;`).catch(() => {});
 
-// Obtener todas las playlists del usuario
+
 export async function GET(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -24,7 +24,7 @@ export async function GET(req) {
     } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
-// Crear una nueva playlist
+
 export async function POST(req) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -52,7 +52,7 @@ export async function POST(req) {
     } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
-// Eliminar una playlist
+
 export async function DELETE(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -64,7 +64,7 @@ export async function DELETE(req) {
     } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
-// Añadir una canción a una playlist
+
 export async function PUT(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -80,7 +80,7 @@ export async function PUT(req) {
             requesterAvatar: session.user.image
         };
 
-        // Verificamos que sea el dueño antes de añadir
+        
         await pool.query(
             `UPDATE user_playlists SET songs = songs || $1::jsonb WHERE id = $2 AND user_id = $3`,
             [JSON.stringify([cleanSong]), playlistId, session.user.id]
@@ -89,7 +89,7 @@ export async function PUT(req) {
     } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
-// Múltiples acciones: Eliminar canción, Reordenar, Renombrar o Cambiar Privacidad
+
 export async function PATCH(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -97,25 +97,25 @@ export async function PATCH(req) {
     try {
         const { playlistId, videoId, action, newSongs, newName, isPublic } = await req.json();
         
-        // Acción: Cambiar Privacidad
+        
         if (action === 'visibility' && isPublic !== undefined) {
             await pool.query(`UPDATE user_playlists SET is_public = $1 WHERE id = $2 AND user_id = $3`, [isPublic, playlistId, session.user.id]);
             return NextResponse.json({ success: true });
         }
 
-        // Acción: Renombrar
+        
         if (action === 'rename' && newName) {
             await pool.query(`UPDATE user_playlists SET name = $1 WHERE id = $2 AND user_id = $3`, [newName, playlistId, session.user.id]);
             return NextResponse.json({ success: true });
         }
 
-        // Acción: Reordenar
+        
         if (action === 'reorder' && newSongs) {
             await pool.query(`UPDATE user_playlists SET songs = $1 WHERE id = $2 AND user_id = $3`, [JSON.stringify(newSongs), playlistId, session.user.id]);
             return NextResponse.json({ success: true });
         }
 
-        // Acción: Eliminar canción
+        
         const res = await pool.query('SELECT songs FROM user_playlists WHERE id = $1 AND user_id = $2', [playlistId, session.user.id]);
         if (res.rows.length === 0) return NextResponse.json({ error: "No encontrada" });
         const updatedSongs = res.rows[0].songs.filter(s => s.videoId !== videoId);

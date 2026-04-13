@@ -17,7 +17,7 @@ export const authOptions = {
         }
         return {
           id: profile.id,
-          // Forzamos el Global Name (Ej: Cardi) en lugar del username
+          
           name: profile.global_name || profile.username,
           email: profile.email,
           image: profile.image_url,
@@ -27,7 +27,7 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, token }) {
-      // Inyectamos la ID de Discord en la sesión visible
+      
       if (session.user) {
         session.user.id = token.sub;
       }
@@ -35,7 +35,7 @@ export const authOptions = {
     },
   },
   pages: {
-    // Le decimos a NextAuth cuáles son nuestras páginas personalizadas
+    
     signIn: '/login',
     signOut: '/signout',
   },

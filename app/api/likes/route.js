@@ -8,7 +8,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// --- AGREGAR A FAVORITOS (POST) ---
+
 export async function POST(request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -16,7 +16,7 @@ export async function POST(request) {
   try {
     const { videoId, title, artist } = await request.json();
 
-    // 1. Verificamos si ya existe para evitar duplicados
+    
     const check = await pool.query(
       'SELECT 1 FROM likes WHERE user_id = $1 AND video_id = $2', 
       [session.user.id, videoId]
@@ -26,7 +26,7 @@ export async function POST(request) {
       return NextResponse.json({ message: "Ya está en favoritos", alreadyExists: true });
     }
 
-    // 2. Si no existe, lo insertamos
+    
     await pool.query(
       'INSERT INTO likes (user_id, video_id, title, artist) VALUES ($1, $2, $3, $4)',
       [session.user.id, videoId, title, artist]
@@ -39,7 +39,7 @@ export async function POST(request) {
   }
 }
 
-// --- ELIMINAR DE FAVORITOS (DELETE) ---
+
 export async function DELETE(request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
