@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSocketStats } from "./SocketContext";
 import { useLanguage } from "./LanguageContext";
 
+
 const formatTime = (ms) => {
   const totalSeconds = Math.floor((ms || 0) / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -101,6 +102,7 @@ const TrashIcon = () => (
   </svg>
 );
 
+
 export default function LivePlayer({ userId, guildId }) {
   const pathname = usePathname();
   const { setSocketStats } = useSocketStats();
@@ -143,10 +145,10 @@ export default function LivePlayer({ userId, guildId }) {
   const lineRefs = useRef([]);
   const idleTimeout = useRef(null);
 
+
   useEffect(() => {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    // FORZAMOS LA CONEXIÓN WEBSOCKET PARA ELIMINAR LATENCIA
     socketRef.current = io(botUrl, { 
       transports: ["websocket"], 
       upgrade: false 
@@ -195,6 +197,7 @@ export default function LivePlayer({ userId, guildId }) {
     };
   }, [userId, guildId, setSocketStats]);
 
+
   useEffect(() => {
     if (showLyrics && currentVideoId) fetchLyrics();
   }, [currentVideoId, showLyrics]);
@@ -238,7 +241,6 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.emit(cmd, extra !== null ? { userId, ...extra } : userId);
     
     setIsOnCooldown(true);
-    // REDUCCIÓN BRUTAL DEL COOLDOWN PARA MAYOR RESPUESTA (De 1500 a 300ms)
     setTimeout(() => setIsOnCooldown(false), 300);
   };
 
@@ -314,6 +316,7 @@ export default function LivePlayer({ userId, guildId }) {
       isReordering.current = false;
     }, 500);
   };
+
 
   const handleRemoveFromQueue = (e, index) => {
     e.stopPropagation();
@@ -422,6 +425,7 @@ export default function LivePlayer({ userId, guildId }) {
     );
   }
 
+
   if (isFullscreen) {
     return (
       <div
@@ -430,23 +434,31 @@ export default function LivePlayer({ userId, guildId }) {
         <style
           dangerouslySetInnerHTML={{
             __html: `
-          @keyframes marquee-ping-pong { 0%, 15% { transform: translateX(0); } 45%, 55% { transform: translateX(calc(-100% + 230px)); } 85%, 100% { transform: translateX(0); } }
-          .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee-ping-pong 12s ease-in-out infinite; }
           .scrollbar-hide::-webkit-scrollbar { display: none; }
           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `,
           }}
         />
 
-        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out transform-gpu" style={{ backgroundColor: activeColor }}></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out transform-gpu" style={{ backgroundColor: activeColor }}></div>
-
-        {/* Añadimos transform-gpu a la capa grande de la caratula para aliviar al navegador */}
+        {/* Gradientes Estáticos para evitar Lag de GPU */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-[80px] scale-125 transform-gpu"
+          className="absolute inset-0 opacity-40 transition-colors duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 10% 20%, var(--dynamic-color-30), transparent 45%),
+              radial-gradient(circle at 90% 80%, var(--dynamic-color-30), transparent 50%)
+            `
+          }}
+        ></div>
+
+        {/* Capa de carátula con blur reducido para salvar rendimiento */}
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-3xl scale-125"
           style={{ backgroundImage: `url(${status.song.thumbnail})` }}
         ></div>
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent transform-gpu"></div>
+        
+        {/* Viñeta */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent"></div>
 
         <div
           className={`z-10 p-6 md:p-8 flex justify-between items-center transition-opacity duration-700 ease-in-out ${isIdle ? "opacity-0" : "opacity-100"}`}
@@ -472,7 +484,7 @@ export default function LivePlayer({ userId, guildId }) {
           >
             <img
               src={status.song.thumbnail}
-              className="w-full max-w-[30vh] md:max-w-[40vh] aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-6 transform-gpu"
+              className="w-full max-w-[30vh] md:max-w-[40vh] aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-6"
               alt="Cover"
             />
 
@@ -480,10 +492,10 @@ export default function LivePlayer({ userId, guildId }) {
               className={`w-full text-center md:text-left flex justify-between items-center gap-4 transition-opacity duration-700 ${isIdle ? "opacity-50" : "opacity-100"}`}
             >
               <div className="min-w-0 py-2">
-                <h1 className="text-2xl md:text-5xl font-black tracking-tighter drop-shadow-xl leading-tight mb-1">
+                <h1 className="text-2xl md:text-5xl font-black tracking-tighter drop-shadow-xl leading-tight mb-1 truncate">
                   {status.song.title}
                 </h1>
-                <p className="text-base md:text-xl font-bold opacity-70 drop-shadow-lg leading-relaxed">
+                <p className="text-base md:text-xl font-bold opacity-70 drop-shadow-lg leading-relaxed truncate">
                   {status.song.artist}
                 </p>
               </div>
@@ -602,6 +614,7 @@ export default function LivePlayer({ userId, guildId }) {
       </div>
     );
   }
+
 
   return (
     <>
