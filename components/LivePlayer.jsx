@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
+import { usePathname } from "next/navigation"; //
 import { useSocketStats } from "./SocketContext";
 import { useLanguage } from "./LanguageContext";
 
@@ -113,7 +114,7 @@ const FullscreenIcon = () => (
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0lColor5-5m11 5l-5-5m5 5v-4m0 4h-4"
     />
   </svg>
 );
@@ -179,6 +180,8 @@ const TrashIcon = () => (
 );
 
 export default function LivePlayer({ userId, guildId }) {
+  const pathname = usePathname();
+
   const { setSocketStats } = useSocketStats();
   const { t } = useLanguage();
 
@@ -211,6 +214,7 @@ export default function LivePlayer({ userId, guildId }) {
   const [isQueueBouncing, setIsQueueBouncing] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [localQueue, setLocalQueue] = useState([]);
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
 
   const isReordering = useRef(false);
   const socketRef = useRef(null);
@@ -269,6 +273,7 @@ export default function LivePlayer({ userId, guildId }) {
   useEffect(() => {
     if (showLyrics && currentVideoId) fetchLyrics();
   }, [currentVideoId, showLyrics]);
+  
   useEffect(() => {
     setIsAutoScroll(true);
   }, [currentVideoId]);
@@ -304,8 +309,11 @@ export default function LivePlayer({ userId, guildId }) {
   };
 
   const handleAction = (cmd, extra = null) => {
-    if (!socketRef.current) return;
+    if (!socketRef.current || isOnCooldown) return;
     socketRef.current.emit(cmd, extra !== null ? { userId, ...extra } : userId);
+    
+    setIsOnCooldown(true);
+    setTimeout(() => setIsOnCooldown(false), 1500);
   };
 
   useEffect(() => {
@@ -394,20 +402,23 @@ export default function LivePlayer({ userId, guildId }) {
 
   const handleLike = (e) => {
     if (e) e.stopPropagation();
+    if (isOnCooldown) return;
     setIsLiked(true);
-    socketRef.current?.emit("cmd_like", userId);
+    handleAction("cmd_like");
   };
 
   const handlePause = (e) => {
     if (e) e.stopPropagation();
+    if (isOnCooldown) return;
     setStatus((prev) => ({ ...prev, isPaused: !prev.isPaused }));
-    socketRef.current?.emit("cmd_pause", userId);
+    handleAction("cmd_pause");
   };
 
   const handleSkip = (e) => {
     if (e) e.stopPropagation();
+    if (isOnCooldown) return;
     setStatus((prev) => ({ ...prev, playing: false }));
-    socketRef.current?.emit("cmd_skip", userId);
+    handleAction("cmd_skip");
   };
 
   const saveToPlaylist = async (playlistId) => {
@@ -433,6 +444,7 @@ export default function LivePlayer({ userId, guildId }) {
       : 0;
   const activeColor = status.color;
   const isLongTitle = status.song?.title?.length > 20;
+  const isRadio = status.song?.isRadio || false;
 
   const renderLyricsContent = () => {
     if (lyrics.loading)
@@ -475,7 +487,9 @@ export default function LivePlayer({ userId, guildId }) {
       </pre>
     );
   };
-
+  if (pathname === "/" || pathname === "/login") {
+    return null; 
+  }
   if (!status.playing || !status.song) {
     return (
       <div className="fixed bottom-[65px] md:bottom-0 left-0 w-full glass-panel border-t border-white/5 p-4 z-[60] flex items-center justify-between px-6 md:px-10 h-[60px] md:h-[90px] shadow-2xl"></div>
@@ -545,7 +559,8 @@ export default function LivePlayer({ userId, guildId }) {
               </div>
               <button
                 onClick={handleLike}
-                className={`p-4 rounded-full transition transform active:scale-95 shadow-xl shrink-0 ${isLiked ? "bg-white text-black" : "bg-white/5 text-white hover:bg-white/10"}`}
+                disabled={isOnCooldown}
+                className={`p-4 rounded-full transition transform active:scale-95 shadow-xl shrink-0 ${isOnCooldown ? 'opacity-40 cursor-not-allowed' : ''} ${isLiked ? "bg-white text-black" : "bg-white/5 text-white hover:bg-white/10"}`}
                 style={{ color: isLiked ? activeColor : "" }}
               >
                 <HeartIcon filled={isLiked} />
@@ -553,7 +568,7 @@ export default function LivePlayer({ userId, guildId }) {
             </div>
           </div>
 
-          {showLyrics && (
+          {showLyrics && !isRadio && (
             <div className="w-full max-w-3xl h-[45vh] md:h-[60vh] bg-transparent flex flex-col animate-fadeIn overflow-hidden relative">
               {!isAutoScroll && parsedLyrics.length > 0 && (
                 <div
@@ -589,55 +604,69 @@ export default function LivePlayer({ userId, guildId }) {
         <div
           className={`z-10 p-6 md:p-10 flex flex-col gap-4 md:gap-6 bg-gradient-to-t from-black to-transparent transition-opacity duration-700 ease-in-out ${isIdle ? "opacity-0" : "opacity-100"}`}
         >
-          <div className="flex items-center gap-4 max-w-4xl mx-auto w-full">
-            <span className="text-[10px] md:text-xs font-mono opacity-50">
-              {formatTime(status.currentMs)}
-            </span>
-            <div
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const p = (e.clientX - rect.left) / rect.width;
-                socketRef.current?.emit("cmd_seek", {
-                  userId,
-                  targetSec: Math.floor(p * status.song.durationSec),
-                });
-              }}
-              className="flex-1 bg-white/20 rounded-full h-1.5 md:h-2 cursor-pointer relative overflow-hidden group"
-            >
+          {!isRadio ? (
+            <div className="flex items-center gap-4 max-w-4xl mx-auto w-full">
+              <span className="text-[10px] md:text-xs font-mono opacity-50">
+                {formatTime(status.currentMs)}
+              </span>
               <div
-                className="h-full rounded-full transition-all duration-500 ease-out relative"
-                style={{
-                  width: `${progressPercent}%`,
-                  backgroundColor: activeColor,
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const p = (e.clientX - rect.left) / rect.width;
+                  socketRef.current?.emit("cmd_seek", {
+                    userId,
+                    targetSec: Math.floor(p * status.song.durationSec),
+                  });
                 }}
+                className="flex-1 bg-white/20 rounded-full h-1.5 md:h-2 cursor-pointer relative overflow-hidden group"
               >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg"></div>
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-out relative"
+                  style={{
+                    width: `${progressPercent}%`,
+                    backgroundColor: activeColor,
+                  }}
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg"></div>
+                </div>
               </div>
+              <span className="text-[10px] md:text-xs font-mono opacity-50">
+                {formatTime(status.song.durationSec * 1000)}
+              </span>
             </div>
-            <span className="text-[10px] md:text-xs font-mono opacity-50">
-              {formatTime(status.song.durationSec * 1000)}
-            </span>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center max-w-4xl mx-auto w-full py-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-red-500 animate-pulse">
+                EN VIVO
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-8 md:gap-10">
-            <button
-              onClick={() => setShowLyrics(!showLyrics)}
-              className={`transition p-2 md:p-3 rounded-full ${showLyrics ? "bg-white/20 text-white" : "opacity-50 hover:opacity-100"}`}
-            >
-              <LyricsIcon />
-            </button>
+            {!isRadio && (
+              <button
+                onClick={() => setShowLyrics(!showLyrics)}
+                className={`transition p-2 md:p-3 rounded-full ${showLyrics ? "bg-white/20 text-white" : "opacity-50 hover:opacity-100"}`}
+              >
+                <LyricsIcon />
+              </button>
+            )}
             <button
               onClick={handlePause}
-              className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+              disabled={isOnCooldown}
+              className={`w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center transition shadow-[0_0_30px_rgba(255,255,255,0.3)] ${isOnCooldown ? 'bg-gray-400 opacity-50 cursor-not-allowed' : 'bg-white text-black hover:scale-105'}`}
             >
               {status.isPaused ? <PlayIcon /> : <PauseIcon />}
             </button>
-            <button
-              onClick={handleSkip}
-              className="opacity-70 hover:opacity-100 hover:scale-110 transition scale-110 md:scale-125"
-            >
-              <SkipIcon />
-            </button>
+            {!isRadio && (
+              <button
+                onClick={handleSkip}
+                disabled={isOnCooldown}
+                className={`transition scale-110 md:scale-125 ${isOnCooldown ? 'opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100 hover:scale-110'}`}
+              >
+                <SkipIcon />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -683,7 +712,7 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
       )}
 
-      {showLyrics && (
+      {showLyrics && !isRadio && (
         <div className="fixed inset-0 bg-[#0a0a0c]/80 z-[100] p-4 flex items-center justify-center animate-fadeIn backdrop-blur-md">
           <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden relative border border-white/10">
             <div className="p-6 border-b border-white/5 flex justify-between items-center shrink-0 z-10 bg-black/40">
@@ -812,15 +841,17 @@ export default function LivePlayer({ userId, guildId }) {
           if (window.innerWidth < 768) toggleFullscreen();
         }}
       >
-        <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 md:hidden">
-          <div
-            className="h-full transition-all duration-500 ease-linear"
-            style={{
-              width: `${progressPercent}%`,
-              backgroundColor: activeColor,
-            }}
-          />
-        </div>
+        {!isRadio && (
+          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 md:hidden">
+            <div
+              className="h-full transition-all duration-500 ease-linear"
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: activeColor,
+              }}
+            />
+          </div>
+        )}
 
         <div className="flex items-center justify-start w-[70%] md:w-1/4 gap-3 md:gap-4 overflow-hidden">
           <div
@@ -868,7 +899,8 @@ export default function LivePlayer({ userId, guildId }) {
             <div className="flex items-center gap-6 mb-1 relative">
               <button
                 onClick={handleLike}
-                className={`transition transform active:scale-95 ${isLiked ? "scale-110" : "text-gray-400 hover:text-white"}`}
+                disabled={isOnCooldown}
+                className={`transition transform active:scale-95 ${isOnCooldown ? 'opacity-40 cursor-not-allowed' : ''} ${isLiked ? "scale-110" : "text-gray-400 hover:text-white"}`}
                 style={{ color: isLiked ? activeColor : "" }}
                 title={t("livePlayer.tooltips.save")}
               >
@@ -935,7 +967,8 @@ export default function LivePlayer({ userId, guildId }) {
               </div>
               <button
                 onClick={handlePause}
-                className="text-white transition transform hover:scale-105 p-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                disabled={isOnCooldown}
+                className={`transition transform active:scale-90 p-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] ${isOnCooldown ? 'text-gray-600 cursor-not-allowed' : 'text-white'}`}
                 title={
                   status.isPaused
                     ? t("livePlayer.tooltips.resume")
@@ -944,13 +977,16 @@ export default function LivePlayer({ userId, guildId }) {
               >
                 {status.isPaused ? <PlayIcon /> : <PauseIcon />}
               </button>
-              <button
-                onClick={handleSkip}
-                className="text-gray-400 hover:text-[#7e22ce] transition transform hover:scale-110"
-                title={t("livePlayer.tooltips.skip")}
-              >
-                <SkipIcon />
-              </button>
+              {!isRadio && (
+                <button
+                  onClick={handleSkip}
+                  disabled={isOnCooldown}
+                  className={`text-gray-400 hover:text-[#7e22ce] transition transform hover:scale-110 ${isOnCooldown ? 'opacity-30 cursor-not-allowed' : ''}`}
+                  title={t("livePlayer.tooltips.skip")}
+                >
+                  <SkipIcon />
+                </button>
+              )}
               <div className="relative">
                 <button
                   onClick={(e) => {
@@ -986,47 +1022,57 @@ export default function LivePlayer({ userId, guildId }) {
               </div>
             </div>
 
-            <div className="w-full max-w-2xl flex items-center gap-3 px-2 mt-1">
-              <span className="text-[10px] text-gray-400 font-mono w-10 text-right">
-                {formatTime(status.currentMs)}
-              </span>
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const percent = (e.clientX - rect.left) / rect.width;
-                  socketRef.current?.emit("cmd_seek", {
-                    userId,
-                    targetSec: Math.floor(percent * status.song.durationSec),
-                  });
-                }}
-                className="flex-1 bg-white/10 rounded-full h-1.5 relative overflow-hidden cursor-pointer group"
-              >
+            {!isRadio ? (
+              <div className="w-full max-w-2xl flex items-center gap-3 px-2 mt-1">
+                <span className="text-[10px] text-gray-400 font-mono w-10 text-right">
+                  {formatTime(status.currentMs)}
+                </span>
                 <div
-                  className="h-full transition-all duration-500 ease-linear rounded-r-full"
-                  style={{
-                    width: `${progressPercent}%`,
-                    backgroundColor: activeColor,
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    socketRef.current?.emit("cmd_seek", {
+                      userId,
+                      targetSec: Math.floor(percent * status.song.durationSec),
+                    });
                   }}
-                />
+                  className="flex-1 bg-white/10 rounded-full h-1.5 relative overflow-hidden cursor-pointer group"
+                >
+                  <div
+                    className="h-full transition-all duration-500 ease-linear rounded-r-full"
+                    style={{
+                      width: `${progressPercent}%`,
+                      backgroundColor: activeColor,
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] text-gray-400 font-mono w-10">
+                  {formatTime(status.song.durationSec * 1000)}
+                </span>
               </div>
-              <span className="text-[10px] text-gray-400 font-mono w-10">
-                {formatTime(status.song.durationSec * 1000)}
-              </span>
-            </div>
+            ) : (
+              <div className="w-full max-w-2xl flex items-center justify-center mt-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-red-500 animate-pulse">
+                  EN VIVO
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex md:hidden items-center gap-3">
             <button
               onClick={handleLike}
-              className={`transition transform active:scale-95 ${isLiked ? "scale-110" : "text-gray-400"}`}
+              disabled={isOnCooldown}
+              className={`transition transform active:scale-95 ${isOnCooldown ? 'opacity-40 cursor-not-allowed' : ''} ${isLiked ? "scale-110" : "text-gray-400"}`}
               style={{ color: isLiked ? activeColor : "" }}
             >
               <HeartIcon filled={isLiked} />
             </button>
             <button
               onClick={handlePause}
-              className="text-white transition transform active:scale-90"
+              disabled={isOnCooldown}
+              className={`transition transform active:scale-90 ${isOnCooldown ? 'text-gray-600 cursor-not-allowed' : 'text-white'}`}
             >
               {status.isPaused ? <PlayIcon /> : <PauseIcon />}
             </button>
@@ -1034,42 +1080,48 @@ export default function LivePlayer({ userId, guildId }) {
         </div>
 
         <div className="hidden md:flex w-1/4 justify-end gap-5 items-center">
-          <div className="flex items-center gap-1.5 mr-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAction("cmd_toggle_autoplay");
-              }}
-              className={`text-[9px] font-bold px-2 py-1 rounded transition-all border ${status.autoplay ? "text-white border-transparent shadow-[0_0_10px_rgba(255,255,255,0.1)]" : "text-gray-500 border-white/10 hover:text-white"}`}
-              style={{
-                backgroundColor: status.autoplay ? activeColor : "transparent",
-              }}
-              title="Modo Estricto (Likes)"
-            >
-              AUTO
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAction("cmd_toggle_discovery");
-              }}
-              className={`text-[9px] font-bold px-2 py-1 rounded transition-all border ${status.discovery ? "text-white border-transparent shadow-[0_0_10px_rgba(255,255,255,0.1)]" : "text-gray-500 border-white/10 hover:text-white"}`}
-              style={{
-                backgroundColor: status.discovery ? activeColor : "transparent",
-              }}
-              title="Modo Descubrimiento (Géneros)"
-            >
-              MIX
-            </button>
-          </div>
+          {!isRadio && (
+            <div className="flex items-center gap-1.5 mr-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction("cmd_toggle_autoplay");
+                }}
+                disabled={isOnCooldown}
+                className={`text-[9px] font-bold px-2 py-1 rounded transition-all border ${isOnCooldown ? 'opacity-50' : ''} ${status.autoplay ? "text-white border-transparent shadow-[0_0_10px_rgba(255,255,255,0.1)]" : "text-gray-500 border-white/10 hover:text-white"}`}
+                style={{
+                  backgroundColor: status.autoplay ? activeColor : "transparent",
+                }}
+                title="Modo Estricto (Likes)"
+              >
+                AUTO
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction("cmd_toggle_discovery");
+                }}
+                disabled={isOnCooldown}
+                className={`text-[9px] font-bold px-2 py-1 rounded transition-all border ${isOnCooldown ? 'opacity-50' : ''} ${status.discovery ? "text-white border-transparent shadow-[0_0_10px_rgba(255,255,255,0.1)]" : "text-gray-500 border-white/10 hover:text-white"}`}
+                style={{
+                  backgroundColor: status.discovery ? activeColor : "transparent",
+                }}
+                title="Modo Descubrimiento (Géneros)"
+              >
+                MIX
+              </button>
+            </div>
+          )}
 
-          <button
-            onClick={() => setShowLyrics(!showLyrics)}
-            className={`${showLyrics && !isFullscreen ? "text-[#7e22ce]" : "text-gray-400"} hover:text-white transition`}
-            title={t("livePlayer.tooltips.lyrics")}
-          >
-            <LyricsIcon />
-          </button>
+          {!isRadio && (
+            <button
+              onClick={() => setShowLyrics(!showLyrics)}
+              className={`${showLyrics && !isFullscreen ? "text-[#7e22ce]" : "text-gray-400"} hover:text-white transition`}
+              title={t("livePlayer.tooltips.lyrics")}
+            >
+              <LyricsIcon />
+            </button>
+          )}
           <button
             onClick={toggleFullscreen}
             className="text-gray-400 hover:text-white transition"

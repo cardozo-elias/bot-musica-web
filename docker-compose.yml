@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  musicardi-bot:
+    build: .
+    container_name: musicardi-core
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      - ./cookies.txt:/usr/src/app/cookies.txt

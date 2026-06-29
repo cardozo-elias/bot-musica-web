@@ -25,6 +25,23 @@ body {
   color: #ffffff;
 }
 
+/* Optimizaciones para Pantallas Táctiles Dedicadas (2000x1200, relación 5:3) */
+@media screen and (min-width: 1200px) and (max-width: 2000px) and (min-aspect-ratio: 5/3) {
+  body {
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none; /* Previene el rebote elástico en Android al hacer scroll */
+  }
+  
+  .dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    height: 100vh;
+    padding: 2rem;
+    gap: 2rem;
+  }
+}
+
 @layer utilities {
   @keyframes fadeIn {
     from {
@@ -69,7 +86,7 @@ body {
     background: linear-gradient(
       to bottom,
       var(--brand-violet),
-      var(--brand-pink)
+      var(--brand-dark)
     );
   }
 
