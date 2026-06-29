@@ -1,23 +1,51 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useSocketStats } from "./SocketContext";
 
 export default function AmbientBackground() {
   const { socketStats } = useSocketStats();
   const color = socketStats?.color || "#a855f7";
 
+  // Efecto que calcula las transparencias y colores oscuros y los inyecta al root global
+  useEffect(() => {
+    const hex = color.replace("#", "");
+    let r = 0, g = 0, b = 0;
+    
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length === 6) {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    }
+
+    const darkR = Math.floor(r * 0.6);
+    const darkG = Math.floor(g * 0.6);
+    const darkB = Math.floor(b * 0.6);
+
+    const root = document.documentElement;
+    root.style.setProperty("--dynamic-color", color);
+    root.style.setProperty("--dynamic-color-15", `rgba(${r}, ${g}, ${b}, 0.15)`);
+    root.style.setProperty("--dynamic-color-30", `rgba(${r}, ${g}, ${b}, 0.3)`);
+    root.style.setProperty("--dynamic-color-40", `rgba(${r}, ${g}, ${b}, 0.4)`);
+    root.style.setProperty("--dynamic-color-50", `rgba(${r}, ${g}, ${b}, 0.5)`);
+    root.style.setProperty("--dynamic-color-dark", `rgb(${darkR}, ${darkG}, ${darkB})`);
+  }, [color]);
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#050508]">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes aurora-blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(5vw, -5vh) scale(1.1); }
-          66% { transform: translate(-4vw, 3vh) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% { transform: translate(0vw, 0vh) scale(1); }
+          33% { transform: translate(12vw, -15vh) scale(1.4); }
+          66% { transform: translate(-10vw, 15vh) scale(0.85); }
+          100% { transform: translate(0vw, 0vh) scale(1); }
         }
         @keyframes twinkle {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 0.2; transform: scale(0.95); }
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50% { opacity: 0.3; transform: scale(0.95); }
         }
         .bg-stars {
           background-image: 
@@ -39,23 +67,26 @@ export default function AmbientBackground() {
         .delay-4000 { animation-delay: 4s; }
       `}} />
 
+      {/* Capa de Estrellas */}
       <div className="absolute inset-0 bg-stars mix-blend-screen"></div>
 
+      {/* Auroras Adaptativas */}
       <div
-        className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[100px] opacity-40 animate-aurora transition-colors duration-1000 ease-in-out"
-        style={{ backgroundColor: color }}
+        className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-40 animate-aurora transition-colors duration-1000 ease-in-out"
+        style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
 
       <div
-        className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out"
-        style={{ backgroundColor: color }}
+        className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[140px] opacity-30 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out"
+        style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
 
       <div
-        className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[100px] opacity-20 animate-aurora delay-4000 transition-colors duration-1000 ease-in-out"
-        style={{ backgroundColor: color }}
+        className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-4000 transition-colors duration-1000 ease-in-out"
+        style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
       
+      {/* Viñeta inmersiva para legibilidad */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#050508]/60 to-[#050508]/95"></div>
     </div>
   );

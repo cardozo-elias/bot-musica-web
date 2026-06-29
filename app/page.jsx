@@ -53,10 +53,16 @@ export default async function LandingPage() {
 
   return (
     <main className="min-h-screen bg-transparent text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#a855f7]/15 via-transparent to-transparent -z-10"></div>
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10"
+        style={{ background: 'radial-gradient(circle at center, var(--dynamic-color-15, rgba(168,85,247,0.15)), transparent, transparent)' }}
+      ></div>
 
       <div className="text-center max-w-2xl animate-slideUp">
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-[#a855f7]">
+        <h1 
+          className="text-6xl md:text-8xl font-black tracking-tighter mb-6 bg-clip-text text-transparent"
+          style={{ backgroundImage: 'linear-gradient(to bottom, white, var(--dynamic-color, #a855f7))' }}
+        >
           Musicardi
         </h1>
         <p className="text-gray-400 text-lg md:text-xl font-medium mb-12 leading-relaxed">
@@ -66,7 +72,11 @@ export default async function LandingPage() {
         <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
           <Link
             href={session ? `/dashboard/${session.user.id}` : "/login"}
-            className="flex items-center gap-3 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:brightness-110 w-full md:w-auto justify-center"
+            className="flex items-center gap-3 text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all transform hover:scale-105 hover:brightness-110 w-full md:w-auto justify-center"
+            style={{
+              background: 'linear-gradient(to right, var(--dynamic-color, #a855f7), var(--dynamic-color-dark, #7e22ce))',
+              boxShadow: '0 0 30px var(--dynamic-color-40, rgba(168, 85, 247, 0.4))'
+            }}
           >
             {session ? <PanelIcon /> : <DiscordIcon />}
             {session ? landingTexts.enter : landingTexts.login}
