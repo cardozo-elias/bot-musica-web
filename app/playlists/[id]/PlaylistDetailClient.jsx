@@ -220,12 +220,12 @@ const MosaicCoverPanel = ({ songs }) => {
       <img
         src={uniqueCovers[0]}
         alt="Cover"
-        className="w-32 h-32 md:w-40 md:h-40 rounded-xl object-cover border border-white/10 shadow-lg"
+        className="w-32 h-32 md:w-40 md:h-40 rounded-xl object-cover border border-white/10 shadow-lg transform-gpu"
       />
     );
 
   return (
-    <div className="w-32 h-32 md:w-40 md:h-40 grid grid-cols-2 grid-rows-2 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+    <div className="w-32 h-32 md:w-40 md:h-40 grid grid-cols-2 grid-rows-2 rounded-xl overflow-hidden border border-white/10 shadow-lg transform-gpu">
       <img
         src={uniqueCovers[0]}
         className="w-full h-full object-cover"
@@ -323,8 +323,11 @@ export default function PlaylistDetailClient({
 
   useEffect(() => {
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
+    // CONEXIÓN DIRECTA POR WEBSOCKET
     const newSocket = io(botUrl, {
       extraHeaders: { "ngrok-skip-browser-warning": "true" },
+      transports: ["websocket"],
+      upgrade: false
     });
     setSocket(newSocket);
     return () => newSocket.disconnect();
@@ -403,7 +406,7 @@ export default function PlaylistDetailClient({
       userAvatar: session.user.image,
       isLikes: isLikesPlaylist,
     });
-    setTimeout(() => setIsPlaying(false), 2000);
+    setTimeout(() => setIsPlaying(false), 500);
   };
 
   const handlePlaySingle = (song) => {
@@ -586,7 +589,7 @@ export default function PlaylistDetailClient({
           <div className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-xl">
             {isLikesPlaylist ? (
               <div 
-                className="w-32 h-32 md:w-40 md:h-40 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-1000"
+                className="w-32 h-32 md:w-40 md:h-40 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-1000 transform-gpu"
                 style={{ 
                   background: 'linear-gradient(to bottom right, var(--dynamic-color), var(--dynamic-color-dark))',
                   boxShadow: '0 0 30px var(--dynamic-color-30)'
@@ -974,7 +977,7 @@ export default function PlaylistDetailClient({
             )}
           </div>
 
-          {}
+          {/* RECOMENDACIONES */}
           {songs.length > 0 && isOwner && !isLikesPlaylist && (
             <div className="glass-panel rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-6">
@@ -1047,7 +1050,7 @@ export default function PlaylistDetailClient({
         </div>
       </section>
 
-      {}
+      {/* MODAL DE AJUSTES/EDICIÓN */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn transition-colors duration-1000">
           <div 

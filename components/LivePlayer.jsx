@@ -103,7 +103,6 @@ const TrashIcon = () => (
 
 export default function LivePlayer({ userId, guildId }) {
   const pathname = usePathname();
-
   const { setSocketStats } = useSocketStats();
   const { t } = useLanguage();
 
@@ -147,11 +146,10 @@ export default function LivePlayer({ userId, guildId }) {
   useEffect(() => {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    
-    // 🔥 OPTIMIZACIÓN DE RED: Forzamos Websocket para eliminar la latencia HTTP
-    socketRef.current = io(botUrl, {
-      transports: ["websocket"],
-      upgrade: false,
+    // FORZAMOS LA CONEXIÓN WEBSOCKET PARA ELIMINAR LATENCIA
+    socketRef.current = io(botUrl, { 
+      transports: ["websocket"], 
+      upgrade: false 
     });
 
     const interval = setInterval(() => {
@@ -240,8 +238,8 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.emit(cmd, extra !== null ? { userId, ...extra } : userId);
     
     setIsOnCooldown(true);
-    // 🔥 OPTIMIZACIÓN DE LATENCIA: Reducimos el bloqueo de 1500ms a 400ms
-    setTimeout(() => setIsOnCooldown(false), 400);
+    // REDUCCIÓN BRUTAL DEL COOLDOWN PARA MAYOR RESPUESTA (De 1500 a 300ms)
+    setTimeout(() => setIsOnCooldown(false), 300);
   };
 
   useEffect(() => {
@@ -416,9 +414,7 @@ export default function LivePlayer({ userId, guildId }) {
     );
   };
   
-  if (pathname === "/" || pathname === "/login") {
-    return null; 
-  }
+  if (pathname === "/" || pathname === "/login") return null; 
   
   if (!status.playing || !status.song) {
     return (
@@ -442,16 +438,15 @@ export default function LivePlayer({ userId, guildId }) {
           }}
         />
 
-        {/* Auroras Dinámicas con aceleración de GPU */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor, willChange: 'transform', transform: 'translateZ(0)' }}></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor, willChange: 'transform', transform: 'translateZ(0)' }}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out transform-gpu" style={{ backgroundColor: activeColor }}></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out transform-gpu" style={{ backgroundColor: activeColor }}></div>
 
-        {/* Capa de carátula difuminada acelerada por GPU */}
+        {/* Añadimos transform-gpu a la capa grande de la caratula para aliviar al navegador */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-[80px] scale-125"
-          style={{ backgroundImage: `url(${status.song.thumbnail})`, willChange: 'transform', transform: 'translateZ(0)' }}
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-[80px] scale-125 transform-gpu"
+          style={{ backgroundImage: `url(${status.song.thumbnail})` }}
         ></div>
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent transform-gpu"></div>
 
         <div
           className={`z-10 p-6 md:p-8 flex justify-between items-center transition-opacity duration-700 ease-in-out ${isIdle ? "opacity-0" : "opacity-100"}`}
@@ -477,7 +472,7 @@ export default function LivePlayer({ userId, guildId }) {
           >
             <img
               src={status.song.thumbnail}
-              className="w-full max-w-[30vh] md:max-w-[40vh] aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-6"
+              className="w-full max-w-[30vh] md:max-w-[40vh] aspect-square object-cover rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 mb-6 transform-gpu"
               alt="Cover"
             />
 
