@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useLanguage } from "../../../components/LanguageContext";
 
-// --- ÍCONOS SVG MINIMALISTAS ---
 const MusicNoteIcon = () => (
   <svg
     className="w-12 h-12 text-gray-600 opacity-50"
@@ -586,7 +585,13 @@ export default function PlaylistDetailClient({
           {/* HEADER GLASSMORPHISM */}
           <div className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 shadow-xl">
             {isLikesPlaylist ? (
-              <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-[#a855f7] to-[#7e22ce] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)] shrink-0">
+              <div 
+                className="w-32 h-32 md:w-40 md:h-40 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-1000"
+                style={{ 
+                  background: 'linear-gradient(to bottom right, var(--dynamic-color), var(--dynamic-color-dark))',
+                  boxShadow: '0 0 30px var(--dynamic-color-30)'
+                }}
+              >
                 <svg
                   className="w-16 h-16 text-white drop-shadow-md"
                   fill="currentColor"
@@ -602,7 +607,10 @@ export default function PlaylistDetailClient({
             )}
 
             <div className="flex flex-col flex-1 text-center md:text-left w-full justify-center h-full pt-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#a855f7] mb-1">
+              <span 
+                className="text-[10px] font-black uppercase tracking-widest mb-1 transition-colors duration-1000"
+                style={{ color: 'var(--dynamic-color)' }}
+              >
                 {isLikesPlaylist ? (
                   t("playlists.autoList")
                 ) : isPublic ? (
@@ -644,7 +652,11 @@ export default function PlaylistDetailClient({
                 <button
                   onClick={handlePlayPlaylist}
                   disabled={songs.length === 0}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] ${isPlaying ? "bg-[#7e22ce] text-white scale-95" : "bg-gradient-to-r from-[#a855f7] to-[#7e22ce] hover:brightness-110 text-white"} ${songs.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all duration-300 ${isPlaying ? "text-white scale-95" : "hover:brightness-110 text-white"} ${songs.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                  style={{ 
+                    background: isPlaying ? 'var(--dynamic-color-dark)' : 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                    boxShadow: '0 0 15px var(--dynamic-color-40)'
+                  }}
                 >
                   <PlayAllIcon />
                   {t("detail.playAll")}
@@ -653,7 +665,16 @@ export default function PlaylistDetailClient({
                 {!isLikesPlaylist && (isOwner || isPublic) && (
                   <button
                     onClick={handleShare}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold border transition-colors ${copiedLink ? "bg-[#a855f7] border-[#a855f7] text-white" : "border-white/10 hover:bg-white/5 text-gray-300"}`}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold border transition-colors duration-300"
+                    style={copiedLink ? {
+                      backgroundColor: 'var(--dynamic-color)',
+                      borderColor: 'var(--dynamic-color)',
+                      color: 'white'
+                    } : {
+                      borderColor: 'rgba(255,255,255,0.1)',
+                      color: '#d1d5db',
+                      backgroundColor: 'transparent'
+                    }}
                   >
                     {copiedLink ? <CheckIcon /> : <ShareIcon />}
                     {copiedLink ? t("detail.copied") : t("detail.share")}
@@ -668,7 +689,16 @@ export default function PlaylistDetailClient({
                         setSearchResults([]);
                         setSearchQuery("");
                       }}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold border transition-colors ${showSearch ? "bg-white/10 border-[#a855f7] text-white" : "border-white/10 hover:bg-white/5 text-gray-300"}`}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold border transition-colors duration-300"
+                      style={showSearch ? {
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        borderColor: 'var(--dynamic-color)',
+                        color: 'white'
+                      } : {
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        color: '#d1d5db',
+                        backgroundColor: 'transparent'
+                      }}
                     >
                       <PlusIcon />
                       {t("detail.add")}
@@ -676,7 +706,7 @@ export default function PlaylistDetailClient({
 
                     <button
                       onClick={() => setIsEditModalOpen(true)}
-                      className="flex items-center justify-center p-2.5 rounded-full border border-white/10 hover:bg-white/5 text-gray-400 hover:text-[#a855f7] transition-colors"
+                      className="flex items-center justify-center p-2.5 rounded-full border border-white/10 hover:bg-white/5 text-gray-400 transition-colors duration-300 hover:text-[var(--dynamic-color)]"
                       title={t("settings.title")}
                     >
                       <SettingsIcon />
@@ -698,7 +728,7 @@ export default function PlaylistDetailClient({
                   type="text"
                   autoFocus
                   placeholder={t("detail.searchPlaceholder")}
-                  className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl p-3 outline-none text-sm focus:border-[#a855f7] transition"
+                  className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl p-3 outline-none text-sm transition-colors focus:border-[var(--dynamic-color)]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -716,7 +746,7 @@ export default function PlaylistDetailClient({
                   {searchResults.map((track, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl hover:border-[#a855f7]/50 transition-colors group"
+                      className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl transition-colors group hover:border-[var(--dynamic-color-50)]"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         <img
@@ -736,7 +766,7 @@ export default function PlaylistDetailClient({
                       <button
                         onClick={() => handleAddSong(track)}
                         disabled={isAdding === track.videoId}
-                        className="px-4 py-2 rounded-lg border border-white/10 text-xs font-bold text-gray-300 hover:text-white hover:bg-[#a855f7] hover:border-[#a855f7] transition-all disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+                        className="px-4 py-2 rounded-lg border border-white/10 text-xs font-bold text-gray-300 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[80px] hover:bg-[var(--dynamic-color)] hover:border-[var(--dynamic-color)]"
                       >
                         {isAdding === track.videoId ? (
                           <LoadingSpinner />
@@ -755,7 +785,7 @@ export default function PlaylistDetailClient({
           <div className="glass-panel rounded-2xl overflow-hidden shadow-xl">
             {/* ENCABEZADOS ORDENABLES */}
             <div
-              className={`grid ${gridColsClass} gap-4 px-6 py-4 border-b border-white/5 bg-black/40 text-[10px] font-black text-[#a855f7] uppercase tracking-widest`}
+              className={`grid ${gridColsClass} gap-4 px-6 py-4 border-b border-white/5 bg-black/40 text-[10px] font-black uppercase tracking-widest transition-colors duration-1000 text-[var(--dynamic-color)]`}
             >
               <span
                 className="w-8 text-center cursor-pointer hover:text-white transition-colors"
@@ -827,7 +857,7 @@ export default function PlaylistDetailClient({
                           {isOwner && !isLikesPlaylist && (
                             <button
                               onClick={() => setShowSearch(true)}
-                              className="text-[#a855f7] hover:underline font-bold text-sm"
+                              className="hover:underline font-bold text-sm transition-colors text-[var(--dynamic-color)]"
                             >
                               {t("detail.table.useSearch")}
                             </button>
@@ -851,7 +881,7 @@ export default function PlaylistDetailClient({
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  className={`group grid ${gridColsClass} gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? "bg-black/60 shadow-2xl opacity-90 border border-[#a855f7]/50 z-50" : "hover:bg-white/5 border border-transparent"} ${isRemoving === song.videoId ? "opacity-30 scale-[0.98]" : ""}`}
+                                  className={`group grid ${gridColsClass} gap-4 px-4 py-3 rounded-xl items-center transition-colors ${snapshot.isDragging ? "bg-black/60 shadow-2xl opacity-90 border border-[var(--dynamic-color-50)] z-50" : "hover:bg-white/5 border border-transparent"} ${isRemoving === song.videoId ? "opacity-30 scale-[0.98]" : ""}`}
                                   style={provided.draggableProps.style}
                                 >
                                   {/* Grip Handle */}
@@ -885,7 +915,7 @@ export default function PlaylistDetailClient({
                                     )}
 
                                     <div className="flex flex-col min-w-0">
-                                      <span className="text-sm font-bold text-gray-200 truncate group-hover:text-white transition-colors">
+                                      <span className="text-sm font-bold text-gray-200 truncate group-hover:text-[var(--dynamic-color)] transition-colors">
                                         {song.title}
                                       </span>
                                       <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">
@@ -915,7 +945,7 @@ export default function PlaylistDetailClient({
                                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                       onClick={() => handlePlaySingle(song)}
-                                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-[#a855f7] hover:bg-[#a855f7]/10 transition-all"
+                                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-[var(--dynamic-color)] hover:bg-[var(--dynamic-color-15)] transition-all"
                                     >
                                       <PlayAllIcon />
                                     </button>
@@ -944,7 +974,7 @@ export default function PlaylistDetailClient({
             )}
           </div>
 
-          {/* RECOMENDACIONES */}
+          {}
           {songs.length > 0 && isOwner && !isLikesPlaylist && (
             <div className="glass-panel rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-6">
@@ -980,7 +1010,7 @@ export default function PlaylistDetailClient({
                   {recommendations.map((track, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl hover:border-[#a855f7]/50 transition-colors group"
+                      className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl transition-colors group hover:border-[var(--dynamic-color-50)]"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         <img
@@ -1000,7 +1030,7 @@ export default function PlaylistDetailClient({
                       <button
                         onClick={() => handleAddSong(track)}
                         disabled={isAdding === track.videoId}
-                        className="px-4 py-2 rounded-lg border border-white/10 text-xs font-bold text-gray-300 hover:text-white hover:bg-[#a855f7] hover:border-[#a855f7] transition-all disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+                        className="px-4 py-2 rounded-lg border border-white/10 text-xs font-bold text-gray-300 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[80px] hover:bg-[var(--dynamic-color)] hover:border-[var(--dynamic-color)]"
                       >
                         {isAdding === track.videoId ? (
                           <LoadingSpinner />
@@ -1017,10 +1047,16 @@ export default function PlaylistDetailClient({
         </div>
       </section>
 
-      {/* 🔥 MODAL DE AJUSTES/EDICIÓN 🔥 */}
+      {}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel rounded-3xl p-8 w-full max-w-md shadow-[0_0_50px_rgba(168,85,247,0.15)] border border-[#a855f7]/30 animate-slideUp">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn transition-colors duration-1000">
+          <div 
+            className="glass-panel rounded-3xl p-8 w-full max-w-md animate-slideUp transition-all duration-1000"
+            style={{ 
+              boxShadow: '0 0 50px var(--dynamic-color-15)',
+              borderColor: 'var(--dynamic-color-30)'
+            }}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-black text-white">
                 {t("detail.settings.title")}
@@ -1040,7 +1076,7 @@ export default function PlaylistDetailClient({
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#a855f7] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
+                  className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-4 outline-none font-bold transition-colors shadow-inner focus:border-[var(--dynamic-color)]"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
@@ -1063,13 +1099,13 @@ export default function PlaylistDetailClient({
                     checked={isPublic}
                     onChange={() => setIsPublic(!isPublic)}
                   />
-                  <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#a855f7]"></div>
+                  <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--dynamic-color)]"></div>
                 </label>
               </div>
 
               {/* Botón de Eliminación (Peligro) */}
-              <div className="p-4 border border-[#7e22ce]/30 bg-[#7e22ce]/10 rounded-xl flex flex-col items-start gap-3 mt-2">
-                <span className="text-sm font-bold text-[#7e22ce] uppercase tracking-widest">
+              <div className="p-4 border border-red-500/30 bg-red-500/10 rounded-xl flex flex-col items-start gap-3 mt-2">
+                <span className="text-sm font-bold text-red-500 uppercase tracking-widest">
                   {t("detail.settings.dangerZone")}
                 </span>
                 <span className="text-xs text-gray-400">
@@ -1078,7 +1114,7 @@ export default function PlaylistDetailClient({
                 <button
                   onClick={handleDeletePlaylist}
                   disabled={isDeleting}
-                  className="px-4 py-2 bg-[#7e22ce]/20 text-[#7e22ce] hover:bg-[#7e22ce] hover:text-white rounded-lg text-xs font-bold transition-colors mt-2 flex items-center justify-center min-w-[120px]"
+                  className="px-4 py-2 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold transition-colors mt-2 flex items-center justify-center min-w-[120px]"
                 >
                   {isDeleting ? (
                     <LoadingSpinner />
@@ -1099,7 +1135,11 @@ export default function PlaylistDetailClient({
               <button
                 onClick={handleSaveEdit}
                 disabled={isSavingEdit || !editName.trim()}
-                className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110 flex items-center gap-2"
+                className="px-6 py-3 rounded-full font-bold text-sm text-white transition-all duration-300 disabled:opacity-50 hover:brightness-110 flex items-center gap-2"
+                style={{ 
+                  background: 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                  boxShadow: '0 0 15px var(--dynamic-color-40)'
+                }}
               >
                 {isSavingEdit ? (
                   <LoadingSpinner />
