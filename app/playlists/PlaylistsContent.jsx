@@ -14,6 +14,7 @@ const PlusIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
   </svg>
 );
+
 const MusicNoteIcon = () => (
   <svg
     className="w-12 h-12 opacity-50"
@@ -29,20 +30,13 @@ const MusicNoteIcon = () => (
     />
   </svg>
 );
-const HeartIcon = () => (
-  <svg
-    className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform"
-    fill="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-  </svg>
-);
+
 const PlayIcon = () => (
   <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24">
     <path d="M8 5v14l11-7z" />
   </svg>
 );
+
 const LoadingSpinner = () => (
   <svg
     className="animate-spin h-5 w-5 text-white"
@@ -243,13 +237,27 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             <Link
               href="/playlists/likes"
-              className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(236,72,153,0.2)] transition-all duration-300 border hover:border-[#7e22ce]/50"
+              className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(168,85,247,0.2)] transition-all duration-300 border hover:border-[#a855f7]/50"
             >
-              <div className="aspect-square bg-gradient-to-br from-[#a855f7] to-[#7e22ce] flex items-center justify-center p-8 relative overflow-hidden">
-                <HeartIcon />
+              <div className="aspect-square bg-[#111214] border-b border-white/5 flex items-center justify-center p-8 relative overflow-hidden group-hover:bg-[#1a1b1e] transition-colors duration-300">
+                <div className="w-16 h-16 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#a855f7]/50 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                  <svg
+                    className="w-8 h-8 text-gray-400 transition-colors duration-300 group-hover:text-[#a855f7]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                    />
+                  </svg>
+                </div>
               </div>
               <div className="p-4 bg-black/40 backdrop-blur-md">
-                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#7e22ce] transition-colors">
+                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#a855f7] transition-colors">
                   {t("playlists.likesTitle")}
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">

@@ -135,7 +135,7 @@ export default function SidebarFavorites({
                 <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 relative z-20 bg-inherit">
                   {loadingTrackId === like.videoId ? (
                     <svg
-                      className="animate-spin h-3.5 w-3.5 text-[#57F287]"
+                      className="animate-spin h-3.5 w-3.5 text-[#a855f7]"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -156,11 +156,23 @@ export default function SidebarFavorites({
                     </svg>
                   ) : (
                     <>
-                      <span className="text-[#57F287]/80 group-hover:opacity-0 transition-opacity text-[10px]">
-                        ♥
+                      <span className="text-gray-500 group-hover:opacity-0 transition-opacity flex items-center justify-center">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                          />
+                        </svg>
                       </span>
                       <svg
-                        className="w-3.5 h-3.5 text-white absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="w-3.5 h-3.5 text-[#a855f7] absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -172,7 +184,7 @@ export default function SidebarFavorites({
 
                 <div className="flex-1 flex flex-col min-w-0 pr-12 pl-3 -ml-3 overflow-hidden relative fade-left-mask">
                   <div className="w-full overflow-hidden">
-                    <p className="font-bold text-gray-200 text-xs truncate whitespace-nowrap group-hover:text-white transition-colors animate-marquee-fav">
+                    <p className="font-bold text-gray-200 text-xs truncate whitespace-nowrap group-hover:text-[#a855f7] transition-colors animate-marquee-fav">
                       {like.title}
                     </p>
                   </div>

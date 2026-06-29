@@ -55,7 +55,7 @@ export default async function DashboardPage({ params }) {
     }
 
     const recentLikesRes = await pool.query(
-      'SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC LIMIT 50',
+      'SELECT title, artist, video_id as "videoId" FROM likes WHERE user_id = $1 ORDER BY id DESC',
       [session.user.id],
     );
     allLikes = recentLikesRes.rows;
