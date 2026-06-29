@@ -161,7 +161,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   };
 
   const VideoCard = ({ video }) => (
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-black/20 p-4 rounded-2xl hover:bg-black/40 transition gap-4 border border-white/5 hover:border-[#7e22ce]/50 shadow-md group">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-black/20 p-4 rounded-2xl hover:bg-black/40 transition-all duration-300 gap-4 border border-white/5 hover:border-[var(--dynamic-color-50)] shadow-md group">
       <div className="flex items-center gap-4 w-full md:w-auto overflow-hidden">
         <img
           src={video.thumbnail || video.image}
@@ -169,7 +169,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
           className="w-14 h-14 md:w-16 md:h-16 rounded-xl object-cover shadow-lg shrink-0"
         />
         <div className="flex flex-col min-w-0 pr-2">
-          <span className="font-bold text-white text-sm md:text-base line-clamp-1 group-hover:text-[#a855f7] transition-colors">
+          <span className="font-bold text-white text-sm md:text-base line-clamp-1 group-hover:text-[var(--dynamic-color)] transition-colors">
             {video.title}
           </span>
           <span className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-1 truncate">
@@ -193,7 +193,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
               setIsOpen(false);
             }, 1500);
           }}
-          className={`flex items-center justify-center gap-1.5 min-w-[90px] px-4 py-2 rounded-xl font-bold text-xs uppercase transition shadow-md ${loadingTrackId === video.videoId ? "bg-white/5 text-gray-500 cursor-not-allowed" : "bg-white/10 hover:bg-[#7e22ce] hover:text-white text-gray-300"}`}
+          className={`flex items-center justify-center gap-1.5 min-w-[90px] px-4 py-2 rounded-xl font-bold text-xs uppercase transition-colors shadow-md ${loadingTrackId === video.videoId ? "bg-white/5 text-gray-500 cursor-not-allowed" : "bg-white/10 hover:bg-[var(--dynamic-color)] hover:text-white text-gray-300"}`}
         >
           {loadingTrackId === video.videoId ? (
             <LoadingSpinner />
@@ -209,13 +209,13 @@ export default function WebSearch({ userId, userName, userAvatar }) {
               openDropdown === video.videoId ? null : video.videoId,
             )
           }
-          className="bg-white/10 hover:bg-[#7e22ce] text-white px-3 py-2 rounded-xl font-bold transition shadow-md"
+          className="bg-white/10 hover:bg-[var(--dynamic-color)] text-white px-3 py-2 rounded-xl font-bold transition-colors shadow-md"
         >
           <PlusIcon />
         </button>
         {openDropdown === video.videoId && (
-          <div className="absolute right-0 top-12 w-56 bg-[#0a0a0c]/95 backdrop-blur-xl border border-[#7e22ce]/30 rounded-2xl shadow-2xl z-20 py-3 animate-fadeIn">
-            <p className="text-[9px] text-[#a855f7] px-4 pb-2 border-b border-white/10 mb-2 uppercase font-black tracking-widest text-center">
+          <div className="absolute right-0 top-12 w-56 bg-black/80 backdrop-blur-xl border border-[var(--dynamic-color-30)] rounded-2xl shadow-[0_0_20px_var(--dynamic-color-15)] z-20 py-3 animate-fadeIn">
+            <p className="text-[9px] text-[var(--dynamic-color)] px-4 pb-2 border-b border-white/10 mb-2 uppercase font-black tracking-widest text-center">
               {t("webSearch.saveTo")}
             </p>
             <div className="max-h-48 overflow-y-auto custom-scrollbar flex flex-col gap-1 px-2">
@@ -223,7 +223,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
                 <button
                   key={pl.id}
                   onClick={() => handleAddToPlaylist(pl.id, video)}
-                  className="w-full text-left px-3 py-2.5 text-[11px] font-bold text-gray-300 hover:bg-[#7e22ce]/40 hover:text-white rounded-lg transition truncate tracking-wide"
+                  className="w-full text-left px-3 py-2.5 text-[11px] font-bold text-gray-300 hover:bg-[var(--dynamic-color-40)] hover:text-white rounded-lg transition-colors truncate tracking-wide"
                 >
                   <FolderIcon /> {pl.name}
                 </button>
@@ -238,8 +238,8 @@ export default function WebSearch({ userId, userName, userAvatar }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-[#0a0a0c]/80 backdrop-blur-sm flex items-start justify-center pt-10 md:pt-20 px-4 animate-fadeIn">
-      <div className="w-full max-w-2xl glass-panel bg-[#111214]/95 rounded-3xl shadow-2xl relative flex flex-col max-h-[85vh] border border-[#7e22ce]/30">
+    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-start justify-center pt-10 md:pt-20 px-4 animate-fadeIn transition-colors duration-1000">
+      <div className="w-full max-w-2xl glass-panel bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[85vh] border border-[var(--dynamic-color-30)] transition-colors duration-1000">
         <div className="flex justify-between items-center p-6 border-b border-white/5 shrink-0 bg-black/20 rounded-t-3xl">
           <div className="flex flex-col">
             <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-3">
@@ -260,7 +260,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
             className="flex flex-col md:flex-row gap-3 mb-8"
           >
             <div className="relative flex-1 group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#a855f7] transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[var(--dynamic-color)] transition-colors">
                 <SearchIcon />
               </div>
               <input
@@ -269,13 +269,17 @@ export default function WebSearch({ userId, userName, userAvatar }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("webSearch.placeholder")}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:border-[#7e22ce]/50 outline-none transition text-sm shadow-inner"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:border-[var(--dynamic-color-50)] outline-none transition-colors text-sm shadow-inner"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white px-8 py-3 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:brightness-110 transition shadow-lg disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+              className="text-white px-8 py-3 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] hover:brightness-110 transition-all duration-300 disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+              style={{
+                background: 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                boxShadow: '0 0 15px var(--dynamic-color-30)'
+              }}
             >
               {loading ? <LoadingSpinner /> : t("webSearch.btnSearch")}
             </button>
@@ -283,7 +287,7 @@ export default function WebSearch({ userId, userName, userAvatar }) {
 
           <div className="flex flex-col gap-3">
             {loading ? (
-              <p className="text-center py-8 font-black uppercase tracking-widest text-[#a855f7] animate-pulse text-[10px]">
+              <p className="text-center py-8 font-black uppercase tracking-widest text-[var(--dynamic-color)] animate-pulse text-[10px] transition-colors">
                 {t("webSearch.loading")}
               </p>
             ) : (

@@ -96,7 +96,7 @@ export default function MobileNav({ userId }) {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 w-full z-[70] bg-[#0a0a0c]/95 backdrop-blur-xl border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] h-[65px] flex justify-around items-center px-2 pb-safe">
+    <div className="md:hidden fixed bottom-[60px] left-0 w-full z-[70] bg-black/60 backdrop-blur-2xl border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] h-[65px] flex justify-around items-center px-2 pb-safe transition-colors duration-1000">
       {navItems.map((item) => {
         const isActive =
           item.href &&
@@ -124,10 +124,13 @@ export default function MobileNav({ userId }) {
           <Link
             key={item.name}
             href={item.href}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl min-w-[70px] transition-all ${isActive ? "text-[#a855f7]" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl min-w-[70px] transition-all duration-300 ${isActive ? "text-[var(--dynamic-color)]" : "text-gray-500 hover:text-gray-300"}`}
           >
             <div
-              className={`${isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" : ""} transition-transform`}
+              className={`${isActive ? "scale-110" : ""} transition-transform duration-300`}
+              style={{
+                filter: isActive ? 'drop-shadow(0 0 8px var(--dynamic-color-50))' : 'none'
+              }}
             >
               {item.icon}
             </div>
