@@ -144,6 +144,15 @@ export default function LivePlayer({ userId, guildId }) {
   const lineRefs = useRef([]);
   const idleTimeout = useRef(null);
 
+  // EFECTO NUEVO: Cambiar el título de la pestaña del navegador
+  useEffect(() => {
+    if (status.playing && status.song) {
+      document.title = `▶ ${status.song.title} • ${status.song.artist}`;
+    } else {
+      document.title = "Musicardi | Tu Panel de Música";
+    }
+  }, [status.playing, status.song]);
+
   useEffect(() => {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";

@@ -31,6 +31,16 @@ const MusicNoteIcon = () => (
   </svg>
 );
 
+const HeartIcon = () => (
+  <svg
+    className="w-16 h-16 text-white drop-shadow-md group-hover:scale-110 transition-transform"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+  </svg>
+);
+
 const PlayIcon = () => (
   <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24">
     <path d="M8 5v14l11-7z" />
@@ -217,14 +227,25 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 hover:border-[#a855f7]/50 transition-all text-left overflow-hidden shadow-lg"
+              className="group relative glass-panel p-6 rounded-2xl flex items-center gap-4 transition-all duration-300 text-left overflow-hidden shadow-lg border border-white/5"
+              style={{ '--hover-border': 'var(--dynamic-color-50)' }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--dynamic-color-50)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/0 to-[#a855f7]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#a855f7] group-hover:scale-110 transition-transform shadow-inner shrink-0">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(to right, transparent, var(--dynamic-color-15))' }}
+              ></div>
+              <div 
+                className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-inner shrink-0"
+                style={{ color: 'var(--dynamic-color)' }}
+              >
                 <PlusIcon />
               </div>
               <div className="flex flex-col z-10 min-w-0">
-                <span className="text-lg font-bold text-white group-hover:text-[#a855f7] transition-colors truncate">
+                <span 
+                  className="text-lg font-bold text-white transition-colors duration-300 truncate"
+                >
                   {t("playlists.create")}
                 </span>
                 <span className="text-xs text-gray-500 truncate">
@@ -237,27 +258,26 @@ export default function PlaylistsContent({ initialPlaylists }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             <Link
               href="/playlists/likes"
-              className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(168,85,247,0.2)] transition-all duration-300 border hover:border-[#a855f7]/50"
+              className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 transition-all duration-300 border border-white/5"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--dynamic-color-50)';
+                e.currentTarget.style.boxShadow = '0 15px 30px var(--dynamic-color-15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              <div className="aspect-square bg-[#111214] border-b border-white/5 flex items-center justify-center p-8 relative overflow-hidden group-hover:bg-[#1a1b1e] transition-colors duration-300">
-                <div className="w-16 h-16 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#a855f7]/50 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-                  <svg
-                    className="w-8 h-8 text-gray-400 transition-colors duration-300 group-hover:text-[#a855f7]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                    />
-                  </svg>
-                </div>
+              <div 
+                className="aspect-square flex items-center justify-center p-8 relative overflow-hidden transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, var(--dynamic-color), var(--dynamic-color-dark))' }}
+              >
+                <HeartIcon />
               </div>
               <div className="p-4 bg-black/40 backdrop-blur-md">
-                <h3 className="font-bold text-white text-sm truncate group-hover:text-[#a855f7] transition-colors">
+                <h3 
+                  className="font-bold text-white text-sm truncate transition-colors duration-300"
+                >
                   {t("playlists.likesTitle")}
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">
@@ -270,18 +290,32 @@ export default function PlaylistsContent({ initialPlaylists }) {
               <Link
                 href={`/playlists/${pl.id}`}
                 key={pl.id}
-                className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(168,85,247,0.2)] transition-all duration-300 border hover:border-[#a855f7]/50"
+                className="group glass-panel rounded-2xl overflow-hidden hover:-translate-y-2 transition-all duration-300 border border-white/5"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--dynamic-color-50)';
+                  e.currentTarget.style.boxShadow = '0 15px 30px var(--dynamic-color-15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
-                <div className="relative rounded-t-2xl overflow-hidden aspect-square bg-[#111214] border-b border-white/5">
+                <div className="relative rounded-t-2xl overflow-hidden aspect-square bg-black/40 border-b border-white/5">
                   <MosaicCover songs={pl.songs} />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end justify-end p-3 z-20">
-                    <button className="w-12 h-12 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] rounded-full flex items-center justify-center text-white opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:brightness-110 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                    <button 
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 hover:brightness-110"
+                      style={{ 
+                        background: 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                        boxShadow: '0 0 15px var(--dynamic-color-50)'
+                      }}
+                    >
                       <PlayIcon />
                     </button>
                   </div>
                 </div>
                 <div className="p-4 bg-black/40 backdrop-blur-md">
-                  <h3 className="font-bold text-white text-sm truncate mb-1 group-hover:text-[#a855f7] transition-colors">
+                  <h3 className="font-bold text-white text-sm truncate mb-1 transition-colors duration-300">
                     {pl.name}
                   </h3>
                   <p className="text-xs text-gray-500 font-medium truncate">
@@ -299,14 +333,17 @@ export default function PlaylistsContent({ initialPlaylists }) {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl border border-[#a855f7]/30 animate-slideUp">
+          <div 
+            className="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl border animate-slideUp"
+            style={{ borderColor: 'var(--dynamic-color-30)' }}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-black text-white">
                 {t("playlists.create")}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-white text-2xl leading-none"
+                className="text-gray-500 hover:text-white text-2xl leading-none transition-colors"
               >
                 ×
               </button>
@@ -318,7 +355,7 @@ export default function PlaylistsContent({ initialPlaylists }) {
                   type="text"
                   autoFocus
                   placeholder="Ej: Cyberpunk Vibes..."
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#a855f7] text-white rounded-xl p-4 outline-none font-bold transition shadow-inner"
+                  className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-4 outline-none font-bold transition shadow-inner focus:border-[var(--dynamic-color)]"
                   value={plName}
                   onChange={(e) => setPlName(e.target.value)}
                 />
@@ -329,14 +366,14 @@ export default function PlaylistsContent({ initialPlaylists }) {
                   <input
                     type="text"
                     placeholder="Busca un artista o tema..."
-                    className="flex-1 bg-white/5 border border-white/10 focus:border-[#a855f7] text-white rounded-xl p-3 outline-none text-sm transition shadow-inner"
+                    className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl p-3 outline-none text-sm transition shadow-inner focus:border-[var(--dynamic-color)]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   <button
                     type="submit"
                     disabled={isSearching}
-                    className="bg-white/10 hover:bg-white/20 text-white px-4 rounded-xl font-bold transition border border-white/5 hover:border-white/10 flex items-center justify-center min-w-[80px]"
+                    className="bg-white/10 hover:bg-[var(--dynamic-color-30)] hover:text-[var(--dynamic-color)] hover:border-[var(--dynamic-color)] text-white px-4 rounded-xl font-bold transition-all duration-300 border border-white/5 flex items-center justify-center min-w-[80px]"
                   >
                     {isSearching ? <LoadingSpinner /> : t("search.btn")}
                   </button>
@@ -348,7 +385,18 @@ export default function PlaylistsContent({ initialPlaylists }) {
                       <div
                         key={i}
                         onClick={() => setSelectedSong(track)}
-                        className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition border ${selectedSong?.videoId === track.videoId ? "border-[#a855f7] bg-[#a855f7]/10 shadow-[0_0_15px_rgba(168,85,247,0.2)]" : "border-transparent hover:bg-white/5"}`}
+                        className="flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-300 border"
+                        style={{
+                          borderColor: selectedSong?.videoId === track.videoId ? 'var(--dynamic-color)' : 'transparent',
+                          backgroundColor: selectedSong?.videoId === track.videoId ? 'var(--dynamic-color-15)' : 'transparent',
+                          boxShadow: selectedSong?.videoId === track.videoId ? '0 0 15px var(--dynamic-color-15)' : 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedSong?.videoId !== track.videoId) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedSong?.videoId !== track.videoId) e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
                       >
                         <img
                           src={track.thumbnail}
@@ -359,7 +407,10 @@ export default function PlaylistsContent({ initialPlaylists }) {
                           <span className="text-sm font-bold text-white truncate">
                             {track.title}
                           </span>
-                          <span className="text-[10px] text-[#a855f7] font-bold uppercase truncate">
+                          <span 
+                            className="text-[10px] font-bold uppercase truncate"
+                            style={{ color: 'var(--dynamic-color)' }}
+                          >
                             {track.artist}
                           </span>
                         </div>
@@ -380,7 +431,11 @@ export default function PlaylistsContent({ initialPlaylists }) {
               <button
                 onClick={handleCreate}
                 disabled={isSaving || !plName.trim()}
-                className="px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white transition disabled:opacity-50 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:brightness-110 flex items-center gap-2"
+                className="px-6 py-3 rounded-full font-bold text-sm text-white transition disabled:opacity-50 hover:brightness-110 flex items-center gap-2"
+                style={{ 
+                  background: 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                  boxShadow: '0 0 15px var(--dynamic-color-40)'
+                }}
               >
                 {isSaving ? <LoadingSpinner /> : t("common.save")}
               </button>

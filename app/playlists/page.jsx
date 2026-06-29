@@ -50,7 +50,8 @@ export default async function PlaylistsPage() {
   return (
     <SocketProvider>
       <main className="h-screen bg-transparent text-white flex overflow-hidden font-sans">
-        <aside className="w-[280px] bg-[#0a0a0c]/80 backdrop-blur-xl border-r border-[#1e1f22] flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] hidden md:flex shrink-0">
+        {/* SIDEBAR ESTILO GLASSMORPHISM */}
+        <aside className="w-[280px] bg-black/20 backdrop-blur-xl border-r border-white/5 flex flex-col pt-8 pb-28 z-10 shadow-[4px_0_30px_rgba(0,0,0,0.5)] hidden md:flex shrink-0 transition-colors duration-1000">
           <div className="px-4 flex flex-col gap-2 mb-8">
             <Link
               href={`/dashboard/${session.user.id}`}
@@ -74,9 +75,14 @@ export default async function PlaylistsPage() {
 
             <SearchTrigger />
 
+            {/* Botón Playlists Activo */}
             <Link
               href="/playlists"
-              className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#a855f7] to-[#7e22ce] text-white rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition mt-1"
+              className="flex items-center gap-3 px-4 py-2.5 text-white rounded-lg font-bold text-sm transition mt-1 shadow-lg hover:scale-[1.02] hover:brightness-110 duration-300"
+              style={{ 
+                background: 'linear-gradient(to right, var(--dynamic-color), var(--dynamic-color-dark))',
+                boxShadow: '0 0 15px var(--dynamic-color-30)'
+              }}
             >
               <svg
                 className="w-5 h-5"
@@ -97,18 +103,24 @@ export default async function PlaylistsPage() {
 
           <Link
             href="/playlists/likes"
-            className="flex items-center gap-4 px-4 py-3 mx-4 mt-2 bg-gradient-to-r from-[#7e22ce]/10 to-transparent hover:from-[#7e22ce]/20 border border-[#7e22ce]/20 hover:border-[#7e22ce]/40 rounded-xl transition-all shadow-lg group"
+            className="flex items-center gap-4 px-4 py-3 mx-4 mt-2 bg-black/20 hover:bg-[var(--dynamic-color-15)] border border-transparent hover:border-[var(--dynamic-color-40)] rounded-xl transition-all duration-300 shadow-lg group"
           >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#a855f7] to-[#7e22ce] flex items-center justify-center text-white shadow-[0_0_15px_rgba(126,34,206,0.4)] group-hover:scale-105 transition-transform">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-white group-hover:scale-105 transition-all duration-300"
+              style={{
+                background: 'linear-gradient(to bottom right, var(--dynamic-color), var(--dynamic-color-dark))',
+                boxShadow: '0 0 15px var(--dynamic-color-30)'
+              }}
+            >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-white group-hover:text-[#a855f7] transition-colors">
+              <span className="text-sm font-bold text-gray-200 group-hover:text-[var(--dynamic-color)] transition-colors duration-300">
                 {dict.nav.likes}
               </span>
-              <span className="text-[10px] font-medium text-gray-500">
+              <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-400 transition-colors">
                 {allLikes.length} {dict.playlists.songs}
               </span>
             </div>
@@ -119,10 +131,10 @@ export default async function PlaylistsPage() {
               <Link
                 key={pl.id}
                 href={`/playlists/${pl.id}`}
-                className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-[#a855f7] hover:bg-white/5 rounded-lg text-sm transition truncate font-medium"
+                className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-[var(--dynamic-color)] hover:bg-[var(--dynamic-color-15)] rounded-lg text-sm transition-all truncate font-medium group"
               >
                 <svg
-                  className="w-4 h-4 shrink-0"
+                  className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -139,21 +151,21 @@ export default async function PlaylistsPage() {
             ))}
           </div>
 
-          <div className="px-4 border-t border-[#1e1f22] pt-4 mb-2">
+          <div className="px-4 border-t border-white/5 pt-4 mb-2">
             <SettingsTrigger />
-            <div className="flex items-center gap-4 mt-4 px-2">
+            <div className="flex items-center gap-4 mt-4 px-2 group">
               <img
                 src={session.user.image}
-                className="w-10 h-10 rounded-full border border-[#a855f7]/50"
+                className="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-[var(--dynamic-color-50)] transition-colors duration-500 object-cover"
                 alt="Avatar"
               />
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-bold truncate text-gray-200">
+                <span className="text-sm font-bold truncate text-gray-200 group-hover:text-white transition-colors">
                   {session.user.name}
                 </span>
                 <a
                   href="/api/auth/signout"
-                  className="text-[10px] text-gray-500 hover:text-red-400 font-bold uppercase tracking-wider transition"
+                  className="text-[10px] text-gray-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors"
                 >
                   {dict.nav.logout}
                 </a>
