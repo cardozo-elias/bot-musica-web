@@ -5,7 +5,8 @@ import { useLanguage } from "./LanguageContext";
 
 const LoadingSpinner = () => (
   <svg
-    className="animate-spin h-4 w-4 text-[#a855f7]"
+    className="animate-spin h-4 w-4"
+    style={{ color: "var(--dynamic-color)" }}
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
@@ -74,7 +75,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
   if (!recs.length) return null;
 
   return (
-    <div className="w-full glass-panel p-6 md:p-8 rounded-3xl border border-white/5 shadow-lg flex flex-col h-[550px]">
+    <div className="w-full glass-panel p-6 md:p-8 rounded-3xl border border-white/5 shadow-lg flex flex-col h-[550px] transition-colors duration-500 hover:border-[var(--dynamic-color-30)]">
       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
         <div className="min-w-0 pr-2 flex flex-col">
           <h3 className="text-xl md:text-2xl font-black text-white tracking-tighter">
@@ -89,7 +90,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
             setLoading(true);
             socketRef.current?.emit("get_recommendations", userId);
           }}
-          className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition flex-shrink-0 shadow-sm"
+          className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition flex-shrink-0 shadow-sm hover:border-[var(--dynamic-color-50)]"
         >
           {t("dashboard.recommendations.refresh")}
         </button>
@@ -101,7 +102,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
             key={track.videoId}
             onClick={() => play(track)}
             className={`group flex items-center gap-4 p-2.5 rounded-2xl transition-all border border-transparent 
-              ${loadingTrackId === track.videoId ? "opacity-50 pointer-events-none" : "bg-black/20 hover:bg-black/40 cursor-pointer hover:border-[#a855f7]/30 shadow-sm"}`}
+              ${loadingTrackId === track.videoId ? "opacity-50 pointer-events-none" : "bg-black/20 hover:bg-black/40 cursor-pointer hover:border-[var(--dynamic-color-30)] shadow-sm"}`}
           >
             <div className="relative h-12 w-12 flex-shrink-0">
               <img
@@ -121,7 +122,7 @@ export default function Recommendations({ userId, userName, userAvatar }) {
               </div>
             </div>
             <div className="flex flex-col min-w-0 flex-1 pr-2">
-              <p className="text-sm font-bold text-white truncate group-hover:text-[#a855f7] transition">
+              <p className="text-sm font-bold text-white truncate group-hover:text-[var(--dynamic-color)] transition-colors">
                 {track.title}
               </p>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest truncate mt-0.5">

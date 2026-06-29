@@ -135,7 +135,8 @@ export default function SidebarFavorites({
                 <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 relative z-20 bg-inherit">
                   {loadingTrackId === like.videoId ? (
                     <svg
-                      className="animate-spin h-3.5 w-3.5 text-[#a855f7]"
+                      className="animate-spin h-3.5 w-3.5"
+                      style={{ color: 'var(--dynamic-color)' }}
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -172,7 +173,8 @@ export default function SidebarFavorites({
                         </svg>
                       </span>
                       <svg
-                        className="w-3.5 h-3.5 text-[#a855f7] absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="w-3.5 h-3.5 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: 'var(--dynamic-color)' }}
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -184,7 +186,9 @@ export default function SidebarFavorites({
 
                 <div className="flex-1 flex flex-col min-w-0 pr-12 pl-3 -ml-3 overflow-hidden relative fade-left-mask">
                   <div className="w-full overflow-hidden">
-                    <p className="font-bold text-gray-200 text-xs truncate whitespace-nowrap group-hover:text-[#a855f7] transition-colors animate-marquee-fav">
+                    <p 
+                      className="font-bold text-gray-200 text-xs truncate whitespace-nowrap transition-colors animate-marquee-fav group-hover:text-[var(--dynamic-color)]"
+                    >
                       {like.title}
                     </p>
                   </div>

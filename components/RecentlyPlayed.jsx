@@ -25,9 +25,10 @@ const LoadingSpinner = () => (
     ></path>
   </svg>
 );
+
 const MusicIcon = () => (
   <svg
-    className="w-4 h-4 mx-auto"
+    className="w-4 h-4 mx-auto transition-colors duration-300"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -96,7 +97,7 @@ export default function RecentlyPlayed({
   };
 
   return (
-    <div className="w-full glass-panel p-6 md:p-8 rounded-3xl border border-white/5 shadow-lg flex flex-col h-[550px]">
+    <div className="w-full glass-panel p-6 md:p-8 rounded-3xl border border-white/5 shadow-lg flex flex-col h-[550px] transition-colors duration-500 hover:border-[var(--dynamic-color-30)]">
       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
         <div className="flex flex-col">
           <h3 className="text-xl md:text-2xl font-black text-white tracking-tighter">
@@ -119,14 +120,14 @@ export default function RecentlyPlayed({
           {history.map((song, index) => (
             <div
               key={`${song.videoId}-${index}`}
-              className="group flex items-center justify-between bg-black/20 p-3 rounded-2xl hover:bg-black/40 transition border border-transparent hover:border-[#a855f7]/30"
+              className="group flex items-center justify-between bg-black/20 p-3 rounded-2xl hover:bg-black/40 transition-all border border-transparent hover:border-[var(--dynamic-color-30)] shadow-sm"
             >
               <div className="flex items-center gap-4 overflow-hidden">
-                <span className="text-gray-600 font-black text-xs w-8 text-center group-hover:text-[#a855f7] transition-colors">
+                <span className="text-gray-600 font-black text-xs w-8 text-center group-hover:text-[var(--dynamic-color)] transition-colors">
                   <MusicIcon />
                 </span>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-white text-sm truncate group-hover:text-[#a855f7] transition cursor-default">
+                  <span className="font-bold text-white text-sm truncate group-hover:text-[var(--dynamic-color)] transition-colors cursor-default">
                     {song.title}
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -144,7 +145,14 @@ export default function RecentlyPlayed({
                 <button
                   disabled={loadingTrackId === song.videoId}
                   onClick={() => handlePlay(song)}
-                  className={`flex items-center justify-center min-w-[90px] px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-md transition ${loadingTrackId === song.videoId ? "opacity-100 bg-white/5 text-gray-400 cursor-not-allowed" : "opacity-0 group-hover:opacity-100 bg-white/10 text-white hover:bg-[#a855f7]"}`}
+                  style={{
+                    backgroundColor: loadingTrackId === song.videoId ? '' : 'var(--dynamic-color)',
+                  }}
+                  className={`flex items-center justify-center min-w-[90px] px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-md transition-all ${
+                    loadingTrackId === song.videoId 
+                    ? "opacity-100 bg-white/5 text-gray-400 cursor-not-allowed" 
+                    : "opacity-0 group-hover:opacity-100 text-white hover:brightness-110 shadow-[0_0_10px_var(--dynamic-color-40)]"
+                  }`}
                 >
                   {loadingTrackId === song.videoId ? (
                     <LoadingSpinner />

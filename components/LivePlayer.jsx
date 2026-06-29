@@ -423,7 +423,7 @@ export default function LivePlayer({ userId, guildId }) {
   if (isFullscreen) {
     return (
       <div
-        className={`fixed inset-0 z-[200] bg-transparent text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? "cursor-none" : ""}`}
+        className={`fixed inset-0 z-[200] bg-[#050508] text-white flex flex-col justify-between overflow-hidden animate-fadeIn transition-colors duration-1000 ${isIdle ? "cursor-none" : ""}`}
       >
         <style
           dangerouslySetInnerHTML={{
@@ -436,12 +436,16 @@ export default function LivePlayer({ userId, guildId }) {
           }}
         />
 
-        {/* Hacemos la capa del álbum extremadamente transparente para que el Background Estrellado se vea */}
+        {/* Auroras Dinámicas exclusivas para el Fullscreen */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor }}></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor }}></div>
+
+        {/* Capa de carátula difuminada */}
         <div
-          className="absolute inset-0 z-[-1] bg-cover bg-center opacity-10 blur-[80px] scale-125"
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-[80px] scale-125"
           style={{ backgroundImage: `url(${status.song.thumbnail})` }}
         ></div>
-        <div className="absolute inset-0 z-[-1] bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-[#050508]/20"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent"></div>
 
         <div
           className={`z-10 p-6 md:p-8 flex justify-between items-center transition-opacity duration-700 ease-in-out ${isIdle ? "opacity-0" : "opacity-100"}`}

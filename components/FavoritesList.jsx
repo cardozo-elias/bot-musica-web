@@ -51,12 +51,19 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
   };
 
   return (
-    <div className="w-full bg-[#111214] p-8 rounded-3xl border border-[#2b2d31] shadow-lg flex flex-col h-[500px]">
-      <div className="flex justify-between items-center mb-6 border-b border-[#2b2d31] pb-4">
+    <div className="w-full glass-panel bg-black/20 backdrop-blur-md p-8 rounded-3xl border border-white/5 shadow-2xl flex flex-col h-[500px] transition-colors duration-500 hover:border-[var(--dynamic-color-30)]">
+      <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
         <h3 className="text-2xl font-black text-white tracking-tighter">
           Toda tu Colección
         </h3>
-        <span className="bg-[#57F287]/10 text-[#57F287] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-[#57F287]/20">
+        <span 
+          className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border transition-colors duration-500"
+          style={{ 
+            backgroundColor: 'var(--dynamic-color-15)', 
+            color: 'var(--dynamic-color)', 
+            borderColor: 'var(--dynamic-color-30)' 
+          }}
+        >
           {likes.length} Pistas
         </span>
       </div>
@@ -70,14 +77,14 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
           {likes.map((song, index) => (
             <div
               key={`${song.videoId}-${index}`}
-              className="group flex items-center justify-between bg-[#1e1f22] p-3 rounded-2xl hover:bg-[#2b2d31] transition border border-transparent hover:border-[#3f4147]"
+              className="group flex items-center justify-between bg-black/20 p-3 rounded-2xl hover:bg-white/5 transition-all border border-transparent hover:border-[var(--dynamic-color-30)] shadow-sm"
             >
               <div className="flex items-center gap-4 overflow-hidden">
-                <span className="text-gray-600 font-black text-xs w-6 text-center">
+                <span className="text-gray-600 font-black text-xs w-6 text-center group-hover:text-white transition-colors">
                   {index + 1}
                 </span>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-white text-sm truncate group-hover:text-[#57F287] transition cursor-default">
+                  <span className="font-bold text-white text-sm truncate group-hover:text-[var(--dynamic-color)] transition-colors cursor-default">
                     {song.title}
                   </span>
                   <span className="text-gray-500 text-[10px] font-black uppercase truncate tracking-wider mt-0.5">
@@ -109,10 +116,13 @@ export default function FavoritesList({ likes, userId, userName, userAvatar }) {
                 <button
                   disabled={loadingTrackId === song.videoId}
                   onClick={() => handlePlay(song)}
-                  className={`flex items-center justify-center min-w-[100px] px-4 py-2 rounded-xl font-black text-xs uppercase shadow-xl transition ${
+                  style={{
+                    backgroundColor: loadingTrackId === song.videoId ? '' : 'var(--dynamic-color)',
+                  }}
+                  className={`flex items-center justify-center min-w-[100px] px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-xl transition-all ${
                     loadingTrackId === song.videoId
-                      ? "opacity-100 bg-[#3f4147] text-gray-400 cursor-not-allowed"
-                      : "opacity-0 group-hover:opacity-100 bg-[#57F287] text-black hover:scale-105"
+                      ? "opacity-100 bg-white/10 text-gray-400 cursor-not-allowed"
+                      : "opacity-0 group-hover:opacity-100 text-white hover:scale-105 hover:brightness-110 shadow-[0_0_15px_var(--dynamic-color-40)]"
                   }`}
                 >
                   {loadingTrackId === song.videoId ? (
