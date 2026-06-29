@@ -6,7 +6,6 @@ export default function AmbientBackground() {
   const { socketStats } = useSocketStats();
   const color = socketStats?.color || "#a855f7";
 
-  // Efecto que calcula las transparencias y colores oscuros y los inyecta al root global
   useEffect(() => {
     const hex = color.replace("#", "");
     let r = 0, g = 0, b = 0;
@@ -35,17 +34,23 @@ export default function AmbientBackground() {
   }, [color]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#050508]">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#050508]" style={{ contain: "strict" }}>
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes aurora-blob {
-          0% { transform: translate(0vw, 0vh) scale(1); }
-          33% { transform: translate(12vw, -15vh) scale(1.4); }
-          66% { transform: translate(-10vw, 15vh) scale(0.85); }
-          100% { transform: translate(0vw, 0vh) scale(1); }
+          0% { transform: translate3d(0vw, 0vh, 0) scale(1); }
+          33% { transform: translate3d(12vw, -15vh, 0) scale(1.4); }
+          66% { transform: translate3d(-10vw, 15vh, 0) scale(0.85); }
+          100% { transform: translate3d(0vw, 0vh, 0) scale(1); }
         }
         @keyframes twinkle {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50% { opacity: 0.3; transform: scale(0.95); }
+          0%, 100% { opacity: 0.7; transform: translate3d(0,0,0) scale(1); }
+          50% { opacity: 0.3; transform: translate3d(0,0,0) scale(0.95); }
+        }
+        .gpu-accelerated {
+          will-change: transform, background-color;
+          backface-visibility: hidden;
+          perspective: 1000px;
+          transform: translateZ(0);
         }
         .bg-stars {
           background-image: 
@@ -59,6 +64,7 @@ export default function AmbientBackground() {
           background-repeat: repeat;
           background-size: 450px 450px;
           animation: twinkle 7s ease-in-out infinite;
+          will-change: opacity;
         }
         .animate-aurora {
           animation: aurora-blob 18s infinite alternate ease-in-out;
@@ -67,27 +73,24 @@ export default function AmbientBackground() {
         .delay-4000 { animation-delay: 4s; }
       `}} />
 
-      {/* Capa de Estrellas */}
-      <div className="absolute inset-0 bg-stars mix-blend-screen"></div>
+      <div className="absolute inset-0 bg-stars mix-blend-screen gpu-accelerated"></div>
 
-      {/* Auroras Adaptativas */}
       <div
-        className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-40 animate-aurora transition-colors duration-1000 ease-in-out"
+        className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[80px] opacity-40 animate-aurora transition-colors duration-1000 ease-in-out gpu-accelerated"
         style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
 
       <div
-        className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[140px] opacity-30 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out"
+        className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[90px] opacity-30 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out gpu-accelerated"
         style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
 
       <div
-        className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-4000 transition-colors duration-1000 ease-in-out"
+        className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[80px] opacity-20 animate-aurora delay-4000 transition-colors duration-1000 ease-in-out gpu-accelerated"
         style={{ backgroundColor: 'var(--dynamic-color)' }}
       ></div>
       
-      {/* Viñeta inmersiva para legibilidad */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#050508]/60 to-[#050508]/95"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#050508]/60 to-[#050508]/95 gpu-accelerated pointer-events-none"></div>
     </div>
   );
 }

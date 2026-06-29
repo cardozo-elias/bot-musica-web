@@ -144,19 +144,15 @@ export default function LivePlayer({ userId, guildId }) {
   const lineRefs = useRef([]);
   const idleTimeout = useRef(null);
 
-  // EFECTO NUEVO: Cambiar el título de la pestaña del navegador
-  useEffect(() => {
-    if (status.playing && status.song) {
-      document.title = `▶ ${status.song.title} • ${status.song.artist}`;
-    } else {
-      document.title = "Musicardi | Tu Panel de Música";
-    }
-  }, [status.playing, status.song]);
-
   useEffect(() => {
     if (!userId) return;
     const botUrl = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:3001";
-    socketRef.current = io(botUrl);
+    
+    // 🔥 OPTIMIZACIÓN DE RED: Forzamos Websocket para eliminar la latencia HTTP
+    socketRef.current = io(botUrl, {
+      transports: ["websocket"],
+      upgrade: false,
+    });
 
     const interval = setInterval(() => {
       if (!isReordering.current)
@@ -244,7 +240,8 @@ export default function LivePlayer({ userId, guildId }) {
     socketRef.current.emit(cmd, extra !== null ? { userId, ...extra } : userId);
     
     setIsOnCooldown(true);
-    setTimeout(() => setIsOnCooldown(false), 1500);
+    // 🔥 OPTIMIZACIÓN DE LATENCIA: Reducimos el bloqueo de 1500ms a 400ms
+    setTimeout(() => setIsOnCooldown(false), 400);
   };
 
   useEffect(() => {
@@ -445,14 +442,14 @@ export default function LivePlayer({ userId, guildId }) {
           }}
         />
 
-        {/* Auroras Dinámicas exclusivas para el Fullscreen */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor }}></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor }}></div>
+        {/* Auroras Dinámicas con aceleración de GPU */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vh] rounded-full mix-blend-screen blur-[120px] opacity-30 animate-aurora transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor, willChange: 'transform', transform: 'translateZ(0)' }}></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full mix-blend-screen blur-[120px] opacity-20 animate-aurora delay-2000 transition-colors duration-1000 ease-in-out" style={{ backgroundColor: activeColor, willChange: 'transform', transform: 'translateZ(0)' }}></div>
 
-        {/* Capa de carátula difuminada */}
+        {/* Capa de carátula difuminada acelerada por GPU */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center opacity-10 blur-[80px] scale-125"
-          style={{ backgroundImage: `url(${status.song.thumbnail})` }}
+          style={{ backgroundImage: `url(${status.song.thumbnail})`, willChange: 'transform', transform: 'translateZ(0)' }}
         ></div>
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050508]/95 via-[#050508]/40 to-transparent"></div>
 
