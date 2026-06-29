@@ -52,7 +52,7 @@ export default async function LandingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0c] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <main className="min-h-screen bg-transparent text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#a855f7]/15 via-transparent to-transparent -z-10"></div>
 
       <div className="text-center max-w-2xl animate-slideUp">
